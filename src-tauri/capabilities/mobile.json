@@ -1,0 +1,19 @@
+{
+  "identifier": "mobile-capability",
+  "platforms": ["android", "iOS"],
+  "windows": ["main"],
+  "permissions": [
+    "http:default",
+    "log:default",
+    "notification:default",
+    "opener:default",
+    "os:default",
+    "sql:default",
+    "store:default",
+    "core:default",
+    "geolocation:allow-check-permissions",
+    "geolocation:allow-request-permissions",
+    "geolocation:allow-get-current-position",
+    "geolocation:allow-watch-position"
+  ]
+}
