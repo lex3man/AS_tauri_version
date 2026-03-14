@@ -1,31 +1,14 @@
 mod ipc;
 mod utils;
 mod config;
+mod state;
 
-use std::sync::{Arc, Mutex};
+use std::sync::{Mutex};
 
-use tauri::{Manager, Wry};
-use tauri_plugin_store::{Store, StoreExt as _};
+use tauri::{Manager};
+use tauri_plugin_store::{StoreExt as _};
 
-use crate::{config::Config, ipc::location::Coords};
-
-pub struct AppState {
-    storage: Option<Arc<Store<Wry>>>,
-    race_number: Option<String>,
-    settings: Config,
-    coords: Option<Coords>,
-}
-
-impl Default for AppState {
-    fn default() -> Self {
-        AppState {
-            storage: None,
-            race_number: None,
-            settings: Config::new(),
-            coords: None,
-        }
-    }
-}
+use crate::{config::Config, state::AppState};
 
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -55,6 +38,8 @@ pub fn run() {
             ipc::settings::switch_theme,
             ipc::location::location_update,
             ipc::location::get_coords,
+            ipc::states::snapshot,
+            ipc::states::get_snapshot,
             ])
         .setup(|app| {
             app.manage(Mutex::new(AppState::default()));
@@ -67,6 +52,9 @@ pub fn run() {
             }
             if let Some(val) = store.get("settings") {
                 state.settings = serde_json::from_value::<Config>(val).unwrap();
+            }
+            if let Some(val) = store.get("snapshot") {
+                state.snapshot = Some(val.as_str().unwrap().to_string());
             }
             state.storage = Some(store);
             Ok(())

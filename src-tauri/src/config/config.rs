@@ -1,13 +1,18 @@
 use serde::{Deserialize, Serialize};
 
+#[derive(Serialize, Deserialize)]
+struct Meters(u64);
+
+#[derive(Serialize, Deserialize)]
+struct Kilometers(u64);
 
 #[derive(Serialize, Deserialize)]
 pub struct Config {
-    dark_theme: bool,
+    dark_mode: bool,
     background: bool,
-    demo: bool,
-    correction_distance_m: u16,
-    track_distance_km: u16,
+    demo_mode: bool,
+    correction_distance: Meters,
+    track_distance: Kilometers,
     jump_mode: bool,
     road_book: bool,
     dtw_enabled: bool,
@@ -16,11 +21,11 @@ pub struct Config {
 impl Config {
     pub fn new() -> Self {
         Config {
-            dark_theme: true,
+            dark_mode: true,
             background: true,
-            demo: false,
-            correction_distance_m: 100,
-            track_distance_km: 30,
+            demo_mode: false,
+            correction_distance: Meters(100),
+            track_distance: Kilometers(30),
             jump_mode: false,
             road_book: false,
             dtw_enabled: true
@@ -28,7 +33,7 @@ impl Config {
     }
 
     pub fn theme_switch(&mut self) {
-        self.dark_theme = !self.dark_theme
+        self.dark_mode = !self.dark_mode
     }
 
     pub fn background_switch(&mut self) {

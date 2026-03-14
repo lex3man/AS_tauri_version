@@ -1,0 +1,1 @@
+export type TypeOfRequest = "race number" | "command" | "code of a day";
