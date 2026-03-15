@@ -94,9 +94,6 @@ export function SettingsProvider({
         const getSettings = async () => {
             const config = await invoke<string>('get_settings');
             const settings = parseSettings(config);
-
-            console.log(config)
-            console.log(settings.darkMode ? "DARK" : "LIGHT")
             
             setDM(settings.darkMode);
             settings.darkMode ? ( setTheme('dark') ) : ( setTheme('light') )
@@ -135,6 +132,7 @@ export function SettingsProvider({
         demoMode,
         jumpMode,
         roadbookMode,
+        
         setDarkMode,
         setShowBackground,
         setCorrectionDistance,

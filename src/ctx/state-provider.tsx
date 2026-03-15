@@ -1,5 +1,7 @@
+import { TypeOfRequest } from "@/types/request";
 import { AppState, DashBoard } from "@/types/state";
 import { ViewPort } from "@/types/viewport";
+import Viewports from "@/viewports";
 import { invoke } from "@tauri-apps/api/core";
 import { createContext, useContext, useEffect, useState } from "react"
 
@@ -21,6 +23,9 @@ type AppStateProviderState = {
     activeViewPort: ViewPort;
 
     setRaceNumber: (rn: string) => void;
+    setCodeOfDay: (code: string) => void;
+    callView: (name: string) => void;
+    setCommand: (cmd: string) => void;
 }
 
 const initialState: AppStateProviderState = {
@@ -50,6 +55,9 @@ const initialState: AppStateProviderState = {
     activeViewPort: ViewPort.new('request', 'race number'),
     
     setRaceNumber: () => null,
+    setCodeOfDay: () => null,
+    callView: () => null,
+    setCommand: () => null,
 }
 
 const AppStateProviderContext = createContext<AppStateProviderState>(initialState)
@@ -59,6 +67,7 @@ export function StateProvider({
     storageKey = "adventuresmart-state", 
     ...props
 }: AppStateProviderProps) {
+    const [coad, setCoad] = useState<string>("")
     const [raceNumber, setRN] = useState<string>("")
     const [adminMode, setAM] = useState(false)
     const [navMode, setNM] = useState(false)
@@ -87,24 +96,54 @@ export function StateProvider({
         ViewPort.new('request', 'race number')
     )
 
+    let screenState = new Viewports();
+
     useEffect(() => {
         const getState = async () => {
             const stateString = await invoke<string>('get_snapshot');
             if (stateString) {
                 const state: AppState = parseState(stateString);
                 setRN(state.raceNumber)
-                setAM(state.adminMode)
                 setNM(state.navMode)
                 setDB(state.dashBoard)
                 setAVP(state.activeViewPort)
             }
         }
+
         getState()
     }, [])
 
+    useEffect(() => {
+        const adminCheck = async () => {
+            if (await invoke<boolean>('is_admin')) {
+                setAM(true)
+                callView('admin-area')
+            } else {
+                setAM(false)
+            }
+        }
+        adminCheck()
+    }, [coad])
+
     const setRaceNumber = async (rn: string) => {
-        setRN(rn)
-        await await invoke('set_race_number', { value: rn });
+        setRN(rn);
+        await invoke('set_race_number', { value: rn });
+        
+        adminMode ? callView('admin-area') : callView('navigate');
+    }
+
+    const setCodeOfDay = async (code: string)  => {
+        await invoke('activate_code', { code: code })
+        setCoad(code)
+    }
+
+    const setCommand = async (cmd: string) => {
+        await invoke('activate_cmd', { cmd: cmd })
+    }
+
+    const callView = (name: string, type?: TypeOfRequest) => {
+        setAVP(ViewPort.new(name, type))
+        screenState.activate(name, type)
     }
 
     const value = {
@@ -113,7 +152,11 @@ export function StateProvider({
         navMode,
         dashBoard,
         activeViewPort,
-        setRaceNumber
+
+        setRaceNumber,
+        callView,
+        setCodeOfDay,
+        setCommand,
     }
 
     return (

@@ -11,9 +11,11 @@ import { DataRequest } from "./components/screens/request";
 import { useAppState } from "./ctx/state-provider";
 import { TypeOfRequest } from "./types/request";
 import AdminPanel from "./components/screens/admin-area";
+import CheckPoints from "./components/screens/checkpoints";
+import Ride from "./components/screens/navigate";
 
 function App() {
-  const { activeViewPort, setRaceNumber } = useAppState()
+  const { activeViewPort, setRaceNumber, setCodeOfDay, setCommand } = useAppState()
 
   const geoloc = async () => {
     let permissions = await checkPermissions();
@@ -48,19 +50,33 @@ function App() {
   }, [])
 
   switch (activeViewPort.name) {
-    case 'request':
+    case 'request': {
+      let answerFunc = setCodeOfDay
+      if (activeViewPort.type == "race number") answerFunc = setRaceNumber
+      if (activeViewPort.type == "command") answerFunc = setCommand
       return (
-        <main className="container gap-3 items-center justify-center">
-          <DataRequest typeOfData={activeViewPort.type as TypeOfRequest} setAnswer={setRaceNumber} />
+        <main className="gap-3 items-center justify-center">
+          <DataRequest typeOfData={activeViewPort.type as TypeOfRequest} setAnswer={answerFunc} />
         </main>
       )
+    }
     case 'admin-area':
       return (
         <AdminPanel />
       )
+    case 'checkpoints':
+      return (
+        <CheckPoints />
+      )
+    case 'navigate':
+      return (
+        <main className="gap-3 items-center justify-center">
+          <Ride />
+        </main>
+      )
   }
   return (
-    <main className="container gap-3 items-center justify-center">
+    <main className="gap-3 items-center justify-center">
       {}
     </main>
   );

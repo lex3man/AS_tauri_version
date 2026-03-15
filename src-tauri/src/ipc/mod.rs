@@ -3,3 +3,5 @@ pub mod race_number;
 pub mod settings;
 pub mod location;
 pub mod states;
+pub mod admin;
+pub mod codes;

@@ -40,6 +40,8 @@ pub fn run() {
             ipc::location::get_coords,
             ipc::states::snapshot,
             ipc::states::get_snapshot,
+            ipc::codes::activate_code,
+            ipc::admin::is_admin,
             ])
         .setup(|app| {
             app.manage(Mutex::new(AppState::default()));
