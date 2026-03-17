@@ -42,6 +42,7 @@ pub fn run() {
             ipc::states::get_snapshot,
             ipc::codes::activate_code,
             ipc::admin::is_admin,
+            ipc::admin::activate_cmd,
             ])
         .setup(|app| {
             app.manage(Mutex::new(AppState::default()));

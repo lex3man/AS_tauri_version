@@ -33,3 +33,12 @@ tauri-plugin-persisted-scope = "2"
 tauri-plugin-sql = "2"
 tauri-plugin-store = "2"
 
+[profile.dev]
+incremental = true # Compile your binary in smaller steps.
+
+[profile.release]
+codegen-units = 1 # Allows LLVM to perform better optimization.
+lto = true # Enables link-time-optimizations.
+opt-level = 2 # Prioritizes small binary size. Use `3` if you prefer speed.
+panic = "abort" # Higher performance by disabling panic handlers.
+strip = true # Ensures debug symbols are removed.
