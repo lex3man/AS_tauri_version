@@ -4,7 +4,7 @@ import { useTheme } from "@/ctx/theme-provider";
 
 const Settings = () => {
   const { callView } = useAppState();
-  const { theme, setTheme } = useTheme();
+  const { theme, background, setTheme, setBackground } = useTheme();
 
   return (
     <div>
@@ -28,7 +28,17 @@ const Settings = () => {
           <Button className="p-6 text-2xl" onClick={() => {}}>
             ROAD BOOK
           </Button>
-          <Button className="p-6 text-2xl" onClick={() => {}}>
+          <Button
+            className="p-6 text-2xl"
+            onClick={() => {
+              if (background) {
+                setBackground(false)
+              } else {
+                setBackground(true)
+              }
+              callView("navigate")
+            }}
+          >
             Background ON/OFF
           </Button>
           <Button

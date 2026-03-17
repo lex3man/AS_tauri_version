@@ -14,10 +14,13 @@ import AdminPanel from "./components/screens/admin-area";
 import CheckPoints from "./components/screens/checkpoints";
 import Ride from "./components/screens/navigate";
 import Settings from "./components/screens/settings";
+import { useTheme } from "./ctx/theme-provider";
+
 
 function App() {
   const { activeViewPort, setRaceNumber, setCodeOfDay, setCommand } =
     useAppState();
+  const { background } = useTheme()
 
   const geoloc = async () => {
     let permissions = await checkPermissions();
@@ -73,8 +76,14 @@ function App() {
       return <CheckPoints />;
     case "navigate":
       return (
-        <main className="gap-3 items-center justify-center">
-          <Ride />
+        <main className="h-full gap-3 items-center justify-center">
+          {background ? (
+            <div className="relative h-screen bg-cover bg-center bg-no-repeat bg-[url('./assets/background.png')]">
+              <Ride />
+            </div>
+          ) : (
+            <Ride />
+          )}
         </main>
       );
   }
