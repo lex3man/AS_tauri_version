@@ -30,6 +30,8 @@ pub fn location_update(state: State<'_, Mutex<AppState>>, data: &str) {
         state.coords = Some(gps_data.coords.clone());
         if let Some(store) = &state.storage {
             store.set("position", json!(gps_data.coords));
+            store.set("sa_state", json!(state.spec_area));
+            store.set("race_state", json!(state.race));
         }
     }
 }

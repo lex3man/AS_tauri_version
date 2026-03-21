@@ -2,13 +2,14 @@ mod ipc;
 mod utils;
 mod config;
 mod state;
+mod race;
 
 use std::sync::{Mutex};
 
 use tauri::{Manager};
 use tauri_plugin_store::{StoreExt as _};
 
-use crate::{config::Config, state::AppState};
+use crate::{config::Config, state::{AppState, race_config::{RaceState, SpecEreaState}}};
 
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -59,6 +60,12 @@ pub fn run() {
             }
             if let Some(val) = store.get("snapshot") {
                 state.snapshot = Some(val.as_str().unwrap().to_string());
+            }
+            if let Some(val) = store.get("sa_state") {
+                state.spec_area = serde_json::from_value::<SpecEreaState>(val).unwrap();
+            }
+            if let Some(val) = store.get("race_state") {
+                state.race = serde_json::from_value::<RaceState>(val).unwrap();
             }
             state.storage = Some(store);
             Ok(())
