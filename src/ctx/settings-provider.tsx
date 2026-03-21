@@ -110,17 +110,15 @@ export function SettingsProvider({
 
     const setDarkMode = (status: boolean) => {
         const save = async () => await invoke('switch_theme');
-
+        if (darkMode != status) { save() }
         setDM(status)
-        status ? ( setTheme('dark') ) : ( setTheme('light') )
-        save()
+        status ? ( setTheme('dark') ) : ( setTheme('light') )        
     }
 
     const setShowBackground = (status: boolean) => {
         const save = async () => await invoke('switch_background');
-
+        if (showBackground != status) { save() }
         setShowBg(status)
-        save()
     }
 
     const value = {

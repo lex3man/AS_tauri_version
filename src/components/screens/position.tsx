@@ -1,0 +1,32 @@
+import { useAppState } from "@/ctx/state-provider";
+import { Button } from "../ui/button";
+
+const Position = () => {
+  const { callView, lat, lon } = useAppState();
+
+  return (
+    <div>
+      <div className="flex justify-end">
+        <div className="flex justify-center text-3xl font-extrabold w-1/3 pt-10">
+          POSITION
+        </div>
+        <div className="flex pt-5 pr-5 justify-end w-1/3">
+          <Button
+            className="p-7 text-2xl"
+            onClick={() => {
+              callView("navigate");
+            }}
+          >
+            BACK
+          </Button>
+        </div>
+      </div>
+      <div className="flex flex-col justify-center m-auto p-10">
+        <div className="text-4xl m-auto">LAT: {lat}</div>
+        <div className="text-4xl m-auto">LON: {lon}</div>
+      </div>
+    </div>
+  )
+}
+
+export default Position;

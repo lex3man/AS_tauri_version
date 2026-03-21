@@ -1,10 +1,10 @@
 import { useAppState } from "@/ctx/state-provider";
 import { Button } from "../ui/button";
-import { useTheme } from "@/ctx/theme-provider";
+import { useSettings } from "@/ctx/settings-provider";
 
 const Settings = () => {
   const { callView } = useAppState();
-  const { theme, background, setTheme, setBackground } = useTheme();
+  const { showBackground, setShowBackground, darkMode, setDarkMode } = useSettings();
 
   return (
     <div>
@@ -31,10 +31,11 @@ const Settings = () => {
           <Button
             className="p-6 text-2xl"
             onClick={() => {
-              if (background) {
-                setBackground(false)
+              if (showBackground) {
+                setShowBackground(false)
               } else {
-                setBackground(true)
+                setShowBackground(true)
+                setDarkMode(false)
               }
               callView("navigate")
             }}
@@ -44,10 +45,11 @@ const Settings = () => {
           <Button
             className="p-6 text-2xl"
             onClick={() => {
-              if (theme === "light") {
-                setTheme("dark");
+              if (darkMode) {
+                setDarkMode(false);
               } else {
-                setTheme("light");
+                setDarkMode(true);
+                setShowBackground(false);
               }
             }}
           >

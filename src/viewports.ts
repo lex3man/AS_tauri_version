@@ -5,6 +5,7 @@ class Viewports {
     constructor (private map: Map<string, ViewPort> = new Map()) {
         map.set('request', ViewPort.new('request'))
         map.set('navigate', ViewPort.new('navigate'))
+        map.set('position', ViewPort.new('position'))
         map.set('tracking', ViewPort.new('tracking'))
         map.set('total', ViewPort.new('total'))
         map.set('settings', ViewPort.new('settings'))

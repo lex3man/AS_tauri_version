@@ -1,5 +1,5 @@
 import { TypeOfRequest } from "@/types/request";
-import { AppState, DashBoard } from "@/types/state";
+import { AppState, Coords, DashBoard } from "@/types/state";
 import { ViewPort } from "@/types/viewport";
 import Viewports from "@/viewports";
 import { invoke } from "@tauri-apps/api/core";
@@ -20,19 +20,41 @@ type AppStateProviderState = {
   raceNumber: string;
   adminMode: boolean;
   navMode: boolean;
+  mobileView: boolean;
   dashBoard: DashBoard;
   activeViewPort: ViewPort;
 
+  totalWidgetShown: boolean;
+  partialWidgetShown: boolean;
+  countdownWidgetShown: boolean;
+
+  lat: number;
+  lon: number;
+  speed: number;
+
   setRaceNumber: (rn: string) => void;
   setCodeOfDay: (code: string) => void;
+  setMobileView: (satus: boolean) => void;
   callView: (name: string, type?: TypeOfRequest) => void;
   setCommand: (cmd: string) => void;
+  switchWidget: (caption: "total" | "partial" | "countdown") => void;
+  setCoords: (update: Coords) => void;
 };
 
 const initialState: AppStateProviderState = {
   raceNumber: await invoke<string>("get_race_number"),
   adminMode: false,
   navMode: false,
+  mobileView: false,
+
+  totalWidgetShown: false,
+  partialWidgetShown: false,
+  countdownWidgetShown: false,
+
+  lat: 0,
+  lon: 0,
+  speed: 0,
+
   dashBoard: {
     cog: 0,
     sog: 0,
@@ -59,6 +81,9 @@ const initialState: AppStateProviderState = {
   setCodeOfDay: () => null,
   callView: () => null,
   setCommand: () => null,
+  switchWidget: () => null,
+  setMobileView: () => null,
+  setCoords: () => null,
 };
 
 const AppStateProviderContext =
@@ -71,8 +96,24 @@ export function StateProvider({
 }: AppStateProviderProps) {
   const [coad, setCoad] = useState<string>("");
   const [raceNumber, setRN] = useState<string>("");
+
+  // modes
   const [adminMode, setAM] = useState(false);
   const [navMode, setNM] = useState(false);
+  const [mobileView, setMobileView] = useState(false);
+
+
+  // widgets state
+  const [totalWidgetShown, setTotalShow] = useState(false);
+  const [partialWidgetShown, setPartialShow] = useState(false);
+  const [countdownWidgetShown, setCountdownShow] = useState(false);
+
+  // data
+  const [lat, setLat] = useState(0);
+  const [lon, setLon] = useState(0);
+  const [speed, _setSpeed] = useState(0);
+
+  // sync state
   const [dashBoard, setDB] = useState<DashBoard>({
     cog: 0,
     sog: 0,
@@ -108,6 +149,9 @@ export function StateProvider({
         setNM(state.navMode);
         setDB(state.dashBoard);
         setAVP(state.activeViewPort);
+        setPartialShow(state.dashBoard.widgetShown["partial"]);
+        setTotalShow(state.dashBoard.widgetShown["total"]);
+        setCountdownShow(state.dashBoard.widgetShown["countdown"]);
       }
     };
 
@@ -153,17 +197,75 @@ export function StateProvider({
     screenState.activate(name, type);
   };
 
+  const setCoords = (update: Coords) => {
+    let db = dashBoard;
+    db.coords = update;
+    setLat(update.lat);
+    setLon(update.lon);
+
+    setDB(db);
+  }
+
+  const switchWidget = (caption: "total" | "partial" | "countdown") => {
+    let db = dashBoard
+    switch (caption) {
+      case "total": {
+        if (db.widgetShown.total) {
+          db.widgetShown.total = false;
+          setTotalShow(false)
+        } else {
+          db.widgetShown.total = true;
+          setTotalShow(true)
+        }
+        setDB(db)
+        return
+      }
+      case "countdown": {
+        if (db.widgetShown.countdown) {
+          db.widgetShown.countdown = false;
+          setCountdownShow(false)
+        } else {
+          db.widgetShown.countdown = true;
+          setCountdownShow(true)
+        }
+        setDB(db)
+        return
+      }
+      case "partial": {
+        if (db.widgetShown.partial) {
+          db.widgetShown.partial = false;
+          setPartialShow(false)
+        } else {
+          db.widgetShown.partial = true;
+          setPartialShow(true)
+        }
+        setDB(db)
+        return
+      }
+    }
+  }
+
   const value = {
     raceNumber,
     adminMode,
     navMode,
+    mobileView,
     dashBoard,
     activeViewPort,
+    totalWidgetShown,
+    partialWidgetShown,
+    countdownWidgetShown,
+    lat,
+    lon, 
+    speed,
 
     setRaceNumber,
     callView,
     setCodeOfDay,
     setCommand,
+    switchWidget,
+    setMobileView,
+    setCoords,
   };
 
   return (
