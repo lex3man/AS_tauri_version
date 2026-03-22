@@ -39,6 +39,7 @@ type AppStateProviderState = {
   setCommand: (cmd: string) => void;
   switchWidget: (caption: "total" | "partial" | "countdown") => void;
   setCoords: (update: Coords) => void;
+  setCurrentSpeed: (update: number) => void;
 };
 
 const initialState: AppStateProviderState = {
@@ -84,6 +85,7 @@ const initialState: AppStateProviderState = {
   switchWidget: () => null,
   setMobileView: () => null,
   setCoords: () => null,
+  setCurrentSpeed: () => null,
 };
 
 const AppStateProviderContext =
@@ -111,7 +113,7 @@ export function StateProvider({
   // data
   const [lat, setLat] = useState(0);
   const [lon, setLon] = useState(0);
-  const [speed, _setSpeed] = useState(0);
+  const [speed, setSpeed] = useState(0);
 
   // sync state
   const [dashBoard, setDB] = useState<DashBoard>({
@@ -206,6 +208,14 @@ export function StateProvider({
     setDB(db);
   }
 
+  const setCurrentSpeed = (update: number) => {
+    let db = dashBoard;
+    db.sog = update;
+    setSpeed(update);
+
+    setDB(db);
+  }
+
   const switchWidget = (caption: "total" | "partial" | "countdown") => {
     let db = dashBoard
     switch (caption) {
@@ -266,6 +276,7 @@ export function StateProvider({
     switchWidget,
     setMobileView,
     setCoords,
+    setCurrentSpeed,
   };
 
   return (

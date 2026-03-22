@@ -1,0 +1,114 @@
+{
+    "map": {
+        "ASS": {
+            "capture_radius": 200,
+            "countdown": 0,
+            "flags": {
+                "in_game": true,
+                "is_ghost": false,
+                "is_open": false
+            },
+            "speed_limit": 170,
+            "visible_radius": 1000
+        },
+        "DSS": {
+            "capture_radius": 100,
+            "countdown": 0,
+            "flags": {
+                "in_game": true,
+                "is_ghost": false,
+                "is_open": true
+            },
+            "speed_limit": 170,
+            "visible_radius": 800
+        },
+        "DZ": {
+            "capture_radius": 200,
+            "countdown": 0,
+            "flags": {
+                "in_game": true,
+                "is_ghost": false,
+                "is_open": false
+            },
+            "speed_limit": 170,
+            "visible_radius": 800
+        },
+        "FZ": {
+            "capture_radius": 100,
+            "countdown": 0,
+            "flags": {
+                "in_game": true,
+                "is_ghost": false,
+                "is_open": true
+            },
+            "speed_limit": 0,
+            "visible_radius": 800
+        },
+        "NZ": {
+            "capture_radius": 200,
+            "countdown": 15,
+            "flags": {
+                "in_game": true,
+                "is_ghost": false,
+                "is_open": false
+            },
+            "speed_limit": 170,
+            "visible_radius": 800
+        },
+        "WPC": {
+            "capture_radius": 200,
+            "countdown": 0,
+            "flags": {
+                "in_game": true,
+                "is_ghost": true,
+                "is_open": true
+            },
+            "speed_limit": 170,
+            "visible_radius": 800
+        },
+        "WPE": {
+            "capture_radius": 200,
+            "countdown": 0,
+            "flags": {
+                "in_game": true,
+                "is_ghost": false,
+                "is_open": false
+            },
+            "speed_limit": 170,
+            "visible_radius": 5000
+        },
+        "WPM": {
+            "capture_radius": 200,
+            "countdown": 0,
+            "flags": {
+                "in_game": true,
+                "is_ghost": false,
+                "is_open": false
+            },
+            "speed_limit": 170,
+            "visible_radius": 800
+        },
+        "WPS": {
+            "capture_radius": 50,
+            "countdown": 0,
+            "flags": {
+                "in_game": true,
+                "is_ghost": false,
+                "is_open": false
+            },
+            "speed_limit": 170,
+            "visible_radius": 1000
+        },
+        "WPV": {
+            "capture_radius": 200,
+            "countdown": 0,
+            "flags": {
+                "in_game": true,
+                "is_ghost": false,
+                "is_open": true
+            },
+            "speed_limit": 170,
+            "visible_radius": 800
+        }
+    }
+}

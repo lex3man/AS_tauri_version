@@ -4,7 +4,7 @@ import "./App.css";
 import {
   checkPermissions,
   requestPermissions,
-  getCurrentPosition,
+  // getCurrentPosition,
   watchPosition,
 } from "@tauri-apps/plugin-geolocation";
 import { DataRequest } from "./components/screens/request";
@@ -28,7 +28,7 @@ function App() {
   const [leftOpen, setLeftOpen] = useState(false);
   const [rightOpen, setRightOpen] = useState(false);
   const { mobileView, setMobileView } = useAppState();
-  const { activeViewPort, setRaceNumber, setCodeOfDay, setCommand, setCoords } =
+  const { activeViewPort, setRaceNumber, setCodeOfDay, setCommand, setCoords, setCurrentSpeed } =
     useAppState();
   const { showBackground } = useSettings();
   const { width, height } = useWindowDimensions();
@@ -43,8 +43,8 @@ function App() {
     }
 
     if (permissions.location === "granted") {
-      const pos = await getCurrentPosition();
-      await invoke("location_update", { data: JSON.stringify(pos) });
+      // const pos = await getCurrentPosition();
+      // await invoke("location_update", { data: JSON.stringify(pos) });
 
       await watchPosition(
         { enableHighAccuracy: true, timeout: 1000, maximumAge: 0 },
@@ -57,6 +57,9 @@ function App() {
             lon: geoData["longitude"],
           }
           setCoords(coords);
+          if (pos) {
+            setCurrentSpeed(pos.coords.speed as number * 3.6);
+          }
         },
       );
     }
