@@ -30,7 +30,7 @@ pub struct Defaults {
 
 impl Default for Defaults {
     fn default() -> Self {
-        Defaults { 
+        Defaults {
             capture_radius: 100,
             visible_radius: 800,
             speed_limit: 100,
@@ -38,15 +38,15 @@ impl Default for Defaults {
             flags: Flags {
                 is_open: false,
                 is_ghost: false,
-                in_game: true
-            }
+                in_game: true,
+            },
         }
     }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct PointTypes {
-    pub map: BTreeMap<String, Defaults>
+    pub map: BTreeMap<String, Defaults>,
 }
 
 impl PointTypes {
@@ -98,7 +98,7 @@ impl PointBuilder {
             visible_radius: defaults.visible_radius,
             countdown: defaults.countdown,
             speed_limit: defaults.speed_limit,
-            flags: defaults.flags.clone()
+            flags: defaults.flags.clone(),
         }
     }
 
@@ -153,18 +153,18 @@ impl PointBuilder {
     }
 
     pub fn build(self) -> Point {
-        Point { 
-            num: self.num, 
-            name: self.name, 
-            lat: self.lat, 
-            lon: self.lon, 
-            odo: self.odo, 
-            point_type: self.point_type, 
-            capture_radius: self.capture_radius, 
-            visible_radius: self.visible_radius, 
-            countdown: self.countdown, 
-            speed_limit: self.speed_limit, 
-            flags: self.flags 
+        Point {
+            num: self.num,
+            name: self.name,
+            lat: self.lat,
+            lon: self.lon,
+            odo: self.odo,
+            point_type: self.point_type,
+            capture_radius: self.capture_radius,
+            visible_radius: self.visible_radius,
+            countdown: self.countdown,
+            speed_limit: self.speed_limit,
+            flags: self.flags,
         }
     }
 }
@@ -177,22 +177,40 @@ pub struct SpecArea {
     pub roadbook: Vec<String>,
 }
 
-impl SpecArea {
-    pub fn new(id: &str, code: &str) -> Self {
-        SpecArea {
+pub struct SpecAreaBuilser {
+    pub id: SpecAreaID,
+    pub activation_code: ActivationCode,
+    pub points_set: Vec<Point>,
+    pub roadbook: Vec<String>,
+}
+
+impl SpecAreaBuilser {
+    pub fn new(id: &str, code: &str) -> SpecAreaBuilser {
+        SpecAreaBuilser {
             id: id.to_string(),
             activation_code: code.to_string(),
             points_set: vec![],
-            roadbook: vec![]
+            roadbook: vec![],
         }
     }
 
-    pub fn add_point(&mut self, point: &Point) {
+    pub fn add_point(mut self, point: &Point) -> Self {
         self.points_set.push(point.clone());
+        self
     }
 
-    pub fn add_roadbook_slide_url(&mut self, url: &str) {
+    pub fn add_roadbook_slide_url(mut self, url: &str) -> Self {
         self.roadbook.push(url.to_string());
+        self
+    }
+
+    pub fn build(self) -> SpecArea {
+        SpecArea {
+            id: self.id,
+            activation_code: self.activation_code,
+            points_set: self.points_set,
+            roadbook: self.roadbook,
+        }
     }
 }
 
@@ -204,17 +222,35 @@ pub struct Race {
     pub areas: HashMap<ActivationCode, SpecArea>,
 }
 
-impl Race {
-    pub fn new(name: &str, serial: &str, exp_date: &str) -> Self {
-        Race {
+pub struct RaceBuilder {
+    pub name: String,
+    pub serial: String,
+    pub expire_date: String,
+    pub areas: HashMap<ActivationCode, SpecArea>,
+}
+
+impl RaceBuilder {
+    pub fn new(name: &str, serial: &str, exp_date: &str) -> RaceBuilder {
+        RaceBuilder {
             name: name.to_string(),
             serial: serial.to_string(),
             expire_date: exp_date.to_string(),
-            areas: HashMap::new()
+            areas: HashMap::new(),
         }
     }
 
-    pub fn add_area(&mut self, area: &SpecArea) {
-        self.areas.insert(area.activation_code.clone(), area.clone());
+    pub fn add_area(mut self, area: &SpecArea) -> Self {
+        self.areas
+            .insert(area.activation_code.clone(), area.clone());
+        self
+    }
+
+    pub fn build(self) -> Race {
+        Race {
+            name: self.name,
+            serial: self.serial,
+            expire_date: self.expire_date,
+            areas: self.areas,
+        }
     }
 }

@@ -1,5 +1,5 @@
-use std::collections::BTreeMap;
 use serde::{Deserialize, Serialize};
+use std::collections::BTreeMap;
 
 use crate::race::types::{Race, SpecAreaID};
 
@@ -17,7 +17,6 @@ pub struct SpecEreaState {
     pub points: BTreeMap<PointID, PointState>,
     pub next_point: PointID,
     pub prev_point: PointID,
-    
 }
 
 impl SpecEreaState {
@@ -25,7 +24,7 @@ impl SpecEreaState {
         SpecEreaState {
             points: BTreeMap::new(),
             next_point: String::from(""),
-            prev_point: String::from("")
+            prev_point: String::from(""),
         }
     }
 }
@@ -44,7 +43,7 @@ impl RaceState {
             race: None,
             current_sa: "".to_string(),
             active_code: "".to_string(),
-            expired: "".to_string()
+            expired: "".to_string(),
         }
     }
 }

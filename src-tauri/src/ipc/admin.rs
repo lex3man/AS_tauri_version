@@ -7,7 +7,9 @@ use crate::state::AppState;
 #[tauri::command]
 pub fn is_admin(state: State<'_, Mutex<AppState>>) -> bool {
     if let Ok(state) = state.lock() {
-        if state.is_admin { return true; }
+        if state.is_admin {
+            return true;
+        }
     }
     false
 }

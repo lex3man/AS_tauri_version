@@ -1,20 +1,27 @@
-mod ipc;
-mod utils;
 mod config;
-mod state;
+mod ipc;
 mod race;
+mod state;
+mod utils;
 
-use std::sync::{Mutex};
+use std::sync::Mutex;
 
-use tauri::{Manager};
-use tauri_plugin_store::{StoreExt as _};
+use tauri::Manager;
+use tauri_plugin_store::StoreExt as _;
 
-use crate::{config::Config, state::{AppState, race_config::{RaceState, SpecEreaState}}};
+use crate::{
+    config::Config,
+    state::{
+        race_config::{RaceState, SpecEreaState},
+        AppState,
+    },
+};
 
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_device_info::init())
         .plugin(tauri_plugin_store::Builder::new().build())
         .plugin(tauri_plugin_sql::Builder::new().build())
         .plugin(tauri_plugin_persisted_scope::init())
@@ -45,13 +52,13 @@ pub fn run() {
             ipc::codes::activate_code,
             ipc::admin::is_admin,
             ipc::admin::activate_cmd,
-            ])
+        ])
         .setup(|app| {
             app.manage(Mutex::new(AppState::default()));
             let store = app.store("AS_storage.json")?;
             let state = app.state::<Mutex<AppState>>();
             let mut state = state.lock().unwrap();
-            
+
             if let Some(val) = store.get("race_number") {
                 state.race_number = Some(val.as_str().unwrap().to_string());
             }

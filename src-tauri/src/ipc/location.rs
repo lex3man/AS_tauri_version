@@ -1,8 +1,8 @@
-use std::sync::Mutex;
+use crate::AppState;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
+use std::sync::Mutex;
 use tauri::State;
-use crate::AppState;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Copy)]
 pub struct Coords {
@@ -12,7 +12,7 @@ pub struct Coords {
     pub altitude_accuracy: Option<f32>,
     pub altitude: Option<f32>,
     pub speed: Option<f32>,
-    pub heading: Option<f32>
+    pub heading: Option<f32>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -40,7 +40,7 @@ pub fn location_update(state: State<'_, Mutex<AppState>>, data: &str) {
 pub fn get_coords(state: State<'_, Mutex<AppState>>) -> Option<String> {
     if let Ok(state) = state.lock() {
         if let Some(coords) = state.coords {
-            return Some(json!(coords).to_string())
+            return Some(json!(coords).to_string());
         }
     }
     None

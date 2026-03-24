@@ -33,6 +33,7 @@ tauri-plugin-persisted-scope = "2"
 tauri-plugin-sql = "2"
 tauri-plugin-store = "2"
 tauri-plugin-app-control = "0.1.1"
+tauri-plugin-device-info = "1.0.1"
 
 [profile.dev]
 incremental = true # Compile your binary in smaller steps.

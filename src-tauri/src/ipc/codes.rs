@@ -12,7 +12,6 @@ pub fn activate_code(state: State<'_, Mutex<AppState>>, code: &str) -> Result<()
                 state.is_admin = true;
             } else {
                 state.is_admin = false;
-                
             }
         }
     }

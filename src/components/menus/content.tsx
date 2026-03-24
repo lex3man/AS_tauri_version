@@ -48,6 +48,14 @@ export const LeftContent = () => {
             RESET
           </Button>
           </div>
+          <div className="py-2 w-full">
+            <Button
+              className="p-7 text-3xl w-full"
+              onClick={() => {switchWidget('countdown')}}
+            >
+              TEST NZ
+            </Button>
+          </div>
         </div>
     )
 }

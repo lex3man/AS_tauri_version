@@ -28,7 +28,7 @@ impl Config {
             track_distance: Kilometers(30),
             jump_mode: false,
             road_book: false,
-            dtw_enabled: true
+            dtw_enabled: true,
         }
     }
 

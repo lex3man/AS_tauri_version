@@ -24,6 +24,10 @@ type AppStateProviderState = {
   dashBoard: DashBoard;
   activeViewPort: ViewPort;
 
+  gpsAccurancy: number;
+  batteryLevel: number;
+  charging: boolean;
+
   totalWidgetShown: boolean;
   partialWidgetShown: boolean;
   countdownWidgetShown: boolean;
@@ -40,6 +44,7 @@ type AppStateProviderState = {
   switchWidget: (caption: "total" | "partial" | "countdown") => void;
   setCoords: (update: Coords) => void;
   setCurrentSpeed: (update: number) => void;
+  setGpsAccuracy: (val: number) => void;
 };
 
 const initialState: AppStateProviderState = {
@@ -47,6 +52,10 @@ const initialState: AppStateProviderState = {
   adminMode: false,
   navMode: false,
   mobileView: false,
+
+  gpsAccurancy: 5,
+  batteryLevel: 100,
+  charging: false,
 
   totalWidgetShown: false,
   partialWidgetShown: false,
@@ -86,6 +95,7 @@ const initialState: AppStateProviderState = {
   setMobileView: () => null,
   setCoords: () => null,
   setCurrentSpeed: () => null,
+  setGpsAccuracy: () => null,
 };
 
 const AppStateProviderContext =
@@ -114,6 +124,9 @@ export function StateProvider({
   const [lat, setLat] = useState(0);
   const [lon, setLon] = useState(0);
   const [speed, setSpeed] = useState(0);
+  const [gpsAccurancy, setGpsAccuracy] = useState(5);
+  const [batteryLevel, _setBatteryLevel] = useState(100);
+  const [charging, _setCharging] = useState(false);
 
   // sync state
   const [dashBoard, setDB] = useState<DashBoard>({
@@ -236,7 +249,11 @@ export function StateProvider({
           setCountdownShow(false)
         } else {
           db.widgetShown.countdown = true;
+          db.widgetShown.total = false;
+          db.widgetShown.partial = false;
           setCountdownShow(true)
+          setPartialShow(false)
+          setTotalShow(false)
         }
         setDB(db)
         return
@@ -268,6 +285,9 @@ export function StateProvider({
     lat,
     lon, 
     speed,
+    gpsAccurancy,
+    batteryLevel,
+    charging,
 
     setRaceNumber,
     callView,
@@ -277,6 +297,7 @@ export function StateProvider({
     setMobileView,
     setCoords,
     setCurrentSpeed,
+    setGpsAccuracy,
   };
 
   return (

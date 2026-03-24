@@ -1,12 +1,12 @@
 import { useAppState } from "@/ctx/state-provider"
 
 const CountdownWidget = () => {
-    const { dashBoard } = useAppState()
+    const { mobileView } = useAppState()
 
     return (
-        <div className="flex flex-col justify-center gap-2 border-2 border-primary">
-            <div className="m-auto p-5">TIME</div>
-            <div className="text-6xl m-auto pb-5">{dashBoard.metrics.total}</div>
+        <div className="flex flex-col gap-2 border-4 border-primary h-full bg-primary-foreground p-2">
+            <div className={`font-extrabold text-center ${mobileView ? 'text-xs' : 'text-xl'}`}>NEUTRALIZATION TIME</div>
+            <div className={`transform scale-x-70 flex justify-center ${mobileView ? 'text-6xl' : 'text-[clamp(4rem,10vw,8rem)]'} font-extrabold leading-none my-auto`}>15:00</div>
         </div>
     )
 }

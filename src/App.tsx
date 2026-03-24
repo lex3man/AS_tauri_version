@@ -28,7 +28,7 @@ function App() {
   const [leftOpen, setLeftOpen] = useState(false);
   const [rightOpen, setRightOpen] = useState(false);
   const { mobileView, setMobileView } = useAppState();
-  const { activeViewPort, setRaceNumber, setCodeOfDay, setCommand, setCoords, setCurrentSpeed } =
+  const { setGpsAccuracy, activeViewPort, setRaceNumber, setCodeOfDay, setCommand, setCoords, setCurrentSpeed } =
     useAppState();
   const { showBackground } = useSettings();
   const { width, height } = useWindowDimensions();
@@ -47,7 +47,7 @@ function App() {
       // await invoke("location_update", { data: JSON.stringify(pos) });
 
       await watchPosition(
-        { enableHighAccuracy: true, timeout: 1000, maximumAge: 0 },
+        { enableHighAccuracy: true, timeout: 100, maximumAge: 0 },
         async (pos) => {
           await invoke("location_update", { data: JSON.stringify(pos) });
           const gpsPosition = await invoke<string>('get_coords')
@@ -56,6 +56,7 @@ function App() {
             lat: geoData["latitude"],
             lon: geoData["longitude"],
           }
+          setGpsAccuracy(pos?.coords.accuracy as number)
           setCoords(coords);
           if (pos) {
             setCurrentSpeed(pos.coords.speed as number * 3.6);
