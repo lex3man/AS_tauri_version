@@ -15,6 +15,7 @@
     "geolocation:allow-request-permissions",
     "geolocation:allow-get-current-position",
     "geolocation:allow-watch-position",
-    "app-control:default"
+    "app-control:default",
+    "device-info:default"
   ]
 }

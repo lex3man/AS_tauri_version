@@ -6,8 +6,18 @@ import { Arrow } from "../arrow";
 import Indicators from "../widgets/indicators";
 
 const Ride = () => {
-  const { dashBoard, speed, totalWidgetShown, partialWidgetShown, countdownWidgetShown } = useAppState()
-  const { mobileView } = useAppState();
+  const {
+    cog,
+    ctw,
+    dtw,
+    speed,
+    maxSpeed,
+    cpCounter,
+    totalWidgetShown,
+    partialWidgetShown,
+    countdownWidgetShown,
+    mobileView
+  } = useAppState();
 
   return (
     <div>
@@ -16,11 +26,11 @@ const Ride = () => {
           <Indicators />
         </div>
         <div className="flex justify-center text-[clamp(2rem,5vw,3.5rem)] leading-none font-extrabold w-1/2 my-auto">
-          <div className="transform scale-x-60">{dashBoard.metrics.cpCounter} CP</div>
+          <div className="transform scale-x-60">{cpCounter} CP</div>
         </div>
         <div className="flex pt-5 pr-5 justify-center w-1/4">
           <div className="flex justify-center text-[clamp(1.5rem,5vw,3rem)] leading-none font-extrabold my-auto">
-            <div className="transform scale-x-60">{dashBoard.maxSpeed} V</div>
+            <div className="transform scale-x-60">{maxSpeed} V</div>
           </div>
         </div>
       </div>
@@ -28,7 +38,7 @@ const Ride = () => {
         <div className="flex flex-col w-1/4 h-[85vh]">
           <div className="flex flex-col justify-start h-[30%] px-3">
             <div className={`flex justify-start ${mobileView ? 'text-6xl' : 'text-[clamp(4rem,10vw,8rem)]'} font-extrabold leading-none`}>
-              <div className="transform origin-left scale-x-60">{dashBoard.cog}</div>
+              <div className="transform origin-left scale-x-60">{cog}</div>
             </div>
             <div className={`flex justify-start ${mobileView ? 'text-xl' : 'text-2xl'} font-bold`}>COG</div>
           </div>
@@ -53,7 +63,7 @@ const Ride = () => {
         <div className="flex flex-col w-1/4 h-[85vh]">
           <div className="flex flex-col justify-start h-[30%] px-3">
             <div className={`flex justify-end ${mobileView ? 'text-6xl' : 'text-[clamp(4rem,10vw,8rem)]'} font-extrabold leading-none`}>
-              <div className="transform origin-right scale-x-60">{dashBoard.ctw}</div>
+              <div className="transform origin-right scale-x-60">{ctw}</div>
             </div>
             <div className={`flex justify-end ${mobileView ? 'text-xl' : 'text-2xl'} font-bold`}>CTW</div>
           </div>
@@ -71,7 +81,7 @@ const Ride = () => {
           <div className="flex flex-col justify-end h-[30%] px-3">
             <div className={`flex justify-end ${mobileView ? 'text-xl' : 'text-2xl'} font-bold`}>DTW</div>
             <div className={`flex justify-end ${mobileView ? 'text-6xl' : 'text-[clamp(4rem,10vw,8rem)]'} font-extrabold leading-none`}>
-              <div className="transform origin-right scale-x-60">{134.87}</div>
+              <div className="transform origin-right scale-x-60">{dtw.toFixed(2)}</div>
             </div>
           </div>
         </div>

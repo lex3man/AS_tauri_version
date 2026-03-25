@@ -5,6 +5,7 @@ import Viewports from "@/viewports";
 import { invoke } from "@tauri-apps/api/core";
 import { createContext, useContext, useEffect, useState } from "react";
 import { toast } from "sonner"
+import { getBatteryInfo } from "tauri-plugin-device-info-api";
 
 type AppStateProviderProps = {
   children: React.ReactNode;
@@ -18,9 +19,13 @@ function parseState(json: string): AppState {
 
 type AppStateProviderState = {
   raceNumber: string;
+
   adminMode: boolean;
   navMode: boolean;
+  demoMode: boolean;
   mobileView: boolean;
+  requestMode: boolean;
+
   dashBoard: DashBoard;
   activeViewPort: ViewPort;
 
@@ -35,10 +40,19 @@ type AppStateProviderState = {
   lat: number;
   lon: number;
   speed: number;
+  cog: number;
+  ctw: number;
+  dtw: number;
+  maxSpeed: number;
+  cpCounter: number;
+  nextPointNumber: number;
+  nextPointName: string;
 
   setRaceNumber: (rn: string) => void;
   setCodeOfDay: (code: string) => void;
-  setMobileView: (satus: boolean) => void;
+  setMobileView: (status: boolean) => void;
+  setDemoMode: (status: boolean) => void;
+  setRequestMode: (status: boolean) => void;
   callView: (name: string, type?: TypeOfRequest) => void;
   setCommand: (cmd: string) => void;
   switchWidget: (caption: "total" | "partial" | "countdown") => void;
@@ -49,9 +63,12 @@ type AppStateProviderState = {
 
 const initialState: AppStateProviderState = {
   raceNumber: await invoke<string>("get_race_number"),
+
   adminMode: false,
   navMode: false,
+  demoMode: false,
   mobileView: false,
+  requestMode: true,
 
   gpsAccurancy: 5,
   batteryLevel: 100,
@@ -64,6 +81,13 @@ const initialState: AppStateProviderState = {
   lat: 0,
   lon: 0,
   speed: 0,
+  cog: 0,
+  ctw: 0, 
+  dtw: 0,
+  maxSpeed: 140,
+  cpCounter: 0,
+  nextPointNumber: 0,
+  nextPointName: "",
 
   dashBoard: {
     cog: 0,
@@ -93,9 +117,11 @@ const initialState: AppStateProviderState = {
   setCommand: () => null,
   switchWidget: () => null,
   setMobileView: () => null,
+  setDemoMode: () => null,
   setCoords: () => null,
   setCurrentSpeed: () => null,
   setGpsAccuracy: () => null,
+  setRequestMode: () => null,
 };
 
 const AppStateProviderContext =
@@ -112,7 +138,9 @@ export function StateProvider({
   // modes
   const [adminMode, setAM] = useState(false);
   const [navMode, setNM] = useState(false);
+  const [demoMode, setDM] = useState(false);
   const [mobileView, setMobileView] = useState(false);
+  const [requestMode, setRM] = useState(true);
 
 
   // widgets state
@@ -123,10 +151,18 @@ export function StateProvider({
   // data
   const [lat, setLat] = useState(0);
   const [lon, setLon] = useState(0);
+  const [cog, setCog] = useState(0);
+  const [ctw, setCtw] = useState(0);
+  const [dtw, setDtw] = useState(0);
   const [speed, setSpeed] = useState(0);
+  const [maxSpeed, _setMaxSpeed] = useState(140);
+  const [cpCounter, setCpCounter] = useState(0);
+  const [nextPointNumber, _setNextPointNumber] = useState(0);
+  const [nextPointName, _setNextPointName] = useState("");
+
   const [gpsAccurancy, setGpsAccuracy] = useState(5);
-  const [batteryLevel, _setBatteryLevel] = useState(100);
-  const [charging, _setCharging] = useState(false);
+  const [batteryLevel, setBatteryLevel] = useState(100);
+  const [charging, setCharging] = useState(false);
 
   // sync state
   const [dashBoard, setDB] = useState<DashBoard>({
@@ -167,6 +203,11 @@ export function StateProvider({
         setPartialShow(state.dashBoard.widgetShown["partial"]);
         setTotalShow(state.dashBoard.widgetShown["total"]);
         setCountdownShow(state.dashBoard.widgetShown["countdown"]);
+
+        setCog(state.dashBoard.cog);
+        setCtw(state.dashBoard.ctw);
+        setDtw(state.dashBoard.dtw);
+        setCpCounter(state.dashBoard.metrics.cpCounter);
       }
     };
 
@@ -184,6 +225,15 @@ export function StateProvider({
     };
     adminCheck();
   }, [coad]);
+
+  useEffect(() => {
+    const batteryCheck = async () => {
+      const battery = await getBatteryInfo();
+      setBatteryLevel(battery.level ? battery.level : 100);
+      setCharging(battery.isCharging ? battery.isCharging : false);
+    };
+    batteryCheck();
+  }, [speed]);
 
   const setRaceNumber = async (rn: string) => {
     setRN(rn);
@@ -227,6 +277,14 @@ export function StateProvider({
     setSpeed(update);
 
     setDB(db);
+  }
+
+  const setDemoMode = (status: boolean) => {
+    setDM(status);
+  };
+
+  const setRequestMode = (status: boolean) => {
+    setRM(status);
   }
 
   const switchWidget = (caption: "total" | "partial" | "countdown") => {
@@ -274,17 +332,32 @@ export function StateProvider({
 
   const value = {
     raceNumber,
+
     adminMode,
     navMode,
+    demoMode,
     mobileView,
+    requestMode,
+
     dashBoard,
     activeViewPort,
+
     totalWidgetShown,
     partialWidgetShown,
     countdownWidgetShown,
+
     lat,
-    lon, 
+    lon,
     speed,
+    cog,
+    ctw,
+    dtw,
+
+    maxSpeed,
+    cpCounter,
+    nextPointNumber,
+    nextPointName,
+
     gpsAccurancy,
     batteryLevel,
     charging,
@@ -298,6 +371,8 @@ export function StateProvider({
     setCoords,
     setCurrentSpeed,
     setGpsAccuracy,
+    setDemoMode,
+    setRequestMode,
   };
 
   return (

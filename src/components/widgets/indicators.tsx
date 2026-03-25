@@ -24,10 +24,10 @@ const Indicators = () => {
         }
 
         if (gpsAccurancy <= 20) {
-            return <SignalMedium className="h-full" />;
+            return <SignalMedium className="h-full w-full" />;
         }
 
-        return <SignalLow className="h-full" />;
+        return <SignalLow className="h-full w-full" />;
     };
 
     const getBatteryIcon = () => {
@@ -36,7 +36,7 @@ const Indicators = () => {
         }
 
         if (batteryLevel === null || batteryLevel === undefined) {
-            return <BatteryWarning className="h-full text-muted-foreground" />;
+            return <BatteryWarning className="h-full w-full text-muted-foreground" />;
         }
 
         if (batteryLevel >= 75) {
@@ -44,10 +44,10 @@ const Indicators = () => {
         }
 
         if (batteryLevel >= 25) {
-            return <BatteryMedium className="h-full" />;
+            return <BatteryMedium className="h-full w-full" />;
         }
 
-        return <BatteryLow className=" h-full" />;
+        return <BatteryLow className="h-full w-full" />;
     };
 
     return (

@@ -22,14 +22,24 @@ import { SwipeZones } from "./components/menus/swipe-zones";
 import { LeftContent, RightContent } from "./components/menus/content";
 import { Coords } from "./types/state";
 import Position from "./components/screens/position";
+import { DEMO_TRACK } from "./lib/demo-track";
 
 
 function App() {
   const [leftOpen, setLeftOpen] = useState(false);
   const [rightOpen, setRightOpen] = useState(false);
-  const { mobileView, setMobileView } = useAppState();
-  const { setGpsAccuracy, activeViewPort, setRaceNumber, setCodeOfDay, setCommand, setCoords, setCurrentSpeed } =
-    useAppState();
+  const {
+    demoMode,
+    activeViewPort,
+    mobileView,
+    setGpsAccuracy,
+    setRaceNumber,
+    setCodeOfDay,
+    setCommand,
+    setCoords,
+    setCurrentSpeed,
+    setMobileView
+  } = useAppState();
   const { showBackground } = useSettings();
   const { width, height } = useWindowDimensions();
 
@@ -47,8 +57,27 @@ function App() {
       // await invoke("location_update", { data: JSON.stringify(pos) });
 
       await watchPosition(
-        { enableHighAccuracy: true, timeout: 100, maximumAge: 0 },
+        { enableHighAccuracy: true, timeout: 1000, maximumAge: 0 },
         async (pos) => {
+          if (demoMode) {
+            const demoPos = DEMO_TRACK.split("\n").pop() as string;
+            const [lat, lon, speed, acc] = demoPos.split(",").map((c) => parseFloat(c));
+            await invoke("location_update", { data: JSON.stringify({
+                coords: {
+                  latitude: lat as number,
+                  longitude: lon as number,
+                  accuracy: acc as number,
+                  speed: speed as number
+                },
+                timestamp: Date.now()
+              })
+            });
+            setGpsAccuracy(acc as number);
+            setCurrentSpeed(speed as number * 3.6);
+            setCoords({ lat: lat as number, lon: lon as number });
+            return;
+          }
+
           await invoke("location_update", { data: JSON.stringify(pos) });
           const gpsPosition = await invoke<string>('get_coords')
           const geoData = JSON.parse(gpsPosition)
@@ -56,9 +85,10 @@ function App() {
             lat: geoData["latitude"],
             lon: geoData["longitude"],
           }
-          setGpsAccuracy(pos?.coords.accuracy as number)
           setCoords(coords);
+
           if (pos) {
+            setGpsAccuracy(pos.coords.accuracy as number)
             setCurrentSpeed(pos.coords.speed as number * 3.6);
           }
         },
