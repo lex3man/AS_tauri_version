@@ -26,7 +26,7 @@ const Position = () => {
         <div className="text-4xl m-auto">LON: {lon}</div>
       </div>
     </div>
-  )
-}
+  );
+};
 
 export default Position;

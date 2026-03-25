@@ -16,7 +16,7 @@ const Ride = () => {
     totalWidgetShown,
     partialWidgetShown,
     countdownWidgetShown,
-    mobileView
+    mobileView,
   } = useAppState();
 
   return (
@@ -37,18 +37,30 @@ const Ride = () => {
       <div className="flex w-full justify-center">
         <div className="flex flex-col w-1/4 h-[85vh]">
           <div className="flex flex-col justify-start h-[30%] px-3">
-            <div className={`flex justify-start ${mobileView ? 'text-6xl' : 'text-[clamp(4rem,10vw,8rem)]'} font-extrabold leading-none`}>
+            <div
+              className={`flex justify-start ${mobileView ? "text-6xl" : "text-[clamp(4rem,10vw,8rem)]"} font-extrabold leading-none`}
+            >
               <div className="transform origin-left scale-x-60">{cog}</div>
             </div>
-            <div className={`flex justify-start ${mobileView ? 'text-xl' : 'text-2xl'} font-bold`}>COG</div>
+            <div
+              className={`flex justify-start ${mobileView ? "text-xl" : "text-2xl"} font-bold`}
+            >
+              COG
+            </div>
           </div>
-          <div className="h-[35%]">
-
-          </div>
+          <div className="h-[35%]"></div>
           <div className="flex flex-col justify-end h-[30%] px-3">
-            <div className={`flex justify-start ${mobileView ? 'text-xl' : 'text-2xl'} font-bold`}>SOG</div>
-            <div className={`flex justify-start ${mobileView ? 'text-6xl' : 'text-[clamp(4rem,10vw,8rem)]'} font-extrabold leading-none`}>
-              <div className="transform origin-left scale-x-60">{speed.toFixed(0)}</div>
+            <div
+              className={`flex justify-start ${mobileView ? "text-xl" : "text-2xl"} font-bold`}
+            >
+              SOG
+            </div>
+            <div
+              className={`flex justify-start ${mobileView ? "text-6xl" : "text-[clamp(4rem,10vw,8rem)]"} font-extrabold leading-none`}
+            >
+              <div className="transform origin-left scale-x-60">
+                {speed.toFixed(0)}
+              </div>
             </div>
           </div>
         </div>
@@ -62,26 +74,45 @@ const Ride = () => {
         </div>
         <div className="flex flex-col w-1/4 h-[85vh]">
           <div className="flex flex-col justify-start h-[30%] px-3">
-            <div className={`flex justify-end ${mobileView ? 'text-6xl' : 'text-[clamp(4rem,10vw,8rem)]'} font-extrabold leading-none`}>
+            <div
+              className={`flex justify-end ${mobileView ? "text-6xl" : "text-[clamp(4rem,10vw,8rem)]"} font-extrabold leading-none`}
+            >
               <div className="transform origin-right scale-x-60">{ctw}</div>
             </div>
-            <div className={`flex justify-end ${mobileView ? 'text-xl' : 'text-2xl'} font-bold`}>CTW</div>
+            <div
+              className={`flex justify-end ${mobileView ? "text-xl" : "text-2xl"} font-bold`}
+            >
+              CTW
+            </div>
           </div>
           <div className="h-[35%]">
             {countdownWidgetShown ? (
-              <div className="h-full"><CountdownWidget /></div>
+              <div className="h-full">
+                <CountdownWidget />
+              </div>
             ) : (
               <div className="h-full">
-                <div className="h-1/2">{totalWidgetShown && <TotalWidget />}</div>
-                <div className="h-1/2">{partialWidgetShown && <PartialWidget />}</div>
+                <div className="h-1/2">
+                  {totalWidgetShown && <TotalWidget />}
+                </div>
+                <div className="h-1/2">
+                  {partialWidgetShown && <PartialWidget />}
+                </div>
               </div>
             )}
-            
           </div>
           <div className="flex flex-col justify-end h-[30%] px-3">
-            <div className={`flex justify-end ${mobileView ? 'text-xl' : 'text-2xl'} font-bold`}>DTW</div>
-            <div className={`flex justify-end ${mobileView ? 'text-6xl' : 'text-[clamp(4rem,10vw,8rem)]'} font-extrabold leading-none`}>
-              <div className="transform origin-right scale-x-60">{dtw.toFixed(2)}</div>
+            <div
+              className={`flex justify-end ${mobileView ? "text-xl" : "text-2xl"} font-bold`}
+            >
+              DTW
+            </div>
+            <div
+              className={`flex justify-end ${mobileView ? "text-6xl" : "text-[clamp(4rem,10vw,8rem)]"} font-extrabold leading-none`}
+            >
+              <div className="transform origin-right scale-x-60">
+                {dtw.toFixed(2)}
+              </div>
             </div>
           </div>
         </div>

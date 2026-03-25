@@ -24,7 +24,6 @@ import { Coords } from "./types/state";
 import Position from "./components/screens/position";
 import { DEMO_TRACK } from "./lib/demo-track";
 
-
 function App() {
   const [leftOpen, setLeftOpen] = useState(false);
   const [rightOpen, setRightOpen] = useState(false);
@@ -38,7 +37,7 @@ function App() {
     setCommand,
     setCoords,
     setCurrentSpeed,
-    setMobileView
+    setMobileView,
   } = useAppState();
   const { showBackground } = useSettings();
   const { width, height } = useWindowDimensions();
@@ -61,35 +60,38 @@ function App() {
         async (pos) => {
           if (demoMode) {
             const demoPos = DEMO_TRACK.split("\n").pop() as string;
-            const [lat, lon, speed, acc] = demoPos.split(",").map((c) => parseFloat(c));
-            await invoke("location_update", { data: JSON.stringify({
+            const [lat, lon, speed, acc] = demoPos
+              .split(",")
+              .map((c) => parseFloat(c));
+            await invoke("location_update", {
+              data: JSON.stringify({
                 coords: {
                   latitude: lat as number,
                   longitude: lon as number,
                   accuracy: acc as number,
-                  speed: speed as number
+                  speed: speed as number,
                 },
-                timestamp: Date.now()
-              })
+                timestamp: Date.now(),
+              }),
             });
             setGpsAccuracy(acc as number);
-            setCurrentSpeed(speed as number * 3.6);
+            setCurrentSpeed((speed as number) * 3.6);
             setCoords({ lat: lat as number, lon: lon as number });
             return;
           }
 
           await invoke("location_update", { data: JSON.stringify(pos) });
-          const gpsPosition = await invoke<string>('get_coords')
-          const geoData = JSON.parse(gpsPosition)
+          const gpsPosition = await invoke<string>("get_coords");
+          const geoData = JSON.parse(gpsPosition);
           const coords: Coords = {
             lat: geoData["latitude"],
             lon: geoData["longitude"],
-          }
+          };
           setCoords(coords);
 
           if (pos) {
-            setGpsAccuracy(pos.coords.accuracy as number)
-            setCurrentSpeed(pos.coords.speed as number * 3.6);
+            setGpsAccuracy(pos.coords.accuracy as number);
+            setCurrentSpeed((pos.coords.speed as number) * 3.6);
           }
         },
       );
@@ -101,7 +103,7 @@ function App() {
       const rn = await invoke<string>("get_race_number");
       setRaceNumber(rn);
     };
-    setMobileView(width/height > 2)
+    setMobileView(width / height > 2);
     check();
     geoloc();
   }, []);
@@ -147,18 +149,32 @@ function App() {
     case "navigate":
       return (
         <>
-          {!mobileView && <SwipeZones 
-            onOpenLeft={() => setLeftOpen(true)}
-            onOpenRight={() => setRightOpen(true)}
-            onCloseLeft={() => setLeftOpen(false)}
-            onCloseRight={() => setRightOpen(false)}
-          />}
-          <main className={`${mobileView && 'flex'} h-full gap-3 items-center justify-center overflow-hidden`}>
-            {mobileView && ( <div className="w-1/6"><LeftContent /></div> )}
-            <div className={`relative h-screen w-full ${showBackground ? 'bg-cover bg-center bg-no-repeat bg-[url("./assets/background.png")]' : ''}`}>
+          {!mobileView && (
+            <SwipeZones
+              onOpenLeft={() => setLeftOpen(true)}
+              onOpenRight={() => setRightOpen(true)}
+              onCloseLeft={() => setLeftOpen(false)}
+              onCloseRight={() => setRightOpen(false)}
+            />
+          )}
+          <main
+            className={`${mobileView && "flex"} h-full gap-3 items-center justify-center overflow-hidden`}
+          >
+            {mobileView && (
+              <div className="w-1/6">
+                <LeftContent />
+              </div>
+            )}
+            <div
+              className={`relative h-screen w-full ${showBackground ? 'bg-cover bg-center bg-no-repeat bg-[url("./assets/background.png")]' : ""}`}
+            >
               <Ride />
             </div>
-            {mobileView ? ( <div className="w-1/6"><RightContent /></div> ) : (
+            {mobileView ? (
+              <div className="w-1/6">
+                <RightContent />
+              </div>
+            ) : (
               <div className="flex">
                 <LeftMenu open={leftOpen} setOpen={setLeftOpen} />
                 <RightMenu open={rightOpen} setOpen={setRightOpen} />

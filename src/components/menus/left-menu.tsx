@@ -14,7 +14,6 @@ interface LeftMenuProps {
 }
 
 export function LeftMenu({ open, setOpen }: LeftMenuProps) {
-
   return (
     <div className="w-1/2">
       <Drawer

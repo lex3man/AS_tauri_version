@@ -7,7 +7,12 @@ interface SwipeZonesProps {
   onCloseRight: () => void;
 }
 
-export function SwipeZones({ onOpenLeft, onOpenRight, onCloseLeft, onCloseRight }: SwipeZonesProps) {
+export function SwipeZones({
+  onOpenLeft,
+  onOpenRight,
+  onCloseLeft,
+  onCloseRight,
+}: SwipeZonesProps) {
   const touchStartX = useRef<number>(0);
   const touchEndX = useRef<number>(0);
 

@@ -14,7 +14,6 @@ interface RightMenuProps {
 }
 
 export function RightMenu({ open, setOpen }: RightMenuProps) {
-
   return (
     <div className="w-1/2">
       <Drawer

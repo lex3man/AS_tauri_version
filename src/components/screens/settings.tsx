@@ -4,7 +4,8 @@ import { useSettings } from "@/ctx/settings-provider";
 
 const Settings = () => {
   const { callView } = useAppState();
-  const { showBackground, setShowBackground, darkMode, setDarkMode } = useSettings();
+  const { showBackground, setShowBackground, darkMode, setDarkMode } =
+    useSettings();
 
   return (
     <div>
@@ -32,12 +33,12 @@ const Settings = () => {
             className="p-6 text-2xl"
             onClick={() => {
               if (showBackground) {
-                setShowBackground(false)
+                setShowBackground(false);
               } else {
-                setShowBackground(true)
-                setDarkMode(false)
+                setShowBackground(true);
+                setDarkMode(false);
               }
-              callView("navigate")
+              callView("navigate");
             }}
           >
             Background ON/OFF

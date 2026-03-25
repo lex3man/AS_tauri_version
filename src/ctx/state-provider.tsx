@@ -4,7 +4,7 @@ import { ViewPort } from "@/types/viewport";
 import Viewports from "@/viewports";
 import { invoke } from "@tauri-apps/api/core";
 import { createContext, useContext, useEffect, useState } from "react";
-import { toast } from "sonner"
+import { toast } from "sonner";
 import { getBatteryInfo } from "tauri-plugin-device-info-api";
 
 type AppStateProviderProps = {
@@ -82,7 +82,7 @@ const initialState: AppStateProviderState = {
   lon: 0,
   speed: 0,
   cog: 0,
-  ctw: 0, 
+  ctw: 0,
   dtw: 0,
   maxSpeed: 140,
   cpCounter: 0,
@@ -141,7 +141,6 @@ export function StateProvider({
   const [demoMode, setDM] = useState(false);
   const [mobileView, setMobileView] = useState(false);
   const [requestMode, setRM] = useState(true);
-
 
   // widgets state
   const [totalWidgetShown, setTotalShow] = useState(false);
@@ -245,16 +244,18 @@ export function StateProvider({
   const setCodeOfDay = async (code: string) => {
     await invoke("activate_code", { code: code });
     setCoad(code);
-    callView('navigate')
+    callView("navigate");
   };
 
   const setCommand = async (cmd: string) => {
-    invoke<string>("activate_cmd", { cmd: cmd }).then((response) => {
-      toast.info(response, { position: "bottom-center" })
-    }).catch((err) => {
-      toast.error(err, { position: "bottom-center" })
-    });
-    callView('navigate')
+    invoke<string>("activate_cmd", { cmd: cmd })
+      .then((response) => {
+        toast.info(response, { position: "bottom-center" });
+      })
+      .catch((err) => {
+        toast.error(err, { position: "bottom-center" });
+      });
+    callView("navigate");
   };
 
   const callView = (name: string, type?: TypeOfRequest) => {
@@ -269,7 +270,7 @@ export function StateProvider({
     setLon(update.lon);
 
     setDB(db);
-  }
+  };
 
   const setCurrentSpeed = (update: number) => {
     let db = dashBoard;
@@ -277,7 +278,7 @@ export function StateProvider({
     setSpeed(update);
 
     setDB(db);
-  }
+  };
 
   const setDemoMode = (status: boolean) => {
     setDM(status);
@@ -285,50 +286,50 @@ export function StateProvider({
 
   const setRequestMode = (status: boolean) => {
     setRM(status);
-  }
+  };
 
   const switchWidget = (caption: "total" | "partial" | "countdown") => {
-    let db = dashBoard
+    let db = dashBoard;
     switch (caption) {
       case "total": {
         if (db.widgetShown.total) {
           db.widgetShown.total = false;
-          setTotalShow(false)
+          setTotalShow(false);
         } else {
           db.widgetShown.total = true;
-          setTotalShow(true)
+          setTotalShow(true);
         }
-        setDB(db)
-        return
+        setDB(db);
+        return;
       }
       case "countdown": {
         if (db.widgetShown.countdown) {
           db.widgetShown.countdown = false;
-          setCountdownShow(false)
+          setCountdownShow(false);
         } else {
           db.widgetShown.countdown = true;
           db.widgetShown.total = false;
           db.widgetShown.partial = false;
-          setCountdownShow(true)
-          setPartialShow(false)
-          setTotalShow(false)
+          setCountdownShow(true);
+          setPartialShow(false);
+          setTotalShow(false);
         }
-        setDB(db)
-        return
+        setDB(db);
+        return;
       }
       case "partial": {
         if (db.widgetShown.partial) {
           db.widgetShown.partial = false;
-          setPartialShow(false)
+          setPartialShow(false);
         } else {
           db.widgetShown.partial = true;
-          setPartialShow(true)
+          setPartialShow(true);
         }
-        setDB(db)
-        return
+        setDB(db);
+        return;
       }
     }
-  }
+  };
 
   const value = {
     raceNumber,
