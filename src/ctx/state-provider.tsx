@@ -159,6 +159,7 @@ export function StateProvider({
   const [nextPointNumber, _setNextPointNumber] = useState(0);
   const [nextPointName, _setNextPointName] = useState("");
 
+  // indicators
   const [gpsAccurancy, setGpsAccuracy] = useState(5);
   const [batteryLevel, setBatteryLevel] = useState(100);
   const [charging, setCharging] = useState(false);
@@ -228,7 +229,7 @@ export function StateProvider({
   useEffect(() => {
     const batteryCheck = async () => {
       const battery = await getBatteryInfo();
-      setBatteryLevel(battery.level ? battery.level : 100);
+      setBatteryLevel(battery.level ? battery.level : 0);
       setCharging(battery.isCharging ? battery.isCharging : false);
     };
     batteryCheck();
@@ -242,8 +243,12 @@ export function StateProvider({
   };
 
   const setCodeOfDay = async (code: string) => {
-    await invoke("activate_code", { code: code });
+    const resp = await invoke<string>("activate_code", { code: code });
     setCoad(code);
+    if (resp) toast.info(resp, { position: "bottom-center" });
+    if (code == "DEMO") {
+      setDemoMode(true);
+    }
     callView("navigate");
   };
 

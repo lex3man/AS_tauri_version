@@ -55,29 +55,28 @@ function App() {
       // const pos = await getCurrentPosition();
       // await invoke("location_update", { data: JSON.stringify(pos) });
 
+      let demoTrack = DEMO_TRACK.split(",\n");
+
       await watchPosition(
         { enableHighAccuracy: true, timeout: 1000, maximumAge: 0 },
         async (pos) => {
           if (demoMode) {
-            const demoPos = DEMO_TRACK.split("\n").pop() as string;
+            const demoPos = demoTrack.pop() as string;
             const [lat, lon, speed, acc] = demoPos
-              .split(",")
+              .split(" ")
               .map((c) => parseFloat(c));
-            await invoke("location_update", {
-              data: JSON.stringify({
-                coords: {
-                  latitude: lat as number,
-                  longitude: lon as number,
-                  accuracy: acc as number,
-                  speed: speed as number,
-                },
-                timestamp: Date.now(),
-              }),
-            });
-            setGpsAccuracy(acc as number);
-            setCurrentSpeed((speed as number) * 3.6);
-            setCoords({ lat: lat as number, lon: lon as number });
-            return;
+            pos = {
+              coords: {
+                latitude: lat as number,
+                longitude: lon as number,
+                accuracy: acc as number,
+                speed: speed as number,
+                altitudeAccuracy: null,
+                altitude: null,
+                heading: null,
+              },
+              timestamp: Date.now(),
+            };
           }
 
           await invoke("location_update", { data: JSON.stringify(pos) });
