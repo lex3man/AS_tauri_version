@@ -9,10 +9,12 @@ use crate::{
 
 #[tauri::command]
 pub fn activate_code(state: State<'_, Mutex<AppState>>, code: &str) -> Result<String, ()> {
+    println!("{}", code);
     if let Ok(mut state) = state.lock() {
         if let Some(_storage) = &state.storage {
             if code == "007" {
                 state.is_admin = true;
+                return Ok("Admin privileges granted".to_string());
             } else {
                 state.is_admin = false;
             }
@@ -25,8 +27,8 @@ pub fn activate_code(state: State<'_, Mutex<AppState>>, code: &str) -> Result<St
                     state.race.expired = "none".to_string();
                     state.race.current_sa = race.areas.get("demo").unwrap().id.clone();
                     state.race.race = Some(race);
-                    return Ok("DEMO".to_string());
                 }
+                return Ok("Demo mode activated".to_string());
             }
         }
     }

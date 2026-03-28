@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::json;
 use std::sync::Mutex;
 use tauri::State;
+// use tauri_plugin_geolocation::{GeolocationExt as _, PositionOptions};
 
 #[derive(Serialize, Deserialize, Debug, Clone, Copy)]
 pub struct Coords {
@@ -45,3 +46,20 @@ pub fn get_coords(state: State<'_, Mutex<AppState>>) -> Option<String> {
     }
     None
 }
+
+// #[tauri::command]
+// pub async fn start_location_watch(
+//     app: tauri::AppHandle,
+//     state: State<'_, Mutex<AppState>>,
+// ) -> Result<(), String> {
+//     let geolocation = app.geolocation();
+
+//     let state_clone = state.clone();
+
+//     geolocation
+//         .watch_position(
+
+//         ).unwrap();
+
+//     Ok(())
+// }

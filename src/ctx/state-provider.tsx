@@ -246,7 +246,7 @@ export function StateProvider({
     const resp = await invoke<string>("activate_code", { code: code });
     setCoad(code);
     if (resp) toast.info(resp, { position: "bottom-center" });
-    if (code == "DEMO") {
+    if (code === "DEMO") {
       setDemoMode(true);
     }
     callView("navigate");
