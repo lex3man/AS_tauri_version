@@ -1,31 +1,11 @@
-use crate::AppState;
-use serde::{Deserialize, Serialize};
+use crate::{state::Position, AppState};
 use serde_json::json;
 use std::sync::Mutex;
 use tauri::State;
-// use tauri_plugin_geolocation::{GeolocationExt as _, PositionOptions};
-
-#[derive(Serialize, Deserialize, Debug, Clone, Copy)]
-pub struct Coords {
-    pub latitude: f64,
-    pub longitude: f64,
-    pub accuracy: f64,
-    pub altitude_accuracy: Option<f32>,
-    pub altitude: Option<f32>,
-    pub speed: Option<f32>,
-    pub heading: Option<f32>,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct Position {
-    timestamp: u64,
-    coords: Coords,
-}
 
 #[tauri::command]
 pub fn location_update(state: State<'_, Mutex<AppState>>, data: &str) {
     let gps_data: Position = serde_json::from_str(data).unwrap();
-    println!("{:?}", gps_data);
 
     if let Ok(mut state) = state.lock() {
         state.coords = Some(gps_data.coords.clone());
@@ -46,20 +26,3 @@ pub fn get_coords(state: State<'_, Mutex<AppState>>) -> Option<String> {
     }
     None
 }
-
-// #[tauri::command]
-// pub async fn start_location_watch(
-//     app: tauri::AppHandle,
-//     state: State<'_, Mutex<AppState>>,
-// ) -> Result<(), String> {
-//     let geolocation = app.geolocation();
-
-//     let state_clone = state.clone();
-
-//     geolocation
-//         .watch_position(
-
-//         ).unwrap();
-
-//     Ok(())
-// }

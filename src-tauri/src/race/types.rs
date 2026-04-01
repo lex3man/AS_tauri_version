@@ -70,6 +70,12 @@ pub struct Point {
     pub flags: Flags,
 }
 
+impl Point {
+    pub fn get_id(&self) -> String {
+        format!("{}-{}", self.num, self.name)
+    }
+}
+
 pub struct PointBuilder {
     pub num: u32,
     pub name: String,
@@ -177,16 +183,16 @@ pub struct SpecArea {
     pub roadbook: Vec<String>,
 }
 
-pub struct SpecAreaBuilser {
+pub struct SpecAreaBuilder {
     pub id: SpecAreaID,
     pub activation_code: ActivationCode,
     pub points_set: Vec<Point>,
     pub roadbook: Vec<String>,
 }
 
-impl SpecAreaBuilser {
-    pub fn new(id: &str, code: &str) -> SpecAreaBuilser {
-        SpecAreaBuilser {
+impl SpecAreaBuilder {
+    pub fn new(id: &str, code: &str) -> SpecAreaBuilder {
+        SpecAreaBuilder {
             id: id.to_string(),
             activation_code: code.to_string(),
             points_set: vec![],
@@ -253,4 +259,12 @@ impl RaceBuilder {
             areas: self.areas,
         }
     }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct CheckPoint {
+    pub num: u32,
+    pub name: String,
+    pub ptype: String,
+    pub checked: bool,
 }

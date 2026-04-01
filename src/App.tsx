@@ -22,13 +22,14 @@ import { SwipeZones } from "./components/menus/swipe-zones";
 import { LeftContent, RightContent } from "./components/menus/content";
 import { Coords } from "./types/state";
 import Position from "./components/screens/position";
-import { DEMO_TRACK } from "./lib/demo-track";
+import DebugScreen from "./components/screens/debug";
+// import { DEMO_TRACK } from "./lib/demo-track";
 
 function App() {
   const [leftOpen, setLeftOpen] = useState(false);
   const [rightOpen, setRightOpen] = useState(false);
   const {
-    demoMode,
+    // demoMode,
     activeViewPort,
     mobileView,
     setGpsAccuracy,
@@ -38,6 +39,13 @@ function App() {
     setCoords,
     setCurrentSpeed,
     setMobileView,
+    setCog,
+    setCtw,
+    setDtw,
+    setCpCounter,
+    setNextPointNumber,
+    setNextPointName,
+    setMaxSpeed,
   } = useAppState();
   const { showBackground } = useSettings();
   const { width, height } = useWindowDimensions();
@@ -55,29 +63,30 @@ function App() {
       // const pos = await getCurrentPosition();
       // await invoke("location_update", { data: JSON.stringify(pos) });
 
-      let demoTrack = DEMO_TRACK.split(",\n");
+      // let demoTrack = DEMO_TRACK.split(",\n");
 
+      let dec = 0;
       await watchPosition(
         { enableHighAccuracy: true, timeout: 1000, maximumAge: 0 },
         async (pos) => {
-          if (demoMode) {
-            const demoPos = demoTrack.pop() as string;
-            const [lat, lon, speed, acc] = demoPos
-              .split(" ")
-              .map((c) => parseFloat(c));
-            pos = {
-              coords: {
-                latitude: lat as number,
-                longitude: lon as number,
-                accuracy: acc as number,
-                speed: speed as number,
-                altitudeAccuracy: null,
-                altitude: null,
-                heading: null,
-              },
-              timestamp: Date.now(),
-            };
-          }
+          // if (demoMode) {
+          //   const demoPos = demoTrack.pop() as string;
+          //   const [lat, lon, speed, acc] = demoPos
+          //     .split(" ")
+          //     .map((c) => parseFloat(c));
+          //   pos = {
+          //     coords: {
+          //       latitude: lat as number,
+          //       longitude: lon as number,
+          //       accuracy: acc as number,
+          //       speed: speed as number,
+          //       altitudeAccuracy: null,
+          //       altitude: null,
+          //       heading: null,
+          //     },
+          //     timestamp: Date.now(),
+          //   };
+          // }
 
           await invoke("location_update", { data: JSON.stringify(pos) });
           const gpsPosition = await invoke<string>("get_coords");
@@ -87,6 +96,16 @@ function App() {
             lon: geoData["longitude"],
           };
           setCoords(coords);
+          setCog(dec);
+          setCtw(285);
+          setDtw(315.45);
+          setCpCounter(24);
+          setNextPointNumber(29);
+          setNextPointName("Bivuac 2");
+          setMaxSpeed(120);
+
+          dec += 5;
+          if (dec > 355) dec = 0;
 
           if (pos) {
             setGpsAccuracy(pos.coords.accuracy as number);
@@ -145,6 +164,12 @@ function App() {
           <CheckPoints />
         </div>
       );
+    case "debug":
+      return (
+        <div className="relative h-screen">
+          <DebugScreen />
+        </div>
+      );
     case "navigate":
       return (
         <>
@@ -165,7 +190,7 @@ function App() {
               </div>
             )}
             <div
-              className={`relative h-screen w-full ${showBackground ? 'bg-cover bg-center bg-no-repeat bg-[url("./assets/background.png")]' : ""}`}
+              className={`relative h-screen w-full border-2 border-foreground ${showBackground ? 'bg-cover bg-center bg-no-repeat bg-[url("./assets/background.png")]' : ""}`}
             >
               <Ride />
             </div>

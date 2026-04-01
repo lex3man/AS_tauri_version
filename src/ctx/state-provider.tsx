@@ -19,6 +19,7 @@ function parseState(json: string): AppState {
 
 type AppStateProviderState = {
   raceNumber: string;
+  debugData: string;
 
   adminMode: boolean;
   navMode: boolean;
@@ -49,6 +50,7 @@ type AppStateProviderState = {
   nextPointName: string;
 
   setRaceNumber: (rn: string) => void;
+  setDebugData: (data: string) => void;
   setCodeOfDay: (code: string) => void;
   setMobileView: (status: boolean) => void;
   setDemoMode: (status: boolean) => void;
@@ -59,10 +61,18 @@ type AppStateProviderState = {
   setCoords: (update: Coords) => void;
   setCurrentSpeed: (update: number) => void;
   setGpsAccuracy: (val: number) => void;
+  setDtw: (val: number) => void;
+  setCog: (val: number) => void;
+  setCtw: (val: number) => void;
+  setCpCounter: (val: number) => void;
+  setNextPointNumber: (val: number) => void;
+  setNextPointName: (val: string) => void;
+  setMaxSpeed: (val: number) => void;
 };
 
 const initialState: AppStateProviderState = {
-  raceNumber: await invoke<string>("get_race_number"),
+  raceNumber: "",
+  debugData: "",
 
   adminMode: false,
   navMode: false,
@@ -112,6 +122,7 @@ const initialState: AppStateProviderState = {
   activeViewPort: ViewPort.new("request", "race number"),
 
   setRaceNumber: () => null,
+  setDebugData: () => null,
   setCodeOfDay: () => null,
   callView: () => null,
   setCommand: () => null,
@@ -122,6 +133,13 @@ const initialState: AppStateProviderState = {
   setCurrentSpeed: () => null,
   setGpsAccuracy: () => null,
   setRequestMode: () => null,
+  setDtw: () => null,
+  setCog: () => null,
+  setCtw: () => null,
+  setCpCounter: () => null,
+  setNextPointNumber: () => null,
+  setNextPointName: () => null,
+  setMaxSpeed: () => null,
 };
 
 const AppStateProviderContext =
@@ -154,10 +172,11 @@ export function StateProvider({
   const [ctw, setCtw] = useState(0);
   const [dtw, setDtw] = useState(0);
   const [speed, setSpeed] = useState(0);
-  const [maxSpeed, _setMaxSpeed] = useState(140);
+  const [maxSpeed, setMaxSpeed] = useState(140);
   const [cpCounter, setCpCounter] = useState(0);
-  const [nextPointNumber, _setNextPointNumber] = useState(0);
-  const [nextPointName, _setNextPointName] = useState("");
+  const [nextPointNumber, setNextPointNumber] = useState(0);
+  const [nextPointName, setNextPointName] = useState("");
+  const [debugData, setDebugData] = useState("");
 
   // indicators
   const [gpsAccurancy, setGpsAccuracy] = useState(5);
@@ -238,7 +257,6 @@ export function StateProvider({
   const setRaceNumber = async (rn: string) => {
     setRN(rn);
     await invoke("set_race_number", { value: rn });
-
     adminMode ? callView("admin-area") : callView("navigate");
   };
 
@@ -338,6 +356,7 @@ export function StateProvider({
 
   const value = {
     raceNumber,
+    debugData,
 
     adminMode,
     navMode,
@@ -369,6 +388,7 @@ export function StateProvider({
     charging,
 
     setRaceNumber,
+    setDebugData,
     callView,
     setCodeOfDay,
     setCommand,
@@ -379,6 +399,13 @@ export function StateProvider({
     setGpsAccuracy,
     setDemoMode,
     setRequestMode,
+    setDtw,
+    setCog,
+    setCtw,
+    setCpCounter,
+    setNextPointNumber,
+    setNextPointName,
+    setMaxSpeed,
   };
 
   return (

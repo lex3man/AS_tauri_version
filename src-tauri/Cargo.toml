@@ -34,6 +34,8 @@ tauri-plugin-sql = "2"
 tauri-plugin-store = "2"
 tauri-plugin-app-control = "0.1.1"
 tauri-plugin-device-info = "1.0.1"
+# reqwest = { version = "0.13", features = ["json"] }
+# chrono = { version = "0.4.44", features = ["serde"] }
 
 [profile.dev]
 incremental = true # Compile your binary in smaller steps.

@@ -49,6 +49,8 @@ pub fn run() {
             ipc::location::get_coords,
             ipc::states::snapshot,
             ipc::states::get_snapshot,
+            ipc::states::update_config,
+            ipc::states::get_current_cp_list,
             ipc::codes::activate_code,
             ipc::admin::is_admin,
             ipc::admin::activate_cmd,

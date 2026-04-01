@@ -1,9 +1,19 @@
 import { ViewPort } from "./viewport";
 
+export type GPSData = {
+    latitude: number;
+    longitude: number;
+    accuracy: number;
+    altitudeAccuracy: number;
+    altitude: number;
+    speed: number;
+    heading: number;
+};
+
 export type Coords = {
     lat: number;
     lon: number;
-}
+};
 
 export type Metrics = {
     absTotal: number;
@@ -11,24 +21,24 @@ export type Metrics = {
     partial: number;
     countdown: number;
     cpCounter: number;
-}
+};
 
 export type DashBoard = {
-    cog: number,
-    sog: number,
-    ctw: number,
-    dtw: number,
+    cog: number;
+    sog: number;
+    ctw: number;
+    dtw: number;
 
-    maxSpeed: number,
-    coords: Coords,
-    metrics: Metrics,
+    maxSpeed: number;
+    coords: Coords;
+    metrics: Metrics;
 
     widgetShown: {
-        "total": boolean,
-        "partial": boolean,
-        "countdown": boolean,
-    }
-}
+        total: boolean;
+        partial: boolean;
+        countdown: boolean;
+    };
+};
 
 export type AppState = {
     raceNumber: string;
@@ -36,4 +46,11 @@ export type AppState = {
     navMode: boolean;
     dashBoard: DashBoard;
     activeViewPort: ViewPort;
-}
+};
+
+export type CheckPoint = {
+    num: number;
+    name: string;
+    ptype: string;
+    checked: boolean;
+};

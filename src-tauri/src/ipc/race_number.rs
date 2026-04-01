@@ -1,5 +1,4 @@
 use std::sync::Mutex;
-// use serde_json::json;
 use tauri::State;
 
 use crate::AppState;
@@ -18,5 +17,6 @@ pub async fn set_race_number(state: State<'_, Mutex<AppState>>, value: &str) -> 
         storage.close_resource();
     };
     state.race_number = Some(value.to_string());
+
     Ok(())
 }

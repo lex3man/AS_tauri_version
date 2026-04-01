@@ -44,7 +44,7 @@ export function SwipeZones({
 
   return (
     <>
-      <div className="fixed top-0 left-0  w-1/2 h-1/2 z-50 pointer-events-none">
+      <div className="fixed top-0 left-0  w-1/2 h-1/2 z-50 pointer-events-auto touch-pan-y">
         <div
           className="w-full h-full pointer-events-auto touch-pan-y"
           onTouchStart={handleTouchStart}
@@ -52,7 +52,7 @@ export function SwipeZones({
           onTouchEnd={handleTouchEndLeft}
         />
       </div>
-      <div className="fixed top-0 right-0 w-1/2 h-1/2 z-50 pointer-events-none">
+      <div className="fixed top-0 right-0 w-1/2 h-1/2 z-50 pointer-events-auto touch-pan-y">
         <div
           className="w-full h-full pointer-events-auto touch-pan-y"
           onTouchStart={handleTouchStart}

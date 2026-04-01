@@ -16,6 +16,11 @@
     "geolocation:allow-get-current-position",
     "geolocation:allow-watch-position",
     "app-control:default",
-    "device-info:default"
+    "device-info:default",
+    {
+      "identifier": "http:default",
+      "allow": [{ "url": "https://map.rostexcabinet.ru" }],
+      "deny": []
+    }
   ]
 }

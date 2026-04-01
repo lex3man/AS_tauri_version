@@ -1,5 +1,6 @@
 use std::sync::Mutex;
 
+use serde_json::json;
 use tauri::State;
 
 use crate::{
@@ -11,25 +12,38 @@ use crate::{
 pub fn activate_code(state: State<'_, Mutex<AppState>>, code: &str) -> Result<String, ()> {
     println!("{}", code);
     if let Ok(mut state) = state.lock() {
-        if let Some(_storage) = &state.storage {
-            if code == "007" {
-                state.is_admin = true;
-                return Ok("Admin privileges granted".to_string());
-            } else {
-                state.is_admin = false;
+        if code == "007" {
+            state.is_admin = true;
+            return Ok("Admin privileges granted".to_string());
+        } else {
+            state.is_admin = false;
+        }
+        if code == "DEMO" {
+            if let Some(race) =
+                upload_config(FormatedData::Toml(crate::config::DEMO_CONFIG.to_string()))
+            {
+                state.race = RaceState::new();
+                state.race.active_code = "demo".to_string();
+                state.race.expired = "none".to_string();
+                state.race.current_sa = race.areas.get("demo").unwrap().id.clone();
+                state.race.race = Some(race);
             }
-            if code == "DEMO" {
-                if let Some(race) =
-                    upload_config(FormatedData::Toml(crate::config::DEMO_CONFIG.to_string()))
-                {
-                    state.race = RaceState::new();
-                    state.race.active_code = "demo".to_string();
-                    state.race.expired = "none".to_string();
-                    state.race.current_sa = race.areas.get("demo").unwrap().id.clone();
-                    state.race.race = Some(race);
+            return Ok("Demo mode activated".to_string());
+        } else {
+            if let Some(race) = state.race.race.as_ref() {
+                if let Some(area) = race.areas.get(code) {
+                    state.race.current_sa = area.id.clone();
+                    state.race.active_code = code.to_string();
+                    state.race.activate(code);
+                    if let Some(storage) = &state.storage {
+                        storage.set("race_state", json!(state.race));
+                        storage.close_resource();
+                    }
+                    return Ok(format!("Code {} activated", code));
                 }
-                return Ok("Demo mode activated".to_string());
+                return Ok("There's no such area".to_string());
             }
+            return Ok("There's no Race Config".to_string());
         }
     }
     Ok("Code activated".to_string())

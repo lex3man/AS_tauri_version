@@ -64,11 +64,13 @@ const Ride = () => {
             </div>
           </div>
         </div>
-        <div className="flex flex-col justify-between w-2/4 h-[85vh]">
-          <div className="text-[clamp(1.5rem,5vw,3rem)] leading-none font-extrabold m-auto p-5">
+        <div className="flex flex-col justify-between h-[85vh] w-2/4">
+          <div
+            className={`text-[clamp(1.5rem,5vw,3rem)] leading-none mx-auto font-extrabold ${mobileView ? "p-2" : "p-5"}`}
+          >
             <div className="transform scale-x-60">WPT1 - Start</div>
           </div>
-          <div className="flex h-full my-auto">
+          <div className="flex h-full w-full justify-center pb-5">
             <Arrow />
           </div>
         </div>

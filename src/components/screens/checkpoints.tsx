@@ -1,8 +1,21 @@
 import { useAppState } from "@/ctx/state-provider";
 import { Button } from "../ui/button";
+import { useEffect, useState } from "react";
+import { CheckPoint } from "@/types/state";
+import { invoke } from "@tauri-apps/api/core";
 
 const CheckPoints = () => {
   const { callView } = useAppState();
+  const [points, setPoints] = useState<CheckPoint[]>([]);
+
+  useEffect(() => {
+    const getPoints = async () => {
+      const resp = await invoke<string>("get_current_cp_list");
+      const checkPoints: CheckPoint[] = JSON.parse(resp);
+      setPoints(checkPoints);
+    };
+    getPoints();
+  }, []);
 
   return (
     <div>
@@ -21,7 +34,25 @@ const CheckPoints = () => {
           </Button>
         </div>
       </div>
-      <div></div>
+      <div className="flex gap-2 flex-wrap">
+        {points.map((point) => (
+          <div
+            className="m-2 p-5 border-2 border-foreground rounded-xl"
+            key={point.num}
+          >
+            <div className="flex gap-5">
+              <div className="text-xl">{point.name}</div>
+              <div className="text-xl">{point.ptype}</div>
+            </div>
+            <div className="flex gap-5">
+              <div className="text-xl">{point.num}</div>
+              <div className="text-xl">
+                {point.checked ? "Checked" : "Unchecked"}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 };

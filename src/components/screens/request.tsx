@@ -1,6 +1,8 @@
 import { Button } from "@/components/ui/button";
+import { server_init } from "@/lib/api";
 import { TypeOfRequest } from "@/types/request";
 import { useState } from "react";
+import { toast } from "sonner";
 
 interface Props {
   typeOfData: TypeOfRequest;
@@ -21,7 +23,19 @@ export const DataRequest = (props: Props) => {
         ></input>
         <Button
           size={"lg"}
-          onClick={() => props.setAnswer(userInput.toUpperCase())}
+          onClick={() => {
+            if (props.typeOfData === "race number") {
+              server_init(userInput)
+                .then(() => {})
+                .catch((e) => {
+                  toast.error(`Request faild with error: ${e}`, {
+                    position: "bottom-center",
+                    duration: 5000,
+                  });
+                });
+            }
+            props.setAnswer(userInput.toUpperCase());
+          }}
         >
           SUBMIT
         </Button>
