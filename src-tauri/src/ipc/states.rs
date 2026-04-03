@@ -6,6 +6,7 @@ use tauri::State;
 use crate::{
     race::types::{CheckPoint, Race},
     state::race_config::RaceState,
+    utils::parser::FormatedData,
     AppState,
 };
 
@@ -37,10 +38,11 @@ pub fn get_snapshot(state: State<'_, Mutex<AppState>>) -> Result<String, ()> {
 
 #[tauri::command]
 pub fn update_config(state: State<'_, Mutex<AppState>>, data: &str) -> Result<String, ()> {
-    if let Ok(config) = serde_json::from_str::<Race>(data) {
+    let cfg = crate::utils::parser::upload_config(FormatedData::Json(data.to_string()));
+    if let Some(cfg) = cfg {
         let mut state = state.lock().unwrap();
         state.race = RaceState::new();
-        state.race.update(&config);
+        state.race.update(&cfg);
         return Ok("Race config updated".to_string());
     }
     Err(())
@@ -51,6 +53,9 @@ pub fn get_current_cp_list(state: State<'_, Mutex<AppState>>) -> String {
     let mut point_list = Vec::new();
     let state = state.lock().unwrap();
     if let Some(race) = &state.race.race {
+        if &state.race.active_code == "" {
+            return "[]".to_string();
+        }
         for p in &race.areas.get(&state.race.active_code).unwrap().points_set {
             point_list.push(CheckPoint {
                 num: p.num,
@@ -61,4 +66,19 @@ pub fn get_current_cp_list(state: State<'_, Mutex<AppState>>) -> String {
         }
     };
     serde_json::to_string(&point_list).unwrap()
+}
+
+#[tauri::command]
+pub fn get_race_info(state: State<'_, Mutex<AppState>>) -> Result<String, String> {
+    let state = state.lock().unwrap();
+    if let Some(race) = &state.race.race {
+        return Ok(format!(
+            "{}-{}-{}-{}",
+            &race.name,
+            &race.serial,
+            &state.race_number.clone().unwrap_or_default(),
+            &state.race.active_code
+        ));
+    }
+    Err("Race not found".to_string())
 }

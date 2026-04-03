@@ -2,6 +2,8 @@ mod config;
 mod ipc;
 mod race;
 mod state;
+#[cfg(test)]
+mod tests;
 mod utils;
 
 use std::sync::Mutex;
@@ -12,6 +14,7 @@ use tauri_plugin_store::StoreExt as _;
 use crate::{
     config::Config,
     state::{
+        dashboard::DashBoard,
         race_config::{RaceState, SpecEreaState},
         AppState,
     },
@@ -39,7 +42,6 @@ pub fn run() {
         .plugin(tauri_plugin_geolocation::init())
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![
-            ipc::init::initialization,
             ipc::race_number::get_race_number,
             ipc::race_number::set_race_number,
             ipc::settings::get_settings,
@@ -51,6 +53,7 @@ pub fn run() {
             ipc::states::get_snapshot,
             ipc::states::update_config,
             ipc::states::get_current_cp_list,
+            ipc::states::get_race_info,
             ipc::codes::activate_code,
             ipc::admin::is_admin,
             ipc::admin::activate_cmd,
@@ -60,6 +63,25 @@ pub fn run() {
             let store = app.store("AS_storage.json")?;
             let state = app.state::<Mutex<AppState>>();
             let mut state = state.lock().unwrap();
+
+            // if let Some(val) = store.get("as_race_number") {
+            //     state.race_number = Some(val.as_str().unwrap().to_string());
+            // }
+            // if let Some(val) = store.get("as_settings") {
+            //     state.settings = serde_json::from_value::<Config>(val).unwrap();
+            // }
+            // if let Some(val) = store.get("as_snapshot") {
+            //     state.snapshot = Some(val.as_str().unwrap().to_string());
+            // }
+            // if let Some(val) = store.get("as_spec_area") {
+            //     state.spec_area = serde_json::from_value::<SpecEreaState>(val).unwrap();
+            // }
+            // if let Some(val) = store.get("as_race") {
+            //     state.race = serde_json::from_value::<RaceState>(val).unwrap();
+            // }
+            // if let Some(val) = store.get("as_dashboard") {
+            //     state.dashboard = serde_json::from_value::<DashBoard>(val).unwrap();
+            // }
 
             if let Some(val) = store.get("race_number") {
                 state.race_number = Some(val.as_str().unwrap().to_string());
@@ -75,6 +97,9 @@ pub fn run() {
             }
             if let Some(val) = store.get("race_state") {
                 state.race = serde_json::from_value::<RaceState>(val).unwrap();
+            }
+            if let Some(val) = store.get("dashboard") {
+                state.dashboard = serde_json::from_value::<DashBoard>(val).unwrap();
             }
             state.storage = Some(store);
             Ok(())

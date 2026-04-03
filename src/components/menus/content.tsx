@@ -1,11 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { useAppState } from "@/ctx/state-provider";
-import { request_config } from "@/lib/api";
-import { toast } from "sonner";
-import { getDeviceInfo } from "tauri-plugin-device-info-api";
 
 export const LeftContent = () => {
-  const { switchWidget, setDebugData } = useAppState();
+  const { switchWidget } = useAppState();
 
   return (
     <div className="flex flex-col gap-2">
@@ -43,33 +40,11 @@ export const LeftContent = () => {
           RESET
         </Button>
       </div>
-      <div className="py-2 w-full">
-        <Button
-          className="p-7 text-3xl w-full"
-          onClick={() => {
-            const make_request = async () => {
-              const device = await getDeviceInfo();
-              request_config(device.uuid as string)
-                .then((resp) => {
-                  toast.info(`Config setted at debug store`, {
-                    position: "bottom-center",
-                    duration: 5000,
-                  });
-                  setDebugData(resp);
-                })
-                .catch((e) => {
-                  toast.error(`Request faild with error: ${e}`, {
-                    position: "bottom-center",
-                    duration: 5000,
-                  });
-                });
-            };
-            make_request();
-          }}
-        >
-          TEST CFG REQUEST
-        </Button>
-      </div>
+      {/* <div className="py-2 w-full"> */}
+      {/*   <Button className="p-7 text-3xl w-full" onClick={() => { }}> */}
+      {/*     CFG REQUEST */}
+      {/*   </Button> */}
+      {/* </div> */}
     </div>
   );
 };

@@ -1,6 +1,6 @@
 import { useAppState } from "@/ctx/state-provider";
 
-const TotalWidget = () => {
+export const TotalWidget = () => {
   const { dashBoard, mobileView } = useAppState();
 
   return (
@@ -19,4 +19,19 @@ const TotalWidget = () => {
   );
 };
 
-export default TotalWidget;
+export const TotalLiteWidget = () => {
+  const { dashBoard, mobileView } = useAppState();
+
+  return (
+    <div
+      className={`flex flex-col justify-between border-2 border-primary h-full bg-primary-foreground p-1`}
+    >
+      <div className={`font-extrabold text-xs`}>TOTAL</div>
+      <div
+        className={`${mobileView ? "text-2xl" : "text-[clamp(1.5rem,5vw,4rem)]"} my-auto leading-none`}
+      >
+        {dashBoard.metrics.total}
+      </div>
+    </div>
+  );
+};

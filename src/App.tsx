@@ -23,6 +23,7 @@ import { LeftContent, RightContent } from "./components/menus/content";
 import { Coords } from "./types/state";
 import Position from "./components/screens/position";
 import DebugScreen from "./components/screens/debug";
+import Roadbook from "./components/screens/roadbook";
 // import { DEMO_TRACK } from "./lib/demo-track";
 
 function App() {
@@ -30,6 +31,7 @@ function App() {
   const [rightOpen, setRightOpen] = useState(false);
   const {
     // demoMode,
+    roadbookMode,
     activeViewPort,
     mobileView,
     setGpsAccuracy,
@@ -46,6 +48,7 @@ function App() {
     setNextPointNumber,
     setNextPointName,
     setMaxSpeed,
+    setRoadbookMode,
   } = useAppState();
   const { showBackground } = useSettings();
   const { width, height } = useWindowDimensions();
@@ -117,6 +120,10 @@ function App() {
   };
 
   useEffect(() => {
+    const orientationChangeHandle = () => {
+      const orientation = screen.orientation.type;
+      setRoadbookMode(orientation.includes("portrait"));
+    };
     const check = async () => {
       const rn = await invoke<string>("get_race_number");
       setRaceNumber(rn);
@@ -124,6 +131,11 @@ function App() {
     setMobileView(width / height > 2);
     check();
     geoloc();
+    screen.orientation.addEventListener("change", orientationChangeHandle);
+
+    return () => {
+      screen.orientation.removeEventListener("change", orientationChangeHandle);
+    };
   }, []);
 
   switch (activeViewPort.name) {
@@ -173,7 +185,7 @@ function App() {
     case "navigate":
       return (
         <>
-          {!mobileView && (
+          {!mobileView && !roadbookMode && (
             <SwipeZones
               onOpenLeft={() => setLeftOpen(true)}
               onOpenRight={() => setRightOpen(true)}
@@ -181,30 +193,37 @@ function App() {
               onCloseRight={() => setRightOpen(false)}
             />
           )}
-          <main
-            className={`${mobileView && "flex"} h-full gap-3 items-center justify-center overflow-hidden`}
-          >
-            {mobileView && (
-              <div className="w-1/6">
-                <LeftContent />
-              </div>
-            )}
-            <div
-              className={`relative h-screen w-full border-2 border-foreground ${showBackground ? 'bg-cover bg-center bg-no-repeat bg-[url("./assets/background.png")]' : ""}`}
+          {roadbookMode ? (
+            <main className="h-full gap-3 items-center justify-center overflow-hidden">
+              <Roadbook />
+            </main>
+          ) : (
+            <main
+              className={`${mobileView && "flex"} h-full gap-3 items-center justify-center overflow-hidden`}
             >
-              <Ride />
-            </div>
-            {mobileView ? (
-              <div className="w-1/6">
-                <RightContent />
+              {mobileView && (
+                <div className="w-1/6">
+                  <LeftContent />
+                </div>
+              )}
+              <div
+                className={`relative ${roadbookMode ? "h-[30vh]" : "h-screen"} w-full border-2 border-foreground ${showBackground ? 'bg-cover bg-center bg-no-repeat bg-[url("./assets/background.png")]' : ""}`}
+              >
+                <Ride />
               </div>
-            ) : (
-              <div className="flex">
-                <LeftMenu open={leftOpen} setOpen={setLeftOpen} />
-                <RightMenu open={rightOpen} setOpen={setRightOpen} />
-              </div>
-            )}
-          </main>
+              {mobileView && (
+                <div className="w-1/6">
+                  <RightContent />
+                </div>
+              )}
+              {!roadbookMode && (
+                <div className="flex">
+                  <LeftMenu open={leftOpen} setOpen={setLeftOpen} />
+                  <RightMenu open={rightOpen} setOpen={setRightOpen} />
+                </div>
+              )}
+            </main>
+          )}
         </>
       );
   }

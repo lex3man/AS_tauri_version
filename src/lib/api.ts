@@ -3,6 +3,7 @@ import { fetch } from "@tauri-apps/plugin-http";
 import { getDeviceInfo } from "tauri-plugin-device-info-api";
 import { platform, version } from "@tauri-apps/plugin-os";
 import { invoke } from "@tauri-apps/api/core";
+import { stop_polling } from "./utils";
 
 const TOKEN =
   "f7c8fe93f15af81dab45215fceb36401baf6b5753e67e1f295391aaf1fe3ec6d";
@@ -62,8 +63,9 @@ export const request_config = async (device_id: string) => {
   let data = await resp.json();
   if (resp.status === 200) {
     await invoke<string>("update_config", { data: JSON.stringify(data) });
-    return JSON.stringify(data);
+    stop_polling();
+    return true;
   } else {
-    return data.error;
+    return false;
   }
 };

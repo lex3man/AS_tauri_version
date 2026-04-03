@@ -17,6 +17,5 @@ pub async fn set_race_number(state: State<'_, Mutex<AppState>>, value: &str) -> 
         storage.close_resource();
     };
     state.race_number = Some(value.to_string());
-
     Ok(())
 }

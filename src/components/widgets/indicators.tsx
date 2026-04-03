@@ -51,7 +51,7 @@ const Indicators = () => {
   };
 
   return (
-    <div className="flex gap-2 h-1/2 my-auto">
+    <div className="flex h-full gap-2 my-auto">
       {getSignalIcon()}
       {getBatteryIcon()}
     </div>

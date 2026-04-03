@@ -1,3 +1,5 @@
+import { request_config } from "@/lib/api";
+import { start_polling } from "@/lib/utils";
 import { TypeOfRequest } from "@/types/request";
 import { AppState, Coords, DashBoard } from "@/types/state";
 import { ViewPort } from "@/types/viewport";
@@ -5,7 +7,7 @@ import Viewports from "@/viewports";
 import { invoke } from "@tauri-apps/api/core";
 import { createContext, useContext, useEffect, useState } from "react";
 import { toast } from "sonner";
-import { getBatteryInfo } from "tauri-plugin-device-info-api";
+import { getBatteryInfo, getDeviceInfo } from "tauri-plugin-device-info-api";
 
 type AppStateProviderProps = {
   children: React.ReactNode;
@@ -20,10 +22,12 @@ function parseState(json: string): AppState {
 type AppStateProviderState = {
   raceNumber: string;
   debugData: string;
+  activeCode: string;
 
   adminMode: boolean;
   navMode: boolean;
   demoMode: boolean;
+  roadbookMode: boolean;
   mobileView: boolean;
   requestMode: boolean;
 
@@ -50,6 +54,7 @@ type AppStateProviderState = {
   nextPointName: string;
 
   setRaceNumber: (rn: string) => void;
+  setRoadbookMode: (status: boolean) => void;
   setDebugData: (data: string) => void;
   setCodeOfDay: (code: string) => void;
   setMobileView: (status: boolean) => void;
@@ -73,10 +78,12 @@ type AppStateProviderState = {
 const initialState: AppStateProviderState = {
   raceNumber: "",
   debugData: "",
+  activeCode: "",
 
   adminMode: false,
   navMode: false,
   demoMode: false,
+  roadbookMode: false,
   mobileView: false,
   requestMode: true,
 
@@ -129,6 +136,7 @@ const initialState: AppStateProviderState = {
   switchWidget: () => null,
   setMobileView: () => null,
   setDemoMode: () => null,
+  setRoadbookMode: () => null,
   setCoords: () => null,
   setCurrentSpeed: () => null,
   setGpsAccuracy: () => null,
@@ -157,6 +165,7 @@ export function StateProvider({
   const [adminMode, setAM] = useState(false);
   const [navMode, setNM] = useState(false);
   const [demoMode, setDM] = useState(false);
+  const [roadbookMode, setRoadbookMode] = useState(false);
   const [mobileView, setMobileView] = useState(false);
   const [requestMode, setRM] = useState(true);
 
@@ -212,9 +221,9 @@ export function StateProvider({
 
   useEffect(() => {
     const getState = async () => {
-      const stateString = await invoke<string>("get_snapshot");
-      if (stateString) {
-        const state: AppState = parseState(stateString);
+      const rawState = await invoke<string>("get_snapshot");
+      if (rawState) {
+        const state: AppState = parseState(rawState);
         setRN(state.raceNumber);
         setNM(state.navMode);
         setDB(state.dashBoard);
@@ -258,9 +267,12 @@ export function StateProvider({
     setRN(rn);
     await invoke("set_race_number", { value: rn });
     adminMode ? callView("admin-area") : callView("navigate");
+    start_polling(10);
   };
 
   const setCodeOfDay = async (code: string) => {
+    const device = await getDeviceInfo();
+    await request_config(device.uuid as string);
     const resp = await invoke<string>("activate_code", { code: code });
     setCoad(code);
     if (resp) toast.info(resp, { position: "bottom-center" });
@@ -357,10 +369,12 @@ export function StateProvider({
   const value = {
     raceNumber,
     debugData,
+    activeCode: coad,
 
     adminMode,
     navMode,
     demoMode,
+    roadbookMode,
     mobileView,
     requestMode,
 
@@ -399,6 +413,7 @@ export function StateProvider({
     setGpsAccuracy,
     setDemoMode,
     setRequestMode,
+    setRoadbookMode,
     setDtw,
     setCog,
     setCtw,

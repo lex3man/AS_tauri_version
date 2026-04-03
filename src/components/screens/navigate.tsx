@@ -1,9 +1,9 @@
 import { useAppState } from "@/ctx/state-provider";
-import TotalWidget from "../widgets/total";
-import PartialWidget from "../widgets/partial";
+import { PartialWidget } from "../widgets/partial";
 import CountdownWidget from "../widgets/countdown";
 import { Arrow } from "../arrow";
 import Indicators from "../widgets/indicators";
+import { TotalWidget } from "../widgets/total";
 
 const Ride = () => {
   const {
@@ -17,12 +17,15 @@ const Ride = () => {
     partialWidgetShown,
     countdownWidgetShown,
     mobileView,
+    roadbookMode,
   } = useAppState();
 
   return (
     <div>
-      <div className="flex justify-center h-[17vh]">
-        <div className="flex pt-5 pl-5 justify-center w-1/4">
+      <div
+        className={`flex justify-center ${roadbookMode ? "h-[6hv]" : "h-[17vh]"}`}
+      >
+        <div className="flex p-8 justify-center w-1/4">
           <Indicators />
         </div>
         <div className="flex justify-center text-[clamp(2rem,5vw,3.5rem)] leading-none font-extrabold w-1/2 my-auto">
@@ -35,7 +38,9 @@ const Ride = () => {
         </div>
       </div>
       <div className="flex w-full justify-center">
-        <div className="flex flex-col w-1/4 h-[85vh]">
+        <div
+          className={`flex flex-col w-1/4 ${roadbookMode ? "h-[25vh]" : "h-[85vh]"}`}
+        >
           <div className="flex flex-col justify-start h-[30%] px-3">
             <div
               className={`flex justify-start ${mobileView ? "text-6xl" : "text-[clamp(4rem,10vw,8rem)]"} font-extrabold leading-none`}
@@ -64,17 +69,23 @@ const Ride = () => {
             </div>
           </div>
         </div>
-        <div className="flex flex-col justify-between h-[85vh] w-2/4">
+        <div
+          className={`flex flex-col justify-between ${roadbookMode ? "h-[25vh]" : "h-[85vh]"} w-2/4`}
+        >
           <div
             className={`text-[clamp(1.5rem,5vw,3rem)] leading-none mx-auto font-extrabold ${mobileView ? "p-2" : "p-5"}`}
           >
             <div className="transform scale-x-60">WPT1 - Start</div>
           </div>
-          <div className="flex h-full w-full justify-center pb-5">
+          <div
+            className={`flex ${roadbookMode ? "h-[30vh]" : "h-full"} w-full justify-center pb-5`}
+          >
             <Arrow />
           </div>
         </div>
-        <div className="flex flex-col w-1/4 h-[85vh]">
+        <div
+          className={`flex flex-col w-1/4 ${roadbookMode ? "h-[25vh]" : "h-[85vh]"}`}
+        >
           <div className="flex flex-col justify-start h-[30%] px-3">
             <div
               className={`flex justify-end ${mobileView ? "text-6xl" : "text-[clamp(4rem,10vw,8rem)]"} font-extrabold leading-none`}

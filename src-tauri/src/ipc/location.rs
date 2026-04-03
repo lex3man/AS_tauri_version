@@ -1,4 +1,4 @@
-use crate::{state::Position, AppState};
+use crate::{state::Position, utils::actor::make_culc, AppState};
 use serde_json::json;
 use std::sync::Mutex;
 use tauri::State;
@@ -13,7 +13,13 @@ pub fn location_update(state: State<'_, Mutex<AppState>>, data: &str) {
             store.set("position", json!(gps_data.coords));
             store.set("sa_state", json!(state.spec_area));
             store.set("race_state", json!(state.race));
+            store.set("dashboard", json!(state.dashboard));
         }
+        state.sync();
+    }
+    match make_culc(&state, &gps_data) {
+        Ok(_) => {}
+        Err(_) => {}
     }
 }
 

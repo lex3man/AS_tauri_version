@@ -4,6 +4,7 @@ pub mod race_config;
 use std::sync::Arc;
 
 use serde::{Deserialize, Serialize};
+use serde_json::json;
 use tauri::Wry;
 use tauri_plugin_store::Store;
 
@@ -56,6 +57,22 @@ impl Default for AppState {
             spec_area: SpecEreaState::new(),
             race: RaceState::new(),
             dashboard: DashBoard::new(),
+        }
+    }
+}
+
+impl AppState {
+    pub fn sync(&self) {
+        if let Some(storage) = &self.storage {
+            storage.set("as_race_number", json!(self.race_number));
+            storage.set("as_settings", json!(self.settings));
+            storage.set("as_coords", json!(self.coords));
+            storage.set("as_snapshot", json!(self.snapshot));
+            storage.set("as_spec_area", json!(self.spec_area));
+            storage.set("as_race", json!(self.race));
+            storage.set("as_dashboard", json!(self.dashboard));
+
+            storage.close_resource();
         }
     }
 }
