@@ -34,6 +34,10 @@ tauri-plugin-sql = "2"
 tauri-plugin-store = "2"
 tauri-plugin-app-control = "0.1.1"
 tauri-plugin-device-info = "1.0.1"
+tauri-plugin-android-fs = "28.1.0"
+reqwest = { version = "0.10", default-features = false, features = ["json", "rustls-tls", "blocking"] }
+rayon = "1.11.0"
+base64 = "0.22"
 # reqwest = { version = "0.13", features = ["json"] }
 # chrono = { version = "0.4.44", features = ["serde"] }
 

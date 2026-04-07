@@ -39,6 +39,7 @@ pub fn run() {
         .plugin(tauri_plugin_http::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
+        .plugin(tauri_plugin_android_fs::init())
         .plugin(tauri_plugin_geolocation::init())
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![
@@ -54,7 +55,10 @@ pub fn run() {
             ipc::states::update_config,
             ipc::states::get_current_cp_list,
             ipc::states::get_race_info,
+            ipc::states::sync_data,
             ipc::codes::activate_code,
+            ipc::roadbook::get_roadbook,
+            ipc::roadbook::get_roadbook_image,
             ipc::admin::is_admin,
             ipc::admin::activate_cmd,
         ])
@@ -91,9 +95,6 @@ pub fn run() {
             }
             if let Some(val) = store.get("snapshot") {
                 state.snapshot = Some(val.as_str().unwrap().to_string());
-            }
-            if let Some(val) = store.get("sa_state") {
-                state.spec_area = serde_json::from_value::<SpecEreaState>(val).unwrap();
             }
             if let Some(val) = store.get("race_state") {
                 state.race = serde_json::from_value::<RaceState>(val).unwrap();

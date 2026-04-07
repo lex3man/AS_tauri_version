@@ -2,14 +2,15 @@ use std::collections::{BTreeMap, HashMap};
 
 use serde::{Deserialize, Serialize};
 
-pub type Kilometers = f32;
+pub type Kilometers = f64;
 pub type Meters = u32;
 pub type Minutes = u8;
 pub type SpecAreaID = String;
 pub type ActivationCode = String;
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Coords {
-    pub lat: f32,
-    pub lon: f32,
+    pub lat: f64,
+    pub lon: f64,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -59,8 +60,8 @@ impl PointTypes {
 pub struct Point {
     pub num: u32,
     pub name: String,
-    pub lat: f32,
-    pub lon: f32,
+    pub lat: f64,
+    pub lon: f64,
     pub odo: Meters,
     pub point_type: String,
     pub capture_radius: Meters,
@@ -79,8 +80,8 @@ impl Point {
 pub struct PointBuilder {
     pub num: u32,
     pub name: String,
-    pub lat: f32,
-    pub lon: f32,
+    pub lat: f64,
+    pub lon: f64,
     pub odo: Meters,
     pub point_type: String,
     pub capture_radius: Meters,
@@ -96,8 +97,8 @@ impl PointBuilder {
         PointBuilder {
             num: num,
             name: caption.to_string(),
-            lat: 0f32,
-            lon: 0f32,
+            lat: 0f64,
+            lon: 0f64,
             odo: 0,
             point_type: p_type.to_string(),
             capture_radius: defaults.capture_radius,
@@ -181,6 +182,12 @@ pub struct SpecArea {
     pub activation_code: ActivationCode,
     pub points_set: Vec<Point>,
     pub roadbook: Vec<String>,
+}
+
+impl SpecArea {
+    pub fn get_point_by_id(&self, id: &str) -> Option<&Point> {
+        self.points_set.iter().find(|p| p.get_id() == id)
+    }
 }
 
 pub struct SpecAreaBuilder {

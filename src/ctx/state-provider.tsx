@@ -1,5 +1,4 @@
 import { request_config } from "@/lib/api";
-import { start_polling } from "@/lib/utils";
 import { TypeOfRequest } from "@/types/request";
 import { AppState, Coords, DashBoard } from "@/types/state";
 import { ViewPort } from "@/types/viewport";
@@ -30,6 +29,7 @@ type AppStateProviderState = {
   roadbookMode: boolean;
   mobileView: boolean;
   requestMode: boolean;
+  configLoading: boolean;
 
   dashBoard: DashBoard;
   activeViewPort: ViewPort;
@@ -86,6 +86,7 @@ const initialState: AppStateProviderState = {
   roadbookMode: false,
   mobileView: false,
   requestMode: true,
+  configLoading: false,
 
   gpsAccurancy: 5,
   batteryLevel: 100,
@@ -168,6 +169,7 @@ export function StateProvider({
   const [roadbookMode, setRoadbookMode] = useState(false);
   const [mobileView, setMobileView] = useState(false);
   const [requestMode, setRM] = useState(true);
+  const [configLoading, setCL] = useState(false);
 
   // widgets state
   const [totalWidgetShown, setTotalShow] = useState(false);
@@ -267,19 +269,47 @@ export function StateProvider({
     setRN(rn);
     await invoke("set_race_number", { value: rn });
     adminMode ? callView("admin-area") : callView("navigate");
-    start_polling(10);
   };
 
   const setCodeOfDay = async (code: string) => {
     const device = await getDeviceInfo();
-    await request_config(device.uuid as string);
-    const resp = await invoke<string>("activate_code", { code: code });
-    setCoad(code);
-    if (resp) toast.info(resp, { position: "bottom-center" });
-    if (code === "DEMO") {
-      setDemoMode(true);
+    if (code === "") { 
+      callView("navigate");
+      return;
     }
-    callView("navigate");
+    if (code === "007") {
+      await invoke<string>("activate_code", { code: code });
+      toast.success(`ADMIN mode activated`, {
+        position: "bottom-center",
+        duration: 5000,
+      });
+      setAM(true);
+      callView("navigate");
+      return;
+    }
+    setCL(true);
+    request_config(device.uuid as string).then(async (resp) => {
+      if (resp) {
+        await invoke<string>("activate_code", { code: code });
+        toast.success(`Config updated`, {
+          position: "bottom-center",
+          duration: 5000,
+        });
+      }
+    }).catch(async (_) => {
+      await invoke<string>("activate_code", { code: code });
+      toast.error(`Loaded config without update`, {
+        position: "bottom-center",
+        duration: 5000,
+      });
+    }).finally(async () => {
+      setCL(false);
+      setCoad(code);
+      if (code === "DEMO") {
+        setDemoMode(true);
+      }
+      callView("navigate");
+    });
   };
 
   const setCommand = async (cmd: string) => {
@@ -377,6 +407,7 @@ export function StateProvider({
     roadbookMode,
     mobileView,
     requestMode,
+    configLoading,
 
     dashBoard,
     activeViewPort,

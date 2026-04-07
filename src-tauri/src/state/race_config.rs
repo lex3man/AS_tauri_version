@@ -62,15 +62,13 @@ impl RaceState {
     pub fn activate(&mut self, code: &str) {
         self.active_code = code.to_string();
         if let Some(race) = &self.race {
+            let mut ses = SpecEreaState::new();
             if let Some(area) = race.areas.get(code) {
                 self.current_sa = area.id.clone();
-            }
-            let mut ses = SpecEreaState::new();
-            if let Some(area) = race.areas.get(&self.current_sa) {
                 for point in &area.points_set {
                     ses.points.insert(point.get_id(), PointState::new());
                 }
-                ses.next_point = area.points_set[0].name.clone();
+                ses.next_point = area.points_set.first().unwrap().get_id();
                 self.spec_area_state = ses;
             }
         }

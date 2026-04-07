@@ -417,16 +417,16 @@ fn test_structs() {
 
     let race = race.build();
 
-    println!("{}", json!(race));
+    let outpath = Path::new("src/tests/output");
 
-    if Path::new("output").exists() {
-        fs::remove_dir_all("output").unwrap();
+    if outpath.exists() {
+        fs::remove_dir_all(outpath).unwrap();
     }
-    fs::create_dir("output").unwrap();
-    let mut file = File::create(Path::new("output").join("full_race.json")).unwrap();
+    fs::create_dir(outpath).unwrap();
+    let mut file = File::create(outpath.join("full_race.json")).unwrap();
     file.write_all(format!("{}", json!(race)).as_bytes())
         .unwrap();
-    let mut file = File::create(Path::new("output").join("point_types.json")).unwrap();
+    let mut file = File::create(outpath.join("point_types.json")).unwrap();
     file.write_all(format!("{}", json!(point_types)).as_bytes())
         .unwrap();
 }

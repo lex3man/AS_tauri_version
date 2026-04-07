@@ -2,5 +2,6 @@ pub mod admin;
 pub mod codes;
 pub mod location;
 pub mod race_number;
+pub mod roadbook;
 pub mod settings;
 pub mod states;

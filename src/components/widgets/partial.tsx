@@ -27,7 +27,7 @@ export const PartialLiteWidget = () => {
 
   return (
     <div
-      className={`flex flex-col justify-between border-2 border-primary h-full bg-primary-foreground p-1`}
+      className={`flex justify-between border-2 border-primary h-full bg-primary-foreground p-1`}
     >
       <div className={`font-extrabold text-xs`}>PARTIAL</div>
       <div

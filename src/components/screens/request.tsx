@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { server_init } from "@/lib/api";
+import { start_polling } from "@/lib/utils";
 import { TypeOfRequest } from "@/types/request";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -26,7 +27,9 @@ export const DataRequest = (props: Props) => {
           onClick={() => {
             if (props.typeOfData === "race number") {
               server_init(userInput)
-                .then(() => {})
+                .then(() => {
+                  start_polling(10);
+                })
                 .catch((e) => {
                   toast.error(`Request faild with error: ${e}`, {
                     position: "bottom-center",

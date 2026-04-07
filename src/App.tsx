@@ -4,7 +4,6 @@ import "./App.css";
 import {
   checkPermissions,
   requestPermissions,
-  // getCurrentPosition,
   watchPosition,
 } from "@tauri-apps/plugin-geolocation";
 import { DataRequest } from "./components/screens/request";
@@ -24,16 +23,15 @@ import { Coords } from "./types/state";
 import Position from "./components/screens/position";
 import DebugScreen from "./components/screens/debug";
 import Roadbook from "./components/screens/roadbook";
-// import { DEMO_TRACK } from "./lib/demo-track";
 
 function App() {
   const [leftOpen, setLeftOpen] = useState(false);
   const [rightOpen, setRightOpen] = useState(false);
   const {
-    // demoMode,
     roadbookMode,
     activeViewPort,
     mobileView,
+    configLoading,
     setGpsAccuracy,
     setRaceNumber,
     setCodeOfDay,
@@ -49,6 +47,7 @@ function App() {
     setNextPointName,
     setMaxSpeed,
     setRoadbookMode,
+    setDebugData,
   } = useAppState();
   const { showBackground } = useSettings();
   const { width, height } = useWindowDimensions();
@@ -63,34 +62,9 @@ function App() {
     }
 
     if (permissions.location === "granted") {
-      // const pos = await getCurrentPosition();
-      // await invoke("location_update", { data: JSON.stringify(pos) });
-
-      // let demoTrack = DEMO_TRACK.split(",\n");
-
-      let dec = 0;
       await watchPosition(
         { enableHighAccuracy: true, timeout: 1000, maximumAge: 0 },
         async (pos) => {
-          // if (demoMode) {
-          //   const demoPos = demoTrack.pop() as string;
-          //   const [lat, lon, speed, acc] = demoPos
-          //     .split(" ")
-          //     .map((c) => parseFloat(c));
-          //   pos = {
-          //     coords: {
-          //       latitude: lat as number,
-          //       longitude: lon as number,
-          //       accuracy: acc as number,
-          //       speed: speed as number,
-          //       altitudeAccuracy: null,
-          //       altitude: null,
-          //       heading: null,
-          //     },
-          //     timestamp: Date.now(),
-          //   };
-          // }
-
           await invoke("location_update", { data: JSON.stringify(pos) });
           const gpsPosition = await invoke<string>("get_coords");
           const geoData = JSON.parse(gpsPosition);
@@ -99,17 +73,19 @@ function App() {
             lon: geoData["longitude"],
           };
           setCoords(coords);
-          setCog(dec);
-          setCtw(285);
-          setDtw(315.45);
-          setCpCounter(24);
-          setNextPointNumber(29);
-          setNextPointName("Bivuac 2");
-          setMaxSpeed(120);
-
-          dec += 5;
-          if (dec > 355) dec = 0;
-
+          invoke<string>("sync_data").then((rawData) => {
+            setDebugData(rawData);
+            const data = JSON.parse(rawData);
+            setCog(data.cog);
+            setCtw(data.ctw);
+            setDtw(data.dtw);
+            setCpCounter(data.metrics.cp_counter);
+            setNextPointNumber(data.next_point.split("-")[0]);
+            setNextPointName(data.next_point.split("-")[1]);
+            setMaxSpeed(data.max_speed);
+          }).catch((_) => {
+            setDebugData("Failed to sync data");
+          });
           if (pos) {
             setGpsAccuracy(pos.coords.accuracy as number);
             setCurrentSpeed((pos.coords.speed as number) * 3.6);
@@ -138,6 +114,7 @@ function App() {
     };
   }, []);
 
+  const renderContent = () => {
   switch (activeViewPort.name) {
     case "request": {
       let answerFunc = setCodeOfDay;
@@ -228,6 +205,21 @@ function App() {
       );
   }
   return <main className="gap-3 items-center justify-center">{}</main>;
+  };
+
+  return (
+    <>
+      {configLoading && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="flex flex-col items-center gap-4">
+            <div className="w-12 h-12 border-4 border-white border-t-transparent rounded-full animate-spin" />
+            <span className="text-white text-lg font-medium">Request for config update...</span>
+          </div>
+        </div>
+      )}
+      {renderContent()}
+    </>
+  );
 }
 
 export default App;

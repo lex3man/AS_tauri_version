@@ -14,9 +14,7 @@ export const start_polling = (sec: number) => {
 
   pollingInterval = setInterval(async () => {
     const device = await getDeviceInfo();
-    request_config(device.uuid as string).then((resp) => {
-      if (resp) return;
-    });
+    await request_config(device.uuid as string);
   }, sec * 1000);
 };
 

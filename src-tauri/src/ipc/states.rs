@@ -1,13 +1,10 @@
 use std::sync::Mutex;
 
 use serde_json::json;
-use tauri::State;
+use tauri::{AppHandle, State};
 
 use crate::{
-    race::types::{CheckPoint, Race},
-    state::race_config::RaceState,
-    utils::parser::FormatedData,
-    AppState,
+    AppState, race::types::{CheckPoint, Race}, state::race_config::RaceState, utils::{parser::FormatedData, rb_store::download_images}
 };
 
 #[tauri::command]
@@ -37,12 +34,18 @@ pub fn get_snapshot(state: State<'_, Mutex<AppState>>) -> Result<String, ()> {
 }
 
 #[tauri::command]
-pub fn update_config(state: State<'_, Mutex<AppState>>, data: &str) -> Result<String, ()> {
+pub async fn update_config(app: AppHandle, state: State<'_, Mutex<AppState>>, data: &str) -> Result<String, ()> {
     let cfg = crate::utils::parser::upload_config(FormatedData::Json(data.to_string()));
     if let Some(cfg) = cfg {
-        let mut state = state.lock().unwrap();
-        state.race = RaceState::new();
-        state.race.update(&cfg);
+        let areas = {
+            let mut state = state.lock().unwrap();
+            state.race = RaceState::new();
+            state.race.update(&cfg);
+            state.race.race.as_ref().unwrap().areas.clone()
+        };
+        for area in areas {
+            let _ = download_images(app.clone(), &area.1.roadbook).await;
+        }
         return Ok("Race config updated".to_string());
     }
     Err(())
@@ -81,4 +84,32 @@ pub fn get_race_info(state: State<'_, Mutex<AppState>>) -> Result<String, String
         ));
     }
     Err("Race not found".to_string())
+}
+
+#[tauri::command]
+pub fn sync_data(state: State<'_, Mutex<AppState>>) -> Result<String, ()> {
+    if let Ok(state) = state.lock() {
+        if state.race.race.is_none() || state.race.active_code == "" {
+            return Err(());
+        }
+        let response = json!({
+            "cog": state.dashboard.cog,
+            "sog": state.dashboard.sog,
+            "ctw": state.dashboard.ctw,
+            "dtw": state.dashboard.dtw,
+            "max_speed": state.dashboard.max_speed,
+            "activation_code": state.race.active_code,
+            "metrics": {
+                "abs_total": state.dashboard.metrics.abs_total,
+                "total": state.dashboard.metrics.total,
+                "partial": state.dashboard.metrics.partial,
+                "countdown": state.dashboard.metrics.countdown,
+                "cp_counter": state.dashboard.metrics.cp_counter
+            },
+            "next_point": &state.race.spec_area_state.next_point
+        });
+    Ok(response.to_string())
+    } else {
+        Err(())
+    }
 }

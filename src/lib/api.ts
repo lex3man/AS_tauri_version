@@ -60,11 +60,12 @@ export const request_config = async (device_id: string) => {
       "Content-Type": "application/json",
     },
   });
-  let data = await resp.json();
+
   if (resp.status === 200) {
+    let data = await resp.json();
     await invoke<string>("update_config", { data: JSON.stringify(data) });
     stop_polling();
-    return true;
+    return true; 
   } else {
     return false;
   }

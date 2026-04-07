@@ -26,9 +26,6 @@ const Settings = () => {
       </div>
       <div className="flex flex-col justify-center m-auto">
         <div className="flex flex-col justify-center m-auto md:w-1/2 sm:w-2/3 gap-2">
-          <Button className="p-6 text-2xl" onClick={() => {}}>
-            ROAD BOOK
-          </Button>
           <Button
             className="p-6 text-2xl"
             onClick={() => {

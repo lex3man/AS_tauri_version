@@ -1,5 +1,7 @@
 use serde::{Deserialize, Serialize};
 
+use crate::race::types::Coords;
+
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct DashBoard {
     pub cog: u32,
@@ -14,17 +16,17 @@ pub struct DashBoard {
     pub widget_shown: Widgets,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct Coords {
-    pub lat: f32,
-    pub lon: f32,
-}
+// #[derive(Serialize, Deserialize, Debug, Clone)]
+// pub struct Coords {
+//     pub lat: f32,
+//     pub lon: f32,
+// }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Metrics {
-    pub abs_total: f32,
-    pub total: f32,
-    pub partial: f32,
+    pub abs_total: f64,
+    pub total: f64,
+    pub partial: f64,
     pub countdown: u32,
     pub cp_counter: u32,
 }
@@ -45,13 +47,13 @@ impl DashBoard {
             dtw: 321.22,
             max_speed: 120,
             coords: Coords {
-                lat: 0f32,
-                lon: 0f32,
+                lat: 0f64,
+                lon: 0f64,
             },
             metrics: Metrics {
-                abs_total: 0f32,
-                total: 0f32,
-                partial: 0f32,
+                abs_total: 0f64,
+                total: 0f64,
+                partial: 0f64,
                 countdown: 0,
                 cp_counter: 0,
             },
