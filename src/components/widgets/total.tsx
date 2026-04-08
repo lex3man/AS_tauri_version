@@ -1,7 +1,7 @@
 import { useAppState } from "@/ctx/state-provider";
 
 export const TotalWidget = () => {
-  const { dashBoard, mobileView } = useAppState();
+  const { total, mobileView } = useAppState();
 
   return (
     <div
@@ -13,14 +13,14 @@ export const TotalWidget = () => {
       <div
         className={`${mobileView ? "text-2xl" : "text-[clamp(1.5rem,5vw,4rem)]"} my-auto leading-none`}
       >
-        {dashBoard.metrics.total}
+        {total.toFixed(2)}
       </div>
     </div>
   );
 };
 
 export const TotalLiteWidget = () => {
-  const { dashBoard, mobileView } = useAppState();
+  const { total, mobileView } = useAppState();
 
   return (
     <div
@@ -30,7 +30,7 @@ export const TotalLiteWidget = () => {
       <div
         className={`${mobileView ? "text-2xl" : "text-[clamp(1.5rem,5vw,4rem)]"} my-auto leading-none`}
       >
-        {dashBoard.metrics.total}
+        {total.toFixed(2)}
       </div>
     </div>
   );

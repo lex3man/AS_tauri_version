@@ -17,28 +17,28 @@ pub fn distance(position_1: Coords, position_2: Coords) -> Kilometers {
     Kilometers::from(6371000.0 * c)
 }
 
-pub fn course_in_degrees(last: Coords, current: Coords) -> u32 {
-    let delta_lat = degrees_to_radians(current.lat - last.lat);
-    let delta_lon = degrees_to_radians(current.lon - last.lon);
+pub fn course_in_degrees(point_a: Coords, point_b: Coords) -> u32 {
+    let delta_lat = degrees_to_radians(point_b.lat - point_a.lat);
+    let delta_lon = degrees_to_radians(point_b.lon - point_a.lon);
 
     let mut catet_a = distance(
         Coords {
-            lat: current.lat,
-            lon: current.lon,
+            lat: point_b.lat,
+            lon: point_b.lon,
         },
         Coords {
-            lat: last.lat,
-            lon: current.lon,
+            lat: point_a.lat,
+            lon: point_b.lon,
         },
     ) * 1000.0;
     let mut catet_b = distance(
         Coords {
-            lat: last.lat,
-            lon: last.lon,
+            lat: point_a.lat,
+            lon: point_a.lon,
         },
         Coords {
-            lat: last.lat,
-            lon: current.lon,
+            lat: point_a.lat,
+            lon: point_b.lon,
         },
     ) * 1000.0;
 
@@ -50,13 +50,13 @@ pub fn course_in_degrees(last: Coords, current: Coords) -> u32 {
     }
 
     let direction = if delta_lat >= 0.0 {
-        if delta_lon >= 0.0 {
+        if delta_lon > 0.0 {
             (catet_b / catet_a).atan() * (180.0 / std::f64::consts::PI)
         } else {
             (catet_a / catet_b).atan() * (180.0 / std::f64::consts::PI) + 270.0
         }
     } else {
-        if delta_lon >= 0.0 {
+        if delta_lon > 0.0 {
             (catet_a / catet_b).atan() * (180.0 / std::f64::consts::PI) + 90.0
         } else {
             (catet_b / catet_a).atan() * (180.0 / std::f64::consts::PI) + 180.0

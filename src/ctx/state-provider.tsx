@@ -52,6 +52,8 @@ type AppStateProviderState = {
   cpCounter: number;
   nextPointNumber: number;
   nextPointName: string;
+  total: number;
+  partial: number;
 
   setRaceNumber: (rn: string) => void;
   setRoadbookMode: (status: boolean) => void;
@@ -73,6 +75,8 @@ type AppStateProviderState = {
   setNextPointNumber: (val: number) => void;
   setNextPointName: (val: string) => void;
   setMaxSpeed: (val: number) => void;
+  setTotal: (val: number) => void;
+  setPartial: (val: number) => void;
 };
 
 const initialState: AppStateProviderState = {
@@ -106,6 +110,8 @@ const initialState: AppStateProviderState = {
   cpCounter: 0,
   nextPointNumber: 0,
   nextPointName: "",
+  total: 0,
+  partial: 0,
 
   dashBoard: {
     cog: 0,
@@ -149,6 +155,8 @@ const initialState: AppStateProviderState = {
   setNextPointNumber: () => null,
   setNextPointName: () => null,
   setMaxSpeed: () => null,
+  setTotal: () => null,
+  setPartial: () => null, 
 };
 
 const AppStateProviderContext =
@@ -188,6 +196,8 @@ export function StateProvider({
   const [nextPointNumber, setNextPointNumber] = useState(0);
   const [nextPointName, setNextPointName] = useState("");
   const [debugData, setDebugData] = useState("");
+  const [total, setTotal] = useState(0);
+  const [partial, setPartial] = useState(0);
 
   // indicators
   const [gpsAccurancy, setGpsAccuracy] = useState(5);
@@ -427,6 +437,8 @@ export function StateProvider({
     cpCounter,
     nextPointNumber,
     nextPointName,
+    total,
+    partial,
 
     gpsAccurancy,
     batteryLevel,
@@ -452,6 +464,8 @@ export function StateProvider({
     setNextPointNumber,
     setNextPointName,
     setMaxSpeed,
+    setTotal,
+    setPartial,
   };
 
   return (

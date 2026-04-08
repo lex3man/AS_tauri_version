@@ -1,7 +1,10 @@
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 
-use crate::race::types::{Race, SpecAreaID};
+use crate::{
+    race::types::{Race, SpecAreaID},
+    state::points_evolution::PointLinkedList,
+};
 
 pub type PointID = String;
 
@@ -9,7 +12,6 @@ pub type PointID = String;
 pub struct PointState {
     pub checked: bool,
     pub jumpable: bool,
-    pub active: bool,
 }
 
 impl PointState {
@@ -17,7 +19,6 @@ impl PointState {
         PointState {
             checked: false,
             jumpable: true,
-            active: false,
         }
     }
 }
@@ -25,6 +26,7 @@ impl PointState {
 #[derive(Serialize, Deserialize)]
 pub struct SpecEreaState {
     pub points: BTreeMap<PointID, PointState>,
+    pub point_controller: PointLinkedList,
     pub next_point: PointID,
     pub prev_point: PointID,
 }
@@ -33,6 +35,7 @@ impl SpecEreaState {
     pub fn new() -> Self {
         SpecEreaState {
             points: BTreeMap::new(),
+            point_controller: PointLinkedList::new(),
             next_point: String::from(""),
             prev_point: String::from(""),
         }
@@ -65,9 +68,13 @@ impl RaceState {
             let mut ses = SpecEreaState::new();
             if let Some(area) = race.areas.get(code) {
                 self.current_sa = area.id.clone();
+                let mut list = vec![];
                 for point in &area.points_set {
                     ses.points.insert(point.get_id(), PointState::new());
+                    list.push(point.get_id());
                 }
+                ses.point_controller = PointLinkedList::from_point_ids(list);
+                ses.point_controller.move_to_first();
                 ses.next_point = area.points_set.first().unwrap().get_id();
                 self.spec_area_state = ses;
             }

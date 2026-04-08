@@ -1,4 +1,5 @@
 pub mod dashboard;
+pub mod points_evolution;
 pub mod race_config;
 pub mod telemetry;
 
@@ -26,7 +27,7 @@ pub struct GPSData {
     pub heading: Option<f32>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone, Copy)]
 pub struct Position {
     pub timestamp: u64,
     pub coords: GPSData,

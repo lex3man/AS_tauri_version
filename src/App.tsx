@@ -43,6 +43,8 @@ function App() {
     setCtw,
     setDtw,
     setCpCounter,
+    setTotal,
+    setPartial,
     setNextPointNumber,
     setNextPointName,
     setMaxSpeed,
@@ -79,7 +81,10 @@ function App() {
             setCog(data.cog);
             setCtw(data.ctw);
             setDtw(data.dtw);
+            setCurrentSpeed(data.sog);
             setCpCounter(data.metrics.cp_counter);
+            setTotal(data.metrics.total);
+            setPartial(data.metrics.partial);
             setNextPointNumber(data.next_point.split("-")[0]);
             setNextPointName(data.next_point.split("-")[1]);
             setMaxSpeed(data.max_speed);
@@ -88,7 +93,7 @@ function App() {
           });
           if (pos) {
             setGpsAccuracy(pos.coords.accuracy as number);
-            setCurrentSpeed((pos.coords.speed as number) * 3.6);
+            // setCurrentSpeed((pos.coords.speed as number) * 3.6);
           }
         },
       );

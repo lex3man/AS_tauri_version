@@ -13,11 +13,7 @@ use tauri_plugin_store::StoreExt as _;
 
 use crate::{
     config::Config,
-    state::{
-        dashboard::DashBoard,
-        race_config::{RaceState, SpecEreaState},
-        AppState,
-    },
+    state::{dashboard::DashBoard, race_config::RaceState, AppState},
 };
 
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
@@ -56,6 +52,7 @@ pub fn run() {
             ipc::states::get_current_cp_list,
             ipc::states::get_race_info,
             ipc::states::sync_data,
+            ipc::states::reset_partial,
             ipc::codes::activate_code,
             ipc::roadbook::get_roadbook,
             ipc::roadbook::get_roadbook_image,
@@ -67,25 +64,6 @@ pub fn run() {
             let store = app.store("AS_storage.json")?;
             let state = app.state::<Mutex<AppState>>();
             let mut state = state.lock().unwrap();
-
-            // if let Some(val) = store.get("as_race_number") {
-            //     state.race_number = Some(val.as_str().unwrap().to_string());
-            // }
-            // if let Some(val) = store.get("as_settings") {
-            //     state.settings = serde_json::from_value::<Config>(val).unwrap();
-            // }
-            // if let Some(val) = store.get("as_snapshot") {
-            //     state.snapshot = Some(val.as_str().unwrap().to_string());
-            // }
-            // if let Some(val) = store.get("as_spec_area") {
-            //     state.spec_area = serde_json::from_value::<SpecEreaState>(val).unwrap();
-            // }
-            // if let Some(val) = store.get("as_race") {
-            //     state.race = serde_json::from_value::<RaceState>(val).unwrap();
-            // }
-            // if let Some(val) = store.get("as_dashboard") {
-            //     state.dashboard = serde_json::from_value::<DashBoard>(val).unwrap();
-            // }
 
             if let Some(val) = store.get("race_number") {
                 state.race_number = Some(val.as_str().unwrap().to_string());

@@ -69,7 +69,7 @@ const CheckPoints = () => {
       <div className="flex flex-wrap justify-center max-h-[70vh] overflow-y-auto">
         {points.map((point) => (
           <div
-            className={`m-2 p-5 gap-15 border-2 ${point.checked && "bg-green-500"} border-foreground rounded-xl w-1/6`}
+            className={`m-2 p-5 gap-15 border-2 ${point.next && "bg-gray-500"} ${point.checked && "bg-green-500"} border-foreground rounded-xl w-1/6`}
             key={point.num}
           >
             <div className="flex justify-between">

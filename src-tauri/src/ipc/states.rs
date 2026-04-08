@@ -4,7 +4,10 @@ use serde_json::json;
 use tauri::{AppHandle, State};
 
 use crate::{
-    AppState, race::types::{CheckPoint, Race}, state::race_config::RaceState, utils::{parser::FormatedData, rb_store::download_images}
+    race::types::CheckPoint,
+    state::race_config::RaceState,
+    utils::{parser::FormatedData, rb_store::download_images},
+    AppState,
 };
 
 #[tauri::command]
@@ -34,7 +37,11 @@ pub fn get_snapshot(state: State<'_, Mutex<AppState>>) -> Result<String, ()> {
 }
 
 #[tauri::command]
-pub async fn update_config(app: AppHandle, state: State<'_, Mutex<AppState>>, data: &str) -> Result<String, ()> {
+pub async fn update_config(
+    app: AppHandle,
+    state: State<'_, Mutex<AppState>>,
+    data: &str,
+) -> Result<String, ()> {
     let cfg = crate::utils::parser::upload_config(FormatedData::Json(data.to_string()));
     if let Some(cfg) = cfg {
         let areas = {
@@ -60,11 +67,14 @@ pub fn get_current_cp_list(state: State<'_, Mutex<AppState>>) -> String {
             return "[]".to_string();
         }
         for p in &race.areas.get(&state.race.active_code).unwrap().points_set {
+            let point_state = state.race.spec_area_state.points.get(&p.get_id());
+            let is_next = &p.get_id() == &state.race.spec_area_state.next_point;
             point_list.push(CheckPoint {
                 num: p.num,
                 name: p.name.clone(),
                 ptype: p.point_type.clone(),
-                checked: false,
+                checked: point_state.is_some() && point_state.unwrap().checked,
+                next: is_next,
             });
         }
     };
@@ -108,8 +118,17 @@ pub fn sync_data(state: State<'_, Mutex<AppState>>) -> Result<String, ()> {
             },
             "next_point": &state.race.spec_area_state.next_point
         });
-    Ok(response.to_string())
+        Ok(response.to_string())
     } else {
         Err(())
     }
+}
+
+#[tauri::command]
+pub fn reset_partial(state: State<'_, Mutex<AppState>>) -> Result<(), ()> {
+    if let Ok(mut state) = state.lock() {
+        state.dashboard.metrics.partial = 0.0;
+        return Ok(());
+    }
+    Err(())
 }

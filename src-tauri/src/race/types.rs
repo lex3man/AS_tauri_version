@@ -274,4 +274,5 @@ pub struct CheckPoint {
     pub name: String,
     pub ptype: String,
     pub checked: bool,
+    pub next: bool,
 }

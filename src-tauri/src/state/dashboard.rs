@@ -16,12 +16,6 @@ pub struct DashBoard {
     pub widget_shown: Widgets,
 }
 
-// #[derive(Serialize, Deserialize, Debug, Clone)]
-// pub struct Coords {
-//     pub lat: f32,
-//     pub lon: f32,
-// }
-
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Metrics {
     pub abs_total: f64,

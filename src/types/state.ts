@@ -53,4 +53,5 @@ export type CheckPoint = {
     name: string;
     ptype: string;
     checked: boolean;
+    next: boolean;
 };

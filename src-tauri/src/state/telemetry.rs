@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::state::Position;
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone, Copy)]
 pub struct Exceed {
     pub speed: f32,
     pub limit: u32,
@@ -17,7 +17,7 @@ impl Exceed {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Telemetry {
     pub events: Vec<String>,
     pub steps: Vec<Position>,
