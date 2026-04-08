@@ -5,7 +5,7 @@ import { CheckPoint } from "@/types/state";
 import { invoke } from "@tauri-apps/api/core";
 
 const CheckPoints = () => {
-  const { callView } = useAppState();
+  const { callView, mobileView } = useAppState();
   const [points, setPoints] = useState<CheckPoint[]>([]);
   // const [raw, setRaw] = useState<string>("");
   const [raceInfo, setRaceInfo] = useState({
@@ -66,7 +66,7 @@ const CheckPoints = () => {
           </Button>
         </div>
       </div>
-      <div className="flex flex-wrap justify-center max-h-[70vh] overflow-y-auto">
+      <div className={`flex flex-wrap justify-center ${mobileView ? "max-h-[50vh]" : "max-h-[70vh]"} overflow-y-auto`}>
         {points.map((point) => (
           <div
             className={`m-2 p-5 gap-15 border-2 ${point.next && "bg-gray-500"} ${point.checked && "bg-green-500"} border-foreground rounded-xl w-1/6`}

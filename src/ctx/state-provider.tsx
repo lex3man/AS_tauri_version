@@ -30,6 +30,7 @@ type AppStateProviderState = {
   mobileView: boolean;
   requestMode: boolean;
   configLoading: boolean;
+  visiable: boolean;
 
   dashBoard: DashBoard;
   activeViewPort: ViewPort;
@@ -62,6 +63,7 @@ type AppStateProviderState = {
   setMobileView: (status: boolean) => void;
   setDemoMode: (status: boolean) => void;
   setRequestMode: (status: boolean) => void;
+  setVisiable: (status: boolean) => void;
   callView: (name: string, type?: TypeOfRequest) => void;
   setCommand: (cmd: string) => void;
   switchWidget: (caption: "total" | "partial" | "countdown") => void;
@@ -91,6 +93,7 @@ const initialState: AppStateProviderState = {
   mobileView: false,
   requestMode: true,
   configLoading: false,
+  visiable: false,
 
   gpsAccurancy: 5,
   batteryLevel: 100,
@@ -157,6 +160,7 @@ const initialState: AppStateProviderState = {
   setMaxSpeed: () => null,
   setTotal: () => null,
   setPartial: () => null, 
+  setVisiable: () => null,
 };
 
 const AppStateProviderContext =
@@ -178,6 +182,7 @@ export function StateProvider({
   const [mobileView, setMobileView] = useState(false);
   const [requestMode, setRM] = useState(true);
   const [configLoading, setCL] = useState(false);
+  const [visiable, setVisiable] = useState(false);
 
   // widgets state
   const [totalWidgetShown, setTotalShow] = useState(false);
@@ -418,6 +423,7 @@ export function StateProvider({
     mobileView,
     requestMode,
     configLoading,
+    visiable,
 
     dashBoard,
     activeViewPort,
@@ -466,6 +472,7 @@ export function StateProvider({
     setMaxSpeed,
     setTotal,
     setPartial,
+    setVisiable,
   };
 
   return (

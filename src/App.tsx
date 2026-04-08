@@ -50,6 +50,7 @@ function App() {
     setMaxSpeed,
     setRoadbookMode,
     setDebugData,
+    setVisiable,
   } = useAppState();
   const { showBackground } = useSettings();
   const { width, height } = useWindowDimensions();
@@ -88,6 +89,7 @@ function App() {
             setNextPointNumber(data.next_point.split("-")[0]);
             setNextPointName(data.next_point.split("-")[1]);
             setMaxSpeed(data.max_speed);
+            setVisiable(data.visiable);
           }).catch((_) => {
             setDebugData("Failed to sync data");
           });

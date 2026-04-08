@@ -30,6 +30,7 @@ pub struct Widgets {
     pub total: bool,
     pub partial: bool,
     pub countdown: bool,
+    pub arrow: bool,
 }
 
 impl DashBoard {
@@ -55,6 +56,7 @@ impl DashBoard {
                 total: false,
                 partial: false,
                 countdown: false,
+                arrow: false,
             },
         }
     }

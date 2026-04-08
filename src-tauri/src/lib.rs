@@ -53,6 +53,7 @@ pub fn run() {
             ipc::states::get_race_info,
             ipc::states::sync_data,
             ipc::states::reset_partial,
+            ipc::states::point_switch,
             ipc::codes::activate_code,
             ipc::roadbook::get_roadbook,
             ipc::roadbook::get_roadbook_image,

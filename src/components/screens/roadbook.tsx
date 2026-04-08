@@ -65,11 +65,11 @@ const Roadbook = () => {
           </div>
           <div className="flex flex-col w-1/2 h-[30vh]">
             <div
-              className={`text-[clamp(1.5rem,5vw,3rem)] leading-none mx-auto font-extrabold p-5`}
+              className={`text-[clamp(1.5rem,5vw,3rem)] leading-none mx-auto font-extrabold py-5`}
             >
-              <div className="transform scale-x-60">WTP{nextPointNumber} {nextPointName}</div>
+              <div className="transform scale-x-60 text-center">WTP{nextPointNumber} {nextPointName}</div>
             </div>
-            <div className={`flex h-[25vh] justify-center pb-5`}>
+            <div className={`flex h-[25vh] justify-center mb-5`}>
               <Arrow />
             </div>
           </div>

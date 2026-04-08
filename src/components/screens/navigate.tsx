@@ -20,6 +20,7 @@ const Ride = () => {
     roadbookMode,
     nextPointNumber,
     nextPointName,
+    visiable
   } = useAppState();
 
   return (
@@ -41,18 +42,22 @@ const Ride = () => {
       </div>
       <div className="flex w-full justify-center">
         <div className={`flex flex-col w-1/4 h-[85vh]`}>
-          <div className="flex flex-col justify-start h-[30%] px-3">
-            <div
-              className={`flex justify-start ${mobileView ? "text-6xl" : "text-[clamp(4rem,10vw,8rem)]"} font-extrabold leading-none`}
-            >
-              <div className="transform origin-left scale-x-60">{cog}</div>
+          {!visiable ? (
+            <div className="flex flex-col justify-start h-[30%] px-3"></div>
+          ) : (
+            <div className="flex flex-col justify-start h-[30%] px-3">
+              <div
+                className={`flex justify-start ${mobileView ? "text-6xl" : "text-[clamp(4rem,10vw,8rem)]"} font-extrabold leading-none`}
+              >
+                <div className="transform origin-left scale-x-60">{cog}</div>
+              </div>
+              <div
+                className={`flex justify-start ${mobileView ? "text-xl" : "text-2xl"} font-bold`}
+              >
+                COG
+              </div>
             </div>
-            <div
-              className={`flex justify-start ${mobileView ? "text-xl" : "text-2xl"} font-bold`}
-            >
-              COG
-            </div>
-          </div>
+          )}
           <div className="h-[35%]"></div>
           <div className="flex flex-col justify-end h-[30%] px-3">
             <div
@@ -77,11 +82,15 @@ const Ride = () => {
           >
             <div className="transform scale-x-60">WPT{nextPointNumber} {nextPointName}</div>
           </div>
-          <div
+          {visiable ? (<div
             className={`flex ${roadbookMode ? "h-[30vh]" : "h-full"} w-full justify-center pb-5`}
           >
             <Arrow />
-          </div>
+          </div>) : (<div className={`flex ${roadbookMode ? "h-[30vh]" : "h-full"} w-full justify-center pb-5`}>
+            <div className="text-[clamp(20rem,5vw,45rem)] font-extrabold leading-none transform scale-x-60">
+            {cog.toFixed(0)}
+            </div>
+          </div>)}
         </div>
         <div
           className={`flex flex-col w-1/4 ${roadbookMode ? "h-[25vh]" : "h-[85vh]"}`}

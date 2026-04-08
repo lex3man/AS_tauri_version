@@ -116,7 +116,8 @@ pub fn sync_data(state: State<'_, Mutex<AppState>>) -> Result<String, ()> {
                 "countdown": state.dashboard.metrics.countdown,
                 "cp_counter": state.dashboard.metrics.cp_counter
             },
-            "next_point": &state.race.spec_area_state.next_point
+            "next_point": &state.race.spec_area_state.next_point,
+            "visiable": state.dashboard.widget_shown.arrow,
         });
         Ok(response.to_string())
     } else {
@@ -128,6 +129,46 @@ pub fn sync_data(state: State<'_, Mutex<AppState>>) -> Result<String, ()> {
 pub fn reset_partial(state: State<'_, Mutex<AppState>>) -> Result<(), ()> {
     if let Ok(mut state) = state.lock() {
         state.dashboard.metrics.partial = 0.0;
+        return Ok(());
+    }
+    Err(())
+}
+
+#[tauri::command]
+pub fn point_switch(state: State<'_, Mutex<AppState>>, move_to: &str) -> Result<(), ()> {
+    if let Ok(mut state) = state.lock() {
+        match move_to {
+            "prev" => {
+                if state.race.spec_area_state.point_controller.has_prev() {
+                    state.race.spec_area_state.point_controller.move_prev();
+                }
+            }
+            "next" => {
+                if state.race.spec_area_state.point_controller.has_next() {
+                    state.race.spec_area_state.point_controller.move_next();
+                }
+            }
+            _ => {}
+        }
+        let next_point_id = state
+            .race
+            .spec_area_state
+            .point_controller
+            .get_active()
+            .unwrap()
+            .clone();
+        if state.race.spec_area_state.point_controller.has_prev() {
+            let prev_point_id = state
+                .race
+                .spec_area_state
+                .point_controller
+                .peek_prev()
+                .unwrap()
+                .clone();
+
+            state.race.spec_area_state.prev_point = prev_point_id;
+        }
+        state.race.spec_area_state.next_point = next_point_id;
         return Ok(());
     }
     Err(())

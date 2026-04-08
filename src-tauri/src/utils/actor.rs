@@ -35,6 +35,8 @@ pub fn make_culc(state: &Mutex<AppState>, pos: &Position) -> Result<(), ()> {
             steps: vec![],
             speed_exceeds: HashMap::new(),
         };
+        let mut is_open = false;
+        let mut in_visiable_zone = false;
 
         // ============================================================================
         // loading current state
@@ -44,6 +46,7 @@ pub fn make_culc(state: &Mutex<AppState>, pos: &Position) -> Result<(), ()> {
             next_point_id = state.race.spec_area_state.next_point.clone();
             if let Some(next_point) = area.get_point_by_id(&next_point_id) {
                 next_point_id = next_point.get_id();
+                is_open = next_point.flags.is_open;
                 prev_point_id = state.race.spec_area_state.prev_point.clone();
                 if let Some(telemetry) = state.telemetry.get(&area.id) {
                     //
@@ -60,6 +63,7 @@ pub fn make_culc(state: &Mutex<AppState>, pos: &Position) -> Result<(), ()> {
                             lon: next_point.lon,
                         },
                     ) / 1000.0;
+                    in_visiable_zone = (dtw * 1000.0) <= (next_point.visible_radius as f64);
                     tel = telemetry.clone();
                     if let Some(_prev_position) = telemetry.steps.last() {
                         let length = telemetry.steps.len();
@@ -94,6 +98,7 @@ pub fn make_culc(state: &Mutex<AppState>, pos: &Position) -> Result<(), ()> {
                     // ============================================================================
                     if dtw * 1000.0 <= next_point.capture_radius as f64 {
                         prev_point_id = next_point_id.clone();
+                        is_open = false;
                         if next_point.odo <= next_point.capture_radius {
                             total_correction = Some(0.0);
                         } else {
@@ -141,6 +146,7 @@ pub fn make_culc(state: &Mutex<AppState>, pos: &Position) -> Result<(), ()> {
         state.race.spec_area_state.prev_point = prev_point_id;
         state.race.spec_area_state.next_point = next_point_id;
         state.telemetry.insert(area_id.clone(), tel);
+        state.dashboard.widget_shown.arrow = is_open || in_visiable_zone;
     }
     Ok(())
 }

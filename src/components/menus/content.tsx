@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { useAppState } from "@/ctx/state-provider";
+import { invoke } from "@tauri-apps/api/core";
 
 export const LeftContent = () => {
   const { switchWidget } = useAppState();
@@ -64,10 +65,10 @@ export const RightContent = () => {
         CHECK
       </Button>
       <div className="flex justify-between">
-        <Button className="p-7 text-3xl w-1/2" onClick={() => { }}>
+        <Button className="p-7 text-3xl w-1/2" onClick={async () => { await invoke("point_switch", { moveTo: "next" }) }}>
           W+
         </Button>
-        <Button className="p-7 text-3xl w-1/2" onClick={() => { }}>
+        <Button className="p-7 text-3xl w-1/2" onClick={async () => { await invoke("point_switch", { moveTo: "prev" }) }}>
           W-
         </Button>
       </div>
