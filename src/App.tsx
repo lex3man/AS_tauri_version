@@ -178,7 +178,6 @@ function App() {
               onOpenTop={() => setTopOpen(true)}
               onCloseLeft={() => setLeftOpen(false)}
               onCloseRight={() => setRightOpen(false)}
-              onCloseTop={() => setTopOpen(false)}
             />
           )}
           {roadbookMode ? (
@@ -189,7 +188,6 @@ function App() {
                 onOpenTop={() => setTopOpen(true)}
                 onCloseLeft={() => setLeftOpen(false)}
                 onCloseRight={() => setRightOpen(false)}
-                onCloseTop={() => setTopOpen(false)}
               />
               <Roadbook />
               <div className="flex">

@@ -6,7 +6,6 @@ interface SwipeZonesProps {
   onOpenRight: () => void;
   onCloseLeft: () => void;
   onCloseRight: () => void;
-  onCloseTop: () => void;
   onOpenTop: () => void;
 }
 
@@ -15,7 +14,6 @@ export function SwipeZones({
   onOpenRight,
   onCloseLeft,
   onCloseRight,
-  onCloseTop,
   onOpenTop,
 }: SwipeZonesProps) {
   const touchStartX = useRef<number>(0);

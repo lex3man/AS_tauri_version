@@ -16,7 +16,7 @@ interface TopMenuProps {
 
 export function TopMenu({ open, setOpen }: TopMenuProps) {
   return (
-    <div className="w-1/2 m-auto">
+    <div className="w-1/2">
       <Drawer
         key={"top"}
         direction={"top"}
