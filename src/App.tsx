@@ -23,10 +23,12 @@ import { Coords } from "./types/state";
 import Position from "./components/screens/position";
 import DebugScreen from "./components/screens/debug";
 import Roadbook from "./components/screens/roadbook";
+import { TopMenu } from "./components/menus/tsd-menu";
 
 function App() {
   const [leftOpen, setLeftOpen] = useState(false);
   const [rightOpen, setRightOpen] = useState(false);
+  const [topOpen, setTopOpen] = useState(false);
   const {
     roadbookMode,
     activeViewPort,
@@ -95,7 +97,6 @@ function App() {
           });
           if (pos) {
             setGpsAccuracy(pos.coords.accuracy as number);
-            // setCurrentSpeed((pos.coords.speed as number) * 3.6);
           }
         },
       );
@@ -111,7 +112,8 @@ function App() {
       const rn = await invoke<string>("get_race_number");
       setRaceNumber(rn);
     };
-    setMobileView(width / height > 2);
+    setMobileView((width / height > 2) || (height / width) > 2);
+    setRoadbookMode(width < height);
     check();
     geoloc();
     screen.orientation.addEventListener("change", orientationChangeHandle);
@@ -173,13 +175,26 @@ function App() {
             <SwipeZones
               onOpenLeft={() => setLeftOpen(true)}
               onOpenRight={() => setRightOpen(true)}
+              onOpenTop={() => setTopOpen(true)}
               onCloseLeft={() => setLeftOpen(false)}
               onCloseRight={() => setRightOpen(false)}
+              onCloseTop={() => setTopOpen(false)}
             />
           )}
           {roadbookMode ? (
             <main className="h-full gap-3 items-center justify-center overflow-hidden">
+              <SwipeZones
+                onOpenLeft={() => setLeftOpen(true)}
+                onOpenRight={() => setRightOpen(true)}
+                onOpenTop={() => setTopOpen(true)}
+                onCloseLeft={() => setLeftOpen(false)}
+                onCloseRight={() => setRightOpen(false)}
+                onCloseTop={() => setTopOpen(false)}
+              />
               <Roadbook />
+              <div className="flex">
+                <TopMenu open={topOpen} setOpen={setTopOpen} />
+              </div>
             </main>
           ) : (
             <main
@@ -191,7 +206,7 @@ function App() {
                 </div>
               )}
               <div
-                className={`relative ${roadbookMode ? "h-[30vh]" : "h-screen"} w-full border-2 border-foreground ${showBackground ? 'bg-cover bg-center bg-no-repeat bg-[url("./assets/background.png")]' : ""}`}
+                className={`relative h-screen w-full border-2 border-foreground ${showBackground ? 'bg-cover bg-center bg-no-repeat bg-[url("./assets/background.png")]' : ""}`}
               >
                 <Ride />
               </div>
@@ -200,7 +215,11 @@ function App() {
                   <RightContent />
                 </div>
               )}
-              {!roadbookMode && (
+              {roadbookMode ? (
+                <div className="flex">
+                  <TopMenu open={topOpen} setOpen={setTopOpen} />
+                </div>
+              ) : (
                 <div className="flex">
                   <LeftMenu open={leftOpen} setOpen={setLeftOpen} />
                   <RightMenu open={rightOpen} setOpen={setRightOpen} />

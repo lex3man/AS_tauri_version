@@ -44,8 +44,32 @@ pub fn make_culc(state: &Mutex<AppState>, pos: &Position) -> Result<(), ()> {
         if let Some(area) = &state.race.race.as_ref().unwrap().areas.get(code) {
             area_id = area.id.clone();
             next_point_id = state.race.spec_area_state.next_point.clone();
+
+            let _ = &area.points_set.iter().for_each(|point| {
+                if distance(
+                    Coords {
+                        lat: pos.coords.latitude,
+                        lon: pos.coords.longitude,
+                    },
+                    Coords {
+                        lat: point.lat,
+                        lon: point.lon,
+                    },
+                ) * 1000.0
+                    <= point.capture_radius as f64
+                    && !state
+                        .race
+                        .spec_area_state
+                        .points
+                        .get(&point.get_id())
+                        .unwrap()
+                        .checked
+                {
+                    next_point_id = point.get_id();
+                }
+            });
+
             if let Some(next_point) = area.get_point_by_id(&next_point_id) {
-                next_point_id = next_point.get_id();
                 is_open = next_point.flags.is_open;
                 prev_point_id = state.race.spec_area_state.prev_point.clone();
                 if let Some(telemetry) = state.telemetry.get(&area.id) {
@@ -62,7 +86,7 @@ pub fn make_culc(state: &Mutex<AppState>, pos: &Position) -> Result<(), ()> {
                             lat: next_point.lat,
                             lon: next_point.lon,
                         },
-                    ) / 1000.0;
+                    );
                     in_visiable_zone = (dtw * 1000.0) <= (next_point.visible_radius as f64);
                     tel = telemetry.clone();
                     if let Some(_prev_position) = telemetry.steps.last() {
@@ -107,6 +131,11 @@ pub fn make_culc(state: &Mutex<AppState>, pos: &Position) -> Result<(), ()> {
                                     as f64,
                             );
                         }
+                        state
+                            .race
+                            .spec_area_state
+                            .point_controller
+                            .set_active(&next_point_id);
                         if state.race.spec_area_state.point_controller.has_next() {
                             state
                                 .race

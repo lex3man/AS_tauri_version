@@ -23,3 +23,18 @@ pub struct Telemetry {
     pub steps: Vec<Position>,
     pub speed_exceeds: HashMap<u32, Vec<Exceed>>,
 }
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct SecondlyShot {
+    pub race_number: String,
+    pub device_id: String,
+    pub etape: String,
+    pub exceeding: bool,
+    pub speed: f32,
+    pub lat: String,
+    pub lon: String,
+    pub accuracy: String,
+    pub point_name: String,
+    pub checked: bool,
+    pub time: u64,
+}

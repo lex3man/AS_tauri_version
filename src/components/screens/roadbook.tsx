@@ -20,6 +20,7 @@ const Roadbook = () => {
     countdownWidgetShown,
     nextPointName,
     nextPointNumber,
+    visiable,
   } = useAppState();
   const { showBackground } = useSettings();
 
@@ -43,14 +44,18 @@ const Roadbook = () => {
         </div>
         <div className="flex w-full justify-center">
           <div className={`flex flex-col w-1/4 h-[30vh] gap-2`}>
-            <div className="flex flex-col justify-start h-[33%] p-3">
-              <div
-                className={`flex justify-start text-6xl font-extrabold leading-none`}
-              >
-                <div className="transform origin-left scale-x-60">{cog}</div>
+            {visiable ? (
+              <div className="flex flex-col justify-start h-[33%] p-3">
+                <div
+                  className={`flex justify-start text-6xl font-extrabold leading-none`}
+                >
+                  <div className="transform origin-left scale-x-60">{cog}</div>
+                </div>
+                <div className={`flex justify-start text-xl font-bold`}>COG</div>
               </div>
-              <div className={`flex justify-start text-xl font-bold`}>COG</div>
-            </div>
+            ) : (
+              <div className="flex flex-col justify-start h-[33%] p-3"></div>
+            )}
             <div className="h-[33%]"></div>
             <div className="flex flex-col justify-end h-[33%] p-3">
               <div className={`flex justify-start text-xl font-bold`}>SOG</div>
@@ -69,9 +74,17 @@ const Roadbook = () => {
             >
               <div className="transform scale-x-60 text-center">WTP{nextPointNumber} {nextPointName}</div>
             </div>
-            <div className={`flex h-[25vh] justify-center mb-5`}>
-              <Arrow />
-            </div>
+            {visiable ? (
+              <div className={`flex h-[25vh] justify-center mb-5`}>
+                <Arrow />
+              </div>
+            ) : (
+              <div className={`flex h-[25vh] justify-center mb-5`}>
+                <div className="text-[clamp(10rem,5vw,22rem)] font-extrabold leading-none transform scale-x-60">
+                  {cog.toFixed(0)}
+                </div>
+              </div>
+            )}
           </div>
           <div className="flex flex-col w-1/4 h-[30vh] gap-2">
             <div className="flex flex-col justify-start h-[33%] p-3">

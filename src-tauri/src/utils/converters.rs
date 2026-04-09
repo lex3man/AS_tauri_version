@@ -14,7 +14,7 @@ pub fn distance(position_1: Coords, position_2: Coords) -> Kilometers {
         (delta_lat / 2.0).sin().powi(2) + (delta_lon / 2.0).sin().powi(2) * lat1.cos() * lat2.cos();
     let c = 2.0 * (a.sqrt().atan2((1.0 - a).sqrt()));
 
-    Kilometers::from(6371000.0 * c)
+    Kilometers::from(6371.0 * c)
 }
 
 pub fn course_in_degrees(point_a: Coords, point_b: Coords) -> u32 {

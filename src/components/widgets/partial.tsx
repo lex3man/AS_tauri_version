@@ -35,9 +35,9 @@ export const PartialLiteWidget = () => {
         setPartial(0);
       }}
     >
-      <div className={`font-extrabold text-xs`}>PARTIAL</div>
+      <div className={`font-extrabold text-xs transform origin-left scale-x-75`}>PARTIAL</div>
       <div
-        className={`${mobileView ? "text-2xl" : "text-[clamp(1.5rem,5vw,4rem)]"} my-auto leading-none`}
+        className={`${mobileView ? "text-2xl" : "text-[clamp(1.5rem,5vw,4rem)]"} my-auto leading-none transform origin-right scale-x-75`}
       >
         {partial.toFixed(2)}
       </div>

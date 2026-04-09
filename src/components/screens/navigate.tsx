@@ -78,19 +78,23 @@ const Ride = () => {
           className={`flex flex-col justify-between ${roadbookMode ? "h-[25vh]" : "h-[85vh]"} w-2/4`}
         >
           <div
-            className={`text-[clamp(1.5rem,5vw,3rem)] leading-none mx-auto font-extrabold ${mobileView ? "p-2" : "p-5"}`}
+            className={`${mobileView ? "text-3xl" : "text-[clamp(1.5rem,5vw,3rem)]"} leading-none mx-auto font-extrabold ${mobileView ? "p-2" : "p-5"}`}
           >
             <div className="transform scale-x-60">WPT{nextPointNumber} {nextPointName}</div>
           </div>
-          {visiable ? (<div
-            className={`flex ${roadbookMode ? "h-[30vh]" : "h-full"} w-full justify-center pb-5`}
-          >
-            <Arrow />
-          </div>) : (<div className={`flex ${roadbookMode ? "h-[30vh]" : "h-full"} w-full justify-center pb-5`}>
-            <div className="text-[clamp(20rem,5vw,45rem)] font-extrabold leading-none transform scale-x-60">
-            {cog.toFixed(0)}
+          {visiable ? (
+            <div
+              className={`flex ${roadbookMode ? "h-[30vh]" : "h-full"} w-full justify-center pb-5`}
+            >
+              <Arrow />
             </div>
-          </div>)}
+          ) : (
+            <div className={`flex ${roadbookMode ? "h-[30vh]" : "h-full"} w-full justify-center pb-5`}>
+              <div className="text-[clamp(15rem,5vw,45rem)] font-extrabold leading-none transform scale-x-60">
+                {cog.toFixed(0)}
+              </div>
+            </div>
+          )}
         </div>
         <div
           className={`flex flex-col w-1/4 ${roadbookMode ? "h-[25vh]" : "h-[85vh]"}`}

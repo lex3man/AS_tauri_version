@@ -26,9 +26,9 @@ export const TotalLiteWidget = () => {
     <div
       className={`flex justify-between border-2 border-primary h-full bg-primary-foreground p-1`}
     >
-      <div className={`font-extrabold text-xs`}>TOTAL</div>
+      <div className={`font-extrabold text-xs transform origin-left scale-x-75`}>TOTAL</div>
       <div
-        className={`${mobileView ? "text-2xl" : "text-[clamp(1.5rem,5vw,4rem)]"} my-auto leading-none`}
+        className={`${mobileView ? "text-2xl" : "text-[clamp(1.5rem,5vw,4rem)]"} my-auto leading-none transform origin-right scale-x-75`}
       >
         {total.toFixed(2)}
       </div>

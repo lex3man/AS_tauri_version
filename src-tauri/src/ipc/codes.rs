@@ -39,6 +39,11 @@ pub fn activate_code(state: State<'_, Mutex<AppState>>, code: &str) -> Result<St
                         storage.set("race_state", json!(state.race));
                         storage.close_resource();
                     }
+                    state.dashboard.metrics.total = 0.0;
+                    state.dashboard.metrics.partial = 0.0;
+                    state.dashboard.metrics.countdown = 0;
+                    state.dashboard.metrics.cp_counter = 0;
+                    state.dashboard.metrics.abs_total = 0.0;
                     return Ok(format!("Code {} activated", code));
                 }
                 return Ok("There's no such area".to_string());
