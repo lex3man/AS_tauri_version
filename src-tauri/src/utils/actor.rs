@@ -1,12 +1,19 @@
 use std::{collections::HashMap, sync::Mutex};
 
+use serde_json::json;
+use tauri::AppHandle;
+
 use crate::{
+    ipc::location::send_telemetry,
     race::types::Coords,
-    state::{telemetry::Telemetry, AppState, GPSData, Position},
+    state::{
+        telemetry::{PointCapture, Telemetry},
+        AppState, GPSData, Position,
+    },
     utils::converters::{course_in_degrees, distance},
 };
 
-pub fn make_culc(state: &Mutex<AppState>, pos: &Position) -> Result<(), ()> {
+pub fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position) -> Result<(), ()> {
     if let Ok(mut state) = state.lock() {
         let coords = GPSData {
             latitude: pos.coords.latitude,
@@ -34,6 +41,7 @@ pub fn make_culc(state: &Mutex<AppState>, pos: &Position) -> Result<(), ()> {
             events: vec![],
             steps: vec![],
             speed_exceeds: HashMap::new(),
+            captures: vec![],
         };
         let mut is_open = false;
         let mut in_visiable_zone = false;
@@ -154,6 +162,25 @@ pub fn make_culc(state: &Mutex<AppState>, pos: &Position) -> Result<(), ()> {
                                 .unwrap()
                                 .clone();
                         }
+                        tel.events.push(
+                            json!({
+                                "type": "point_capture",
+                                "point": state.race.spec_area_state.next_point.clone(),
+                                "time": pos.timestamp,
+                                "speed": pos.coords.speed.unwrap_or(0.0) * 3.6,
+                                "accuracy": pos.coords.accuracy
+                            })
+                            .to_string(),
+                        );
+                        tel.captures.push(PointCapture {
+                            point: state.race.spec_area_state.next_point.clone(),
+                            time: pos.timestamp,
+                            speed: pos.coords.speed.unwrap_or(0.0) * 3.6,
+                            accuracy: pos.coords.accuracy,
+                        });
+                        send_telemetry(app, &state, true).unwrap();
+                    } else {
+                        send_telemetry(app, &state, false).unwrap();
                     }
                 }
             }

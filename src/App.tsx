@@ -23,12 +23,10 @@ import { Coords } from "./types/state";
 import Position from "./components/screens/position";
 import DebugScreen from "./components/screens/debug";
 import Roadbook from "./components/screens/roadbook";
-import { TopMenu } from "./components/menus/tsd-menu";
 
 function App() {
   const [leftOpen, setLeftOpen] = useState(false);
   const [rightOpen, setRightOpen] = useState(false);
-  const [topOpen, setTopOpen] = useState(false);
   const {
     roadbookMode,
     activeViewPort,
@@ -175,24 +173,13 @@ function App() {
             <SwipeZones
               onOpenLeft={() => setLeftOpen(true)}
               onOpenRight={() => setRightOpen(true)}
-              onOpenTop={() => setTopOpen(true)}
               onCloseLeft={() => setLeftOpen(false)}
               onCloseRight={() => setRightOpen(false)}
             />
           )}
           {roadbookMode ? (
             <main className="h-full gap-3 items-center justify-center overflow-hidden">
-              <SwipeZones
-                onOpenLeft={() => setLeftOpen(true)}
-                onOpenRight={() => setRightOpen(true)}
-                onOpenTop={() => setTopOpen(true)}
-                onCloseLeft={() => setLeftOpen(false)}
-                onCloseRight={() => setRightOpen(false)}
-              />
               <Roadbook />
-              <div className="flex">
-                <TopMenu open={topOpen} setOpen={setTopOpen} />
-              </div>
             </main>
           ) : (
             <main
@@ -213,16 +200,10 @@ function App() {
                   <RightContent />
                 </div>
               )}
-              {roadbookMode ? (
-                <div className="flex">
-                  <TopMenu open={topOpen} setOpen={setTopOpen} />
-                </div>
-              ) : (
                 <div className="flex">
                   <LeftMenu open={leftOpen} setOpen={setLeftOpen} />
                   <RightMenu open={rightOpen} setOpen={setRightOpen} />
                 </div>
-              )}
             </main>
           )}
         </>

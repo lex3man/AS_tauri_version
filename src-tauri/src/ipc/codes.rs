@@ -10,13 +10,15 @@ use crate::{
 
 #[tauri::command]
 pub fn activate_code(state: State<'_, Mutex<AppState>>, code: &str) -> Result<String, ()> {
-    println!("{}", code);
     if let Ok(mut state) = state.lock() {
         if code == "007" {
             state.is_admin = true;
             return Ok("Admin privileges granted".to_string());
         } else {
             state.is_admin = false;
+        }
+        if code == "" {
+            return Ok("".to_string());
         }
         if code == "DEMO" {
             if let Some(race) =

@@ -18,23 +18,17 @@ impl Exceed {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct PointCapture {
+    pub point: String,
+    pub time: u64,
+    pub speed: f32,
+    pub accuracy: f64,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Telemetry {
     pub events: Vec<String>,
     pub steps: Vec<Position>,
     pub speed_exceeds: HashMap<u32, Vec<Exceed>>,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct SecondlyShot {
-    pub race_number: String,
-    pub device_id: String,
-    pub etape: String,
-    pub exceeding: bool,
-    pub speed: f32,
-    pub lat: String,
-    pub lon: String,
-    pub accuracy: String,
-    pub point_name: String,
-    pub checked: bool,
-    pub time: u64,
+    pub captures: Vec<PointCapture>,
 }

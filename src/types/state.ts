@@ -55,3 +55,17 @@ export type CheckPoint = {
     checked: boolean;
     next: boolean;
 };
+
+export type TelemetryData = {
+    race_number: string;
+    device_id: string;
+    etape: string;
+    exceeding: boolean;
+    speed: number;
+    lat: number;
+    lon: number;
+    accuracy: number;
+    point_name: string;
+    checked: boolean;
+    time: number;
+}

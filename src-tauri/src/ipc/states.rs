@@ -126,15 +126,6 @@ pub fn sync_data(state: State<'_, Mutex<AppState>>) -> Result<String, ()> {
 }
 
 #[tauri::command]
-pub fn reset_partial(state: State<'_, Mutex<AppState>>) -> Result<(), ()> {
-    if let Ok(mut state) = state.lock() {
-        state.dashboard.metrics.partial = 0.0;
-        return Ok(());
-    }
-    Err(())
-}
-
-#[tauri::command]
 pub fn point_switch(state: State<'_, Mutex<AppState>>, move_to: &str) -> Result<(), ()> {
     if let Ok(mut state) = state.lock() {
         match move_to {

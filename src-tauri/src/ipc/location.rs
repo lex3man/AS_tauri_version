@@ -1,10 +1,10 @@
 use crate::{state::Position, utils::actor::make_culc, AppState};
 use serde_json::json;
-use std::sync::Mutex;
-use tauri::State;
+use std::sync::{Mutex, MutexGuard};
+use tauri::{AppHandle, Emitter, State};
 
 #[tauri::command]
-pub fn location_update(state: State<'_, Mutex<AppState>>, data: &str) {
+pub fn location_update(app: AppHandle, state: State<'_, Mutex<AppState>>, data: &str) {
     let gps_data: Position = serde_json::from_str(data).unwrap();
 
     if let Ok(mut state) = state.lock() {
@@ -17,7 +17,7 @@ pub fn location_update(state: State<'_, Mutex<AppState>>, data: &str) {
         }
         state.sync();
     }
-    match make_culc(&state, &gps_data) {
+    match make_culc(&app, &state, &gps_data) {
         Ok(_) => {}
         Err(_) => {}
     }
@@ -31,4 +31,32 @@ pub fn get_coords(state: State<'_, Mutex<AppState>>) -> Option<String> {
         }
     }
     None
+}
+
+pub fn send_telemetry(
+    app: &AppHandle,
+    state: &MutexGuard<AppState>,
+    chacked: bool,
+) -> Result<(), ()> {
+    let data = json!({
+            "race_number": &state.race_number.clone(),
+            "device_id": "",
+            "etape": &state.race.active_code.clone(),
+            "exceeding": state.dashboard.sog > state.dashboard.max_speed,
+            "speed": state.dashboard.sog,
+            "lat": state.dashboard.coords.lat,
+            "lon": state.dashboard.coords.lon,
+            "accuracy": "",
+            "point_name": state.race.spec_area_state.next_point.clone(),
+            "checked": chacked,
+            "time": ""})
+    .to_string();
+    match app.emit("send_telemetry", data) {
+        Ok(_) => {
+            return Ok(());
+        }
+        Err(_) => {
+            return Err(());
+        }
+    };
 }

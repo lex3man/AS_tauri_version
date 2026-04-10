@@ -8,10 +8,10 @@ export const LeftContent = () => {
   return (
     <div className="flex flex-col gap-2">
       <div className="flex justify-between">
-        <Button className="p-7 text-3xl w-1/2" onClick={() => { }}>
+        <Button className="p-7 text-3xl w-1/2" onClick={async () => { await invoke("decrease_total") }}>
           DIST-
         </Button>
-        <Button className="p-7 text-3xl w-1/2" onClick={() => { }}>
+        <Button className="p-7 text-3xl w-1/2" onClick={async () => { await invoke("increase_total") }}>
           DIST+
         </Button>
       </div>

@@ -90,7 +90,7 @@ const Ride = () => {
             </div>
           ) : (
             <div className={`flex ${roadbookMode ? "h-[30vh]" : "h-full"} w-full justify-center pb-5`}>
-              <div className="text-[clamp(15rem,5vw,45rem)] font-extrabold leading-none transform scale-x-60">
+              <div className="text-[clamp(10rem,5vw,45rem)] font-extrabold leading-none transform scale-x-50">
                 {cog.toFixed(0)}
               </div>
             </div>

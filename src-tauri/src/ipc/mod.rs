@@ -4,4 +4,5 @@ pub mod location;
 pub mod race_number;
 pub mod roadbook;
 pub mod settings;
+pub mod metrics;
 pub mod states;

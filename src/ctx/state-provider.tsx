@@ -1,6 +1,6 @@
 import { request_config } from "@/lib/api";
 import { TypeOfRequest } from "@/types/request";
-import { AppState, Coords, DashBoard } from "@/types/state";
+import { AppState, Coords, DashBoard, TelemetryData } from "@/types/state";
 import { ViewPort } from "@/types/viewport";
 import Viewports from "@/viewports";
 import { invoke } from "@tauri-apps/api/core";
@@ -55,6 +55,7 @@ type AppStateProviderState = {
   nextPointName: string;
   total: number;
   partial: number;
+  telemetry: TelemetryData[];
 
   setRaceNumber: (rn: string) => void;
   setRoadbookMode: (status: boolean) => void;
@@ -79,6 +80,7 @@ type AppStateProviderState = {
   setMaxSpeed: (val: number) => void;
   setTotal: (val: number) => void;
   setPartial: (val: number) => void;
+  setTelemetry: (val: TelemetryData[]) => void; 
 };
 
 const initialState: AppStateProviderState = {
@@ -115,6 +117,7 @@ const initialState: AppStateProviderState = {
   nextPointName: "",
   total: 0,
   partial: 0,
+  telemetry: [],
 
   dashBoard: {
     cog: 0,
@@ -161,6 +164,7 @@ const initialState: AppStateProviderState = {
   setTotal: () => null,
   setPartial: () => null, 
   setVisiable: () => null,
+  setTelemetry: () => null,
 };
 
 const AppStateProviderContext =
@@ -203,6 +207,7 @@ export function StateProvider({
   const [debugData, setDebugData] = useState("");
   const [total, setTotal] = useState(0);
   const [partial, setPartial] = useState(0);
+  const [telemetry, setTelemetry] = useState<TelemetryData[]>([]);
 
   // indicators
   const [gpsAccurancy, setGpsAccuracy] = useState(5);
@@ -290,6 +295,8 @@ export function StateProvider({
     const device = await getDeviceInfo();
     if (code === "") { 
       callView("navigate");
+      setAM(false);
+      await invoke<string>("activate_code", { code: "" });
       return;
     }
     if (code === "007") {
@@ -445,6 +452,7 @@ export function StateProvider({
     nextPointName,
     total,
     partial,
+    telemetry,
 
     gpsAccurancy,
     batteryLevel,
@@ -473,6 +481,7 @@ export function StateProvider({
     setTotal,
     setPartial,
     setVisiable,
+    setTelemetry,
   };
 
   return (

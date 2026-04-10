@@ -6,6 +6,7 @@ import { TotalLiteWidget } from "../widgets/total";
 import { PartialLiteWidget } from "../widgets/partial";
 import { Arrow } from "../arrow";
 import { RoadbookSlides } from "../roadbook";
+import { BtmMenu } from "../menus/bottom-menu";
 
 const Roadbook = () => {
   const {
@@ -124,6 +125,7 @@ const Roadbook = () => {
           </div>
         </div>
       </div>
+      <BtmMenu />
       <RoadbookSlides />
     </div>
   );
