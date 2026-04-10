@@ -16,6 +16,9 @@ pub fn increase_total(state: State<'_, Mutex<AppState>>) -> Result<(), ()> {
 pub fn decrease_total(state: State<'_, Mutex<AppState>>) -> Result<(), ()> {
     if let Ok(mut state) = state.lock() {
         state.dashboard.metrics.total -= 100.0;
+        if state.dashboard.metrics.total < 0.0 {
+            state.dashboard.metrics.total = 0.0;
+        }
         return Ok(());
     }
     Err(())

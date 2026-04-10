@@ -61,7 +61,7 @@ export const LeftContent = () => {
 };
 
 export const RightContent = () => {
-  const { callView, adminMode } = useAppState();
+  const { callView, adminMode, setNextPointNumber, setNextPointName } = useAppState();
 
   return (
     <div className="flex flex-col gap-2">
@@ -75,10 +75,24 @@ export const RightContent = () => {
         CHECK
       </Button>
       <div className="flex justify-between">
-        <Button className="p-7 text-3xl w-1/2" onClick={async () => { await invoke("point_switch", { moveTo: "next" }) }}>
+        <Button className="p-7 text-3xl w-1/2" onClick={async () => {
+          await invoke("point_switch", { moveTo: "next" });
+          await invoke<string>("sync_data").then((rawData) => {
+            const data = JSON.parse(rawData);
+            setNextPointNumber(data.next_point.split("-")[0]);
+            setNextPointName(data.next_point.split("-")[1]);
+          });
+        }}>
           W+
         </Button>
-        <Button className="p-7 text-3xl w-1/2" onClick={async () => { await invoke("point_switch", { moveTo: "prev" }) }}>
+        <Button className="p-7 text-3xl w-1/2" onClick={async () => {
+          await invoke("point_switch", { moveTo: "prev" });
+          await invoke<string>("sync_data").then((rawData) => {
+            const data = JSON.parse(rawData);
+            setNextPointNumber(data.next_point.split("-")[0]);
+            setNextPointName(data.next_point.split("-")[1]);
+          });
+        }}>
           W-
         </Button>
       </div>
