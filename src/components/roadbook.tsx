@@ -61,7 +61,7 @@ export const RoadbookSlides = () => {
     return (
     <div className="relative flex flex-col w-full h-full">
         {/* Previous slide zone */}
-        <div className="flex-shrink-0 h-[15vh] w-full flex items-center justify-center overflow-hidden bg-gray-800/40">
+        <div className="shrink-0 h-[15vh] w-full flex items-center justify-center overflow-hidden bg-gray-800/40">
             {slides.length > 0 && currentIndex > 0 && (() => {
                 const prevSlide = slides[currentIndex - 1];
                 const prevKey = `${prevSlide.subdir}/${prevSlide.name}`;

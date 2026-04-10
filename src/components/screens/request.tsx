@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { useAppState } from "@/ctx/state-provider";
 import { server_init } from "@/lib/api";
 import { start_polling } from "@/lib/utils";
 import { TypeOfRequest } from "@/types/request";
@@ -12,9 +13,10 @@ interface Props {
 
 export const DataRequest = (props: Props) => {
   const [userInput, setUserInput] = useState("");
+  const { roadbookMode } = useAppState();
 
   return (
-    <div className="flex flex-col justify-center m-auto gap-10 p-50">
+    <div className={`flex flex-col justify-center m-auto gap-10 ${roadbookMode ? "p-10" : "p-50"}`}>
       <div className="flex gap-5 m-auto">
         <input
           className="border-b-2 w-auto"
