@@ -33,6 +33,26 @@ pub struct Position {
     pub coords: GPSData,
 }
 
+pub struct Flags {
+    pub speed_exceeded: bool,
+    pub gps_signal_lost: bool,
+    pub low_battery: bool,
+    pub internert_disconnected: bool,
+    pub speed_limit: u8,
+}
+
+impl Flags {
+    pub fn new() -> Self {
+        Flags {
+            speed_exceeded: false,
+            gps_signal_lost: false,
+            low_battery: false,
+            internert_disconnected: false,
+            speed_limit: 0,
+        }
+    }
+}
+
 pub struct AppState {
     pub storage: Option<Arc<Store<Wry>>>,
     pub race_number: Option<String>,
@@ -43,6 +63,7 @@ pub struct AppState {
     pub race: RaceState,
     pub dashboard: DashBoard,
     pub telemetry: HashMap<SpecAreaID, Telemetry>,
+    pub current: Flags,
 }
 
 impl Default for AppState {
@@ -57,6 +78,7 @@ impl Default for AppState {
             race: RaceState::new(),
             dashboard: DashBoard::new(),
             telemetry: HashMap::new(),
+            current: Flags::new(),
         }
     }
 }

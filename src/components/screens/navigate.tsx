@@ -84,13 +84,13 @@ const Ride = () => {
           </div>
           {visiable ? (
             <div
-              className={`flex ${roadbookMode ? "h-[30vh]" : "h-full"} w-full justify-center pb-5`}
+              className={`flex ${roadbookMode ? "h-[30vh]" : "h-full"} w-[30vw] justify-center`}
             >
               <Arrow />
             </div>
           ) : (
-            <div className={`flex ${roadbookMode ? "h-[30vh]" : "h-full"} w-full justify-center pb-5`}>
-              <div className="text-[clamp(10rem,5vw,45rem)] font-extrabold leading-none transform scale-x-50">
+            <div className={`flex ${roadbookMode ? "h-[30vh]" : "h-full"} w-[30vw] justify-center`}>
+              <div className="text-[clamp(15rem,5vw,40rem)] font-extrabold leading-none transform scale-x-50">
                 {cog.toFixed(0)}
               </div>
             </div>

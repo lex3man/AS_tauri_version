@@ -1,4 +1,4 @@
-use std::{collections::HashMap, sync::Mutex};
+use std::{sync::Mutex};
 
 use serde_json::json;
 use tauri::AppHandle;
@@ -7,13 +7,15 @@ use crate::{
     ipc::location::send_telemetry,
     race::types::Coords,
     state::{
-        telemetry::{PointCapture, Telemetry},
-        AppState, GPSData, Position,
+        AppState, GPSData, Position, telemetry::{Exceed, PointCapture, Telemetry}
     },
     utils::converters::{course_in_degrees, distance},
 };
 
 pub fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position) -> Result<(), ()> {
+    if pos.coords.speed.unwrap_or(0.0) * 3.6 < 5.0 {
+        return Ok(());
+    }
     if let Ok(mut state) = state.lock() {
         let coords = GPSData {
             latitude: pos.coords.latitude,
@@ -29,27 +31,23 @@ pub fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position) -> Re
             return Ok(());
         }
         let mut total_correction = None;
-        let code = &state.race.active_code;
         let sog = (coords.speed.unwrap_or(0.0) * 3.6) as u32;
         let mut next_point_id = "".to_string();
         let mut prev_point_id = "".to_string();
         let mut dtw = 0.0f64;
         let mut cog = 0;
         let mut ctw = 0;
+        let mut max_speed = 0u8;
         let mut area_id = String::new();
-        let mut tel = Telemetry {
-            events: vec![],
-            steps: vec![],
-            speed_exceeds: HashMap::new(),
-            captures: vec![],
-        };
+        let mut tel = Telemetry::new();
         let mut is_open = false;
         let mut in_visiable_zone = false;
 
         // ============================================================================
         // loading current state
         // ============================================================================
-        if let Some(area) = &state.race.race.as_ref().unwrap().areas.get(code) {
+        let code = &state.race.active_code;
+        if let Some(area) = state.race.race.as_ref().unwrap().areas.get(code) {
             area_id = area.id.clone();
             next_point_id = state.race.spec_area_state.next_point.clone();
 
@@ -79,6 +77,7 @@ pub fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position) -> Re
 
             if let Some(next_point) = area.get_point_by_id(&next_point_id) {
                 is_open = next_point.flags.is_open;
+                max_speed = next_point.speed_limit;
                 prev_point_id = state.race.spec_area_state.prev_point.clone();
                 if let Some(telemetry) = state.telemetry.get(&area.id) {
                     //
@@ -189,10 +188,13 @@ pub fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position) -> Re
         // ============================================================================
         // updating current state
         // ============================================================================
+        
+        state.current.speed_exceeded = sog > state.current.speed_limit as u32;
         state.dashboard.dtw = dtw as f32;
         state.dashboard.cog = cog;
         state.dashboard.ctw = ctw;
         state.dashboard.sog = sog;
+        state.current.speed_limit = max_speed;
         if let Some(new_total) = total_correction {
             state.dashboard.metrics.total = new_total;
         } else {
@@ -201,6 +203,13 @@ pub fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position) -> Re
         state.dashboard.metrics.partial += (coords.speed.unwrap_or(0.0) / 1000.0) as f64;
         state.race.spec_area_state.prev_point = prev_point_id;
         state.race.spec_area_state.next_point = next_point_id;
+        if state.current.speed_exceeded {
+            let odo_key = (state.dashboard.metrics.total / 150.0) as u32;
+            let exceed = Exceed::new(sog, state.current.speed_limit, pos.timestamp);
+            if exceed.speed > tel.speed_exceeds.get(&odo_key).unwrap_or(&Exceed::new(0, 0, 0)).speed {  
+                    tel.speed_exceeds.insert(odo_key, exceed);
+            }
+        }
         state.telemetry.insert(area_id.clone(), tel);
         state.dashboard.widget_shown.arrow = is_open || in_visiable_zone;
     }

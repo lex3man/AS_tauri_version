@@ -191,7 +191,7 @@ function App() {
                 </div>
               )}
               <div
-                className={`relative h-screen w-full border-2 border-foreground ${showBackground ? 'bg-cover bg-center bg-no-repeat bg-[url("./assets/background.png")]' : ""}`}
+                className={`relative h-screen w-2/3 border-2 border-foreground ${showBackground ? 'bg-cover bg-center bg-no-repeat bg-[url("./assets/background.png")]' : ""}`}
               >
                 <Ride />
               </div>
