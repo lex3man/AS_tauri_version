@@ -1,7 +1,8 @@
 
-use std::sync::{Mutex};
+use std::{collections::HashMap, sync::Mutex};
+use serde_json::json;
 use tauri::{State};
-use crate::state::AppState;
+use crate::state::{AppState, telemetry::{Exceed, Telemetry}};
 
 #[tauri::command]
 pub fn increase_total(state: State<'_, Mutex<AppState>>) -> Result<(), ()> {
@@ -31,4 +32,15 @@ pub fn reset_partial(state: State<'_, Mutex<AppState>>) -> Result<(), ()> {
         return Ok(());
     }
     Err(())
+}
+
+#[tauri::command]
+pub async fn get_exceeds(state: State<'_, Mutex<AppState>>) -> Result<String, ()> {
+    let mut result: HashMap<String, Exceed> = HashMap::new();
+    if let Ok(state) = state.lock() {
+        let area = state.race.current_sa.clone();
+        result = state.telemetry.get(&area).unwrap_or(&Telemetry::new()).speed_exceeds.clone();
+    }
+    println!("get_exceeds: {:?}", result);
+    Ok(json!(result).to_string())
 }

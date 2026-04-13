@@ -5,8 +5,6 @@ import { platform, version } from "@tauri-apps/plugin-os";
 import { invoke } from "@tauri-apps/api/core";
 import { stop_polling } from "./utils";
 import { TelemetryData } from "@/types/state";
-import { useAppState } from "@/ctx/state-provider";
-import { listen } from '@tauri-apps/api/event';
 
 const TOKEN =
   "f7c8fe93f15af81dab45215fceb36401baf6b5753e67e1f295391aaf1fe3ec6d";
@@ -74,43 +72,25 @@ export const request_config = async (device_id: string) => {
   }
 };
 
-listen<string>('send_telemetry', async (data) => {
-  const device = await getDeviceInfo();
-  var telemetryData = JSON.parse(data.payload) as TelemetryData;
-  telemetryData.device_id = device.uuid as string;
-  await send_telemetry(telemetryData);
-
-  const { setTelemetry, telemetry } = useAppState();
-  const updatedTelemetry = [...telemetry, telemetryData];
-  setTelemetry(updatedTelemetry);
-});
-
 export const send_telemetry = async (data: TelemetryData) => {
-  // const { setTelemetry, telemetry } = useAppState(); 
   const url = `${SCHEME}://${HOST}/api/report/secondly`;
 
   const resp = await fetch(url, {
     method: "POST",
     headers: {
-      authentication: TOKEN,  
+      authentication: TOKEN,
       "Content-Type": "application/json",
     },
     body: JSON.stringify(data),
   });
 
   if (resp.status === 200) {
-    // toast.info("telemetry call success", { 
+    // toast.success("Telemetry data sent successfully", { 
     //   position: "bottom-center",
-    //   duration: 5000,
+    //   duration: 3000,
     // });
     return true;
   } else {
-    // toast.info("telemetry call failed", { 
-    //   position: "bottom-center",
-    //   duration: 5000,
-    // });
-    // const updatedTelemetry = [...telemetry, data];
-    // setTelemetry(updatedTelemetry);
     return false;
   }
 }

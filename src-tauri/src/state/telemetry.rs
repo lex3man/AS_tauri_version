@@ -9,11 +9,12 @@ pub struct Exceed {
     pub speed: u32,
     pub limit: u8,
     pub time: u64,
+    pub km: u32,
 }
 
 impl Exceed {
-    pub fn new(speed: u32, limit: u8, time: u64) -> Self {
-        Self { speed, limit, time }
+    pub fn new(speed: u32, limit: u8, time: u64, km: u32) -> Self {
+        Self { speed, limit, time, km }
     }
 }
 
@@ -29,7 +30,7 @@ pub struct PointCapture {
 pub struct Telemetry {
     pub events: Vec<String>,
     pub steps: Vec<Position>,
-    pub speed_exceeds: HashMap<u32, Exceed>,
+    pub speed_exceeds: HashMap<String, Exceed>,
     pub captures: Vec<PointCapture>,
 }
 

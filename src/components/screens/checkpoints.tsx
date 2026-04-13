@@ -59,6 +59,14 @@ const CheckPoints = () => {
           <Button
             className="p-7 text-2xl"
             onClick={() => {
+              callView("exceeds");
+            }}
+          >
+            EXCEEDS
+          </Button>
+          <Button
+            className="p-7 text-2xl"
+            onClick={() => {
               callView("navigate");
             }}
           >

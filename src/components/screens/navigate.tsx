@@ -4,6 +4,7 @@ import CountdownWidget from "../widgets/countdown";
 import { Arrow } from "../arrow";
 import Indicators from "../widgets/indicators";
 import { TotalWidget } from "../widgets/total";
+import { useEffect, useState } from "react";
 
 const Ride = () => {
   const {
@@ -22,6 +23,11 @@ const Ride = () => {
     nextPointName,
     visiable
   } = useAppState();
+  const [exceeding, setExceeding] = useState(false);
+
+  useEffect(() => {
+    setExceeding(speed > maxSpeed);
+  }, [speed, maxSpeed]);
 
   return (
     <div>
@@ -58,7 +64,15 @@ const Ride = () => {
               </div>
             </div>
           )}
-          <div className="h-[35%]"></div>
+          <div className="h-[35%]">
+            {exceeding && (
+              <div className="flex items-center justify-center m-auto h-full border-25 border-red-500 rounded-full animate-pulse aspect-square">
+                <div className="text-[clamp(1rem,5vw,3.5rem)] font-extrabold">
+                  {maxSpeed}
+                </div>
+              </div>
+            )}
+          </div>
           <div className="flex flex-col justify-end h-[30%] px-3">
             <div
               className={`flex justify-start ${mobileView ? "text-xl" : "text-2xl"} font-bold`}
@@ -84,13 +98,13 @@ const Ride = () => {
           </div>
           {visiable ? (
             <div
-              className={`flex ${roadbookMode ? "h-[30vh]" : "h-full"} w-[30vw] justify-center`}
+              className={`flex h-full w-[30vw] justify-center`}
             >
               <Arrow />
             </div>
           ) : (
-            <div className={`flex ${roadbookMode ? "h-[30vh]" : "h-full"} w-[30vw] justify-center`}>
-              <div className="text-[clamp(15rem,5vw,40rem)] font-extrabold leading-none transform scale-x-50">
+            <div className={`flex h-full w-[30vw] justify-center m-auto`}>
+              <div className="text-[clamp(20rem,5vw,30rem)] font-extrabold leading-none transform scale-x-50 my-auto">
                 {cog.toFixed(0)}
               </div>
             </div>

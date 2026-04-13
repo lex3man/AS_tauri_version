@@ -10,6 +10,7 @@ use crate::{
 
 #[tauri::command]
 pub fn activate_code(state: State<'_, Mutex<AppState>>, code: &str) -> Result<String, ()> {
+    let area_id;
     if let Ok(mut state) = state.lock() {
         if code == "007" {
             state.is_admin = true;
@@ -34,7 +35,8 @@ pub fn activate_code(state: State<'_, Mutex<AppState>>, code: &str) -> Result<St
         } else {
             if let Some(race) = state.race.race.as_ref() {
                 if let Some(area) = race.areas.get(code) {
-                    state.race.current_sa = area.id.clone();
+                    area_id = area.id.clone();
+                    state.race.current_sa = area_id.clone();
                     state.race.active_code = code.to_string();
                     state.race.activate(code);
                     if let Some(storage) = &state.storage {
@@ -46,6 +48,7 @@ pub fn activate_code(state: State<'_, Mutex<AppState>>, code: &str) -> Result<St
                     state.dashboard.metrics.countdown = 0;
                     state.dashboard.metrics.cp_counter = 0;
                     state.dashboard.metrics.abs_total = 0.0;
+                    state.telemetry.insert(area_id.clone(), crate::state::telemetry::Telemetry::new());
                     return Ok(format!("Code {} activated", code));
                 }
                 return Ok("There's no such area".to_string());

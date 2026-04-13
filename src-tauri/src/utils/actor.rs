@@ -13,9 +13,6 @@ use crate::{
 };
 
 pub fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position) -> Result<(), ()> {
-    if pos.coords.speed.unwrap_or(0.0) * 3.6 < 5.0 {
-        return Ok(());
-    }
     if let Ok(mut state) = state.lock() {
         let coords = GPSData {
             latitude: pos.coords.latitude,
@@ -54,8 +51,8 @@ pub fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position) -> Re
             let _ = &area.points_set.iter().for_each(|point| {
                 if distance(
                     Coords {
-                        lat: pos.coords.latitude,
-                        lon: pos.coords.longitude,
+                        lat: coords.latitude,
+                        lon: coords.longitude,
                     },
                     Coords {
                         lat: point.lat,
@@ -106,14 +103,14 @@ pub fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position) -> Re
                                     lon: prev_pos.coords.longitude,
                                 },
                                 Coords {
-                                    lat: pos.coords.latitude,
-                                    lon: pos.coords.longitude,
+                                    lat: coords.latitude,
+                                    lon: coords.longitude,
                                 },
                             );
                             ctw = course_in_degrees(
                                 Coords {
-                                    lat: pos.coords.latitude,
-                                    lon: pos.coords.longitude,
+                                    lat: coords.latitude,
+                                    lon: coords.longitude,
                                 },
                                 Coords {
                                     lat: next_point.lat,
@@ -166,16 +163,16 @@ pub fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position) -> Re
                                 "type": "point_capture",
                                 "point": state.race.spec_area_state.next_point.clone(),
                                 "time": pos.timestamp,
-                                "speed": pos.coords.speed.unwrap_or(0.0) * 3.6,
-                                "accuracy": pos.coords.accuracy
+                                "speed": coords.speed.unwrap_or(0.0) * 3.6,
+                                "accuracy": coords.accuracy
                             })
                             .to_string(),
                         );
                         tel.captures.push(PointCapture {
                             point: state.race.spec_area_state.next_point.clone(),
                             time: pos.timestamp,
-                            speed: pos.coords.speed.unwrap_or(0.0) * 3.6,
-                            accuracy: pos.coords.accuracy,
+                            speed: coords.speed.unwrap_or(0.0) * 3.6,
+                            accuracy: coords.accuracy,
                         });
                         send_telemetry(app, &state, true).unwrap();
                     } else {
@@ -189,12 +186,12 @@ pub fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position) -> Re
         // updating current state
         // ============================================================================
         
-        state.current.speed_exceeded = sog > state.current.speed_limit as u32;
+        state.current.speed_exceeded = sog > max_speed as u32;
         state.dashboard.dtw = dtw as f32;
         state.dashboard.cog = cog;
         state.dashboard.ctw = ctw;
         state.dashboard.sog = sog;
-        state.current.speed_limit = max_speed;
+        state.dashboard.max_speed = max_speed as u32;
         if let Some(new_total) = total_correction {
             state.dashboard.metrics.total = new_total;
         } else {
@@ -203,12 +200,16 @@ pub fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position) -> Re
         state.dashboard.metrics.partial += (coords.speed.unwrap_or(0.0) / 1000.0) as f64;
         state.race.spec_area_state.prev_point = prev_point_id;
         state.race.spec_area_state.next_point = next_point_id;
-        if state.current.speed_exceeded {
-            let odo_key = (state.dashboard.metrics.total / 150.0) as u32;
-            let exceed = Exceed::new(sog, state.current.speed_limit, pos.timestamp);
-            if exceed.speed > tel.speed_exceeds.get(&odo_key).unwrap_or(&Exceed::new(0, 0, 0)).speed {  
+        if max_speed > 0 && sog > max_speed as u32 {
+            let exceed = Exceed::new(sog, max_speed, pos.timestamp, state.dashboard.metrics.total as u32);
+            let odo_key = ((state.dashboard.metrics.total * 1000.0 / 150.0) as u32).to_string();
+            if let Some(exceed_at_key) = tel.speed_exceeds.get(&odo_key) {
+                if sog > exceed_at_key.speed {  
                     tel.speed_exceeds.insert(odo_key, exceed);
-            }
+                }
+            } else {
+                tel.speed_exceeds.insert(odo_key, exceed);
+            };
         }
         state.telemetry.insert(area_id.clone(), tel);
         state.dashboard.widget_shown.arrow = is_open || in_visiable_zone;

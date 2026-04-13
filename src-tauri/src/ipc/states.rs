@@ -4,10 +4,7 @@ use serde_json::json;
 use tauri::{AppHandle, State};
 
 use crate::{
-    race::types::CheckPoint,
-    state::race_config::RaceState,
-    utils::{parser::FormatedData, rb_store::download_images},
-    AppState,
+    AppState, race::types::CheckPoint, state::{race_config::RaceState}, utils::{parser::FormatedData, rb_store::download_images}
 };
 
 #[tauri::command]

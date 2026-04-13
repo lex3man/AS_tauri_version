@@ -23,6 +23,7 @@ import { Coords } from "./types/state";
 import Position from "./components/screens/position";
 import DebugScreen from "./components/screens/debug";
 import Roadbook from "./components/screens/roadbook";
+import SpeedExceedsScreen from "./components/screens/speed-exceeds";
 
 function App() {
   const [leftOpen, setLeftOpen] = useState(false);
@@ -51,6 +52,7 @@ function App() {
     setRoadbookMode,
     setDebugData,
     setVisiable,
+    setSpeedExceeds,
   } = useAppState();
   const { showBackground } = useSettings();
   const { width, height } = useWindowDimensions();
@@ -96,6 +98,10 @@ function App() {
           if (pos) {
             setGpsAccuracy(pos.coords.accuracy as number);
           }
+          
+          invoke<string>("get_exceeds").then((exceeds) => {
+            setSpeedExceeds(exceeds);
+          });
         },
       );
     }
@@ -160,6 +166,12 @@ function App() {
           <CheckPoints />
         </div>
       );
+    case "exceeds":
+      return (
+        <div className="relative h-screen">
+          <SpeedExceedsScreen />
+        </div>
+      );
     case "debug":
       return (
         <div className="relative h-screen">
@@ -191,7 +203,7 @@ function App() {
                 </div>
               )}
               <div
-                className={`relative h-screen w-2/3 border-2 border-foreground ${showBackground ? 'bg-cover bg-center bg-no-repeat bg-[url("./assets/background.png")]' : ""}`}
+                className={`relative h-screen ${mobileView ? "w-2/3" : "w-full"} border-2 border-foreground ${showBackground ? 'bg-cover bg-center bg-no-repeat bg-[url("./assets/background.png")]' : ""}`}
               >
                 <Ride />
               </div>

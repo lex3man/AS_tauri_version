@@ -12,6 +12,7 @@ class Viewports {
         map.set("checkpoints", ViewPort.new("checkpoints"));
         map.set("admin-area", ViewPort.new("admin-area"));
         map.set("debug", ViewPort.new("debug"));
+        map.set("exceeds", ViewPort.new("exceeds"));
     }
 
     activate(name: string, type?: TypeOfRequest) {

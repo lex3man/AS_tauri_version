@@ -7,6 +7,7 @@ import { PartialLiteWidget } from "../widgets/partial";
 import { Arrow } from "../arrow";
 import { RoadbookSlides } from "../roadbook";
 import { BtmMenu } from "../menus/bottom-menu";
+import { useEffect, useState } from "react";
 
 const Roadbook = () => {
   const {
@@ -24,6 +25,11 @@ const Roadbook = () => {
     visiable,
   } = useAppState();
   const { showBackground } = useSettings();
+  const [exceeding, setExceeding] = useState(false);
+  
+  useEffect(() => {
+    setExceeding(speed > maxSpeed);
+  }, [speed, maxSpeed]);
 
   return (
     <div className="flex flex-col">
@@ -57,7 +63,14 @@ const Roadbook = () => {
             ) : (
               <div className="flex flex-col justify-start h-[33%] p-3"></div>
             )}
-            <div className="h-[33%]"></div>
+            <div className="h-[33%]">
+            {exceeding && (
+              <div className={`flex items-center justify-center m-auto h-full border-15 border-red-500 rounded-full animate-pulse aspect-square`}>
+                <div className="text-[clamp(2rem,5vw,3.5rem)] font-extrabold">
+                  {maxSpeed}
+                </div>
+              </div>
+            )}</div>
             <div className="flex flex-col justify-end h-[33%] p-3">
               <div className={`flex justify-start text-xl font-bold`}>SOG</div>
               <div

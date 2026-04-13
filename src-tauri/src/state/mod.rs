@@ -38,7 +38,6 @@ pub struct Flags {
     pub gps_signal_lost: bool,
     pub low_battery: bool,
     pub internert_disconnected: bool,
-    pub speed_limit: u8,
 }
 
 impl Flags {
@@ -48,7 +47,6 @@ impl Flags {
             gps_signal_lost: false,
             low_battery: false,
             internert_disconnected: false,
-            speed_limit: 0,
         }
     }
 }

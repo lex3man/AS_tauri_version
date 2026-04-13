@@ -1,9 +1,10 @@
-import { request_config } from "@/lib/api";
+import { request_config, send_telemetry } from "@/lib/api";
 import { TypeOfRequest } from "@/types/request";
 import { AppState, Coords, DashBoard, TelemetryData } from "@/types/state";
 import { ViewPort } from "@/types/viewport";
 import Viewports from "@/viewports";
 import { invoke } from "@tauri-apps/api/core";
+import { listen } from "@tauri-apps/api/event";
 import { createContext, useContext, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { getBatteryInfo, getDeviceInfo } from "tauri-plugin-device-info-api";
@@ -55,6 +56,7 @@ type AppStateProviderState = {
   nextPointName: string;
   total: number;
   partial: number;
+  speedExceeds: string;
   telemetry: TelemetryData[];
 
   setRaceNumber: (rn: string) => void;
@@ -80,7 +82,8 @@ type AppStateProviderState = {
   setMaxSpeed: (val: number) => void;
   setTotal: (val: number) => void;
   setPartial: (val: number) => void;
-  setTelemetry: (val: TelemetryData[]) => void; 
+  setTelemetry: (val: TelemetryData[]) => void;
+  setSpeedExceeds: (val: string) => void;
 };
 
 const initialState: AppStateProviderState = {
@@ -118,6 +121,7 @@ const initialState: AppStateProviderState = {
   total: 0,
   partial: 0,
   telemetry: [],
+  speedExceeds: "",
 
   dashBoard: {
     cog: 0,
@@ -165,6 +169,7 @@ const initialState: AppStateProviderState = {
   setPartial: () => null, 
   setVisiable: () => null,
   setTelemetry: () => null,
+  setSpeedExceeds: () => null,
 };
 
 const AppStateProviderContext =
@@ -208,6 +213,7 @@ export function StateProvider({
   const [total, setTotal] = useState(0);
   const [partial, setPartial] = useState(0);
   const [telemetry, setTelemetry] = useState<TelemetryData[]>([]);
+  const [speedExceeds, setSpeedExceeds] = useState("");
 
   // indicators
   const [gpsAccurancy, setGpsAccuracy] = useState(5);
@@ -284,6 +290,25 @@ export function StateProvider({
     };
     batteryCheck();
   }, [speed]);
+
+  // Слушатель событий телеметрии от Rust-бэкенда
+  useEffect(() => {
+    const unlisten = listen<string>("send_telemetry", async (event) => {
+      try {
+        const telemetryData = JSON.parse(event.payload) as TelemetryData;
+        const device = await getDeviceInfo();
+        telemetryData.device_id = device.uuid as string;
+        await send_telemetry(telemetryData);
+        setTelemetry((prev) => [...prev, telemetryData]);
+      } catch (e) {
+        console.error("Failed to parse telemetry event:", e);
+      }
+    });
+
+    return () => {
+      unlisten.then((u) => u());
+    };
+  }, []);
 
   const setRaceNumber = async (rn: string) => {
     setRN(rn);
@@ -453,6 +478,7 @@ export function StateProvider({
     total,
     partial,
     telemetry,
+    speedExceeds,
 
     gpsAccurancy,
     batteryLevel,
@@ -482,6 +508,7 @@ export function StateProvider({
     setPartial,
     setVisiable,
     setTelemetry,
+    setSpeedExceeds,
   };
 
   return (
