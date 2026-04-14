@@ -47,6 +47,12 @@ pub struct Position {
     pub coords: GPSData,
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct JumpSuggestion {
+    pub suggested: bool,
+    pub point: String
+}
+
 pub struct Flags {
     pub speed_exceeded: bool,
     pub _gps_signal_lost: bool,
@@ -76,6 +82,7 @@ pub struct AppState {
     pub dashboard: DashBoard,
     pub telemetry: HashMap<SpecAreaID, Telemetry>,
     pub current: Flags,
+    pub jump_suggestion: JumpSuggestion,
 }
 
 impl Default for AppState {
@@ -91,6 +98,10 @@ impl Default for AppState {
             dashboard: DashBoard::new(),
             telemetry: HashMap::new(),
             current: Flags::new(),
+            jump_suggestion: JumpSuggestion {
+                suggested: false,
+                point: "None".to_string()
+            }
         }
     }
 }

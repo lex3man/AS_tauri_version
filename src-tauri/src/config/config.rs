@@ -39,4 +39,12 @@ impl Config {
     pub fn background_switch(&mut self) {
         self.background = !self.background
     }
+
+    pub fn jump_mode_switch(&mut self, status: &str) {
+        match status {
+            "on" => { self.jump_mode = true },
+            "off" => { self.jump_mode = false },
+            _ => { self.jump_mode = false }
+        }
+    }
 }

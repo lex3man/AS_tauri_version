@@ -7,7 +7,7 @@ use crate::{
     ipc::location::send_telemetry,
     race::types::Coords,
     state::{
-        AppState, GPSData, Position, telemetry::{Exceed, PointCapture, Telemetry}
+        AppState, GPSData, JumpSuggestion, Position, telemetry::{Exceed, PointCapture, Telemetry}
     },
     utils::converters::{course_in_degrees, distance},
 };
@@ -29,6 +29,8 @@ pub fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position) -> Re
         }
         let sog = (coords.speed.unwrap_or(0.0) * 3.6) as u32;
         let next_point_type;
+        let mut jump_suggested = false;
+        let mut jump_point_id = String::new();
         let mut total_correction = None;
         let mut next_point_id = "".to_string();
         let mut prev_point_id = "".to_string();
@@ -50,7 +52,7 @@ pub fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position) -> Re
             next_point_id = state.race.spec_area_state.next_point.clone();
 
             let _ = &area.points_set.iter().for_each(|point| {
-                if distance(
+                let distance_to_point = distance(
                     Coords {
                         lat: coords.latitude,
                         lon: coords.longitude,
@@ -59,7 +61,8 @@ pub fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position) -> Re
                         lat: point.lat,
                         lon: point.lon,
                     },
-                ) * 1000.0
+                ) * 1000.0; 
+                if distance_to_point
                     <= point.capture_radius as f64
                     && !state
                         .race
@@ -70,6 +73,20 @@ pub fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position) -> Re
                         .checked
                 {
                     next_point_id = point.get_id();
+                }
+
+                if distance_to_point
+                    <= point.visible_radius as f64
+                    && !state
+                        .race
+                        .spec_area_state
+                        .points
+                        .get(&point.get_id())
+                        .unwrap()
+                        .checked
+                {
+                    jump_suggested = true;
+                    jump_point_id = point.get_id();
                 }
             });
 
@@ -190,33 +207,41 @@ pub fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position) -> Re
         // ============================================================================
         
         state.current.speed_exceeded = sog > max_speed as u32;
-        state.dashboard.dtw = dtw as f32;
-        state.dashboard.cog = cog;
-        state.dashboard.ctw = ctw;
-        state.dashboard.sog = sog;
-        state.dashboard.max_speed = max_speed as u32;
-        if let Some(new_total) = total_correction {
-            state.dashboard.metrics.total = new_total;
+        if (sog > 3) {
+            state.dashboard.dtw = dtw as f32;
+            state.dashboard.cog = cog;
+            state.dashboard.ctw = ctw;
+            state.dashboard.sog = sog;
+            if let Some(new_total) = total_correction {
+                state.dashboard.metrics.total = new_total;
+            } else {
+                state.dashboard.metrics.abs_total += (coords.speed.unwrap_or(0.0) / 1000.0) as f64;
+                state.dashboard.metrics.total += (coords.speed.unwrap_or(0.0) / 1000.0) as f64;
+            }
+            state.dashboard.metrics.partial += (coords.speed.unwrap_or(0.0) / 1000.0) as f64;
+            if max_speed > 0 && sog > max_speed as u32 {
+                let exceed = Exceed::new(sog, max_speed, pos.timestamp, state.dashboard.metrics.total as u32);
+                let odo_key = ((state.dashboard.metrics.abs_total * 1000.0 / 150.0) as u32).to_string();
+                if let Some(exceed_at_key) = tel.speed_exceeds.get(&odo_key) {
+                    if sog > exceed_at_key.speed {  
+                        tel.speed_exceeds.insert(odo_key, exceed);
+                    }
+                } else {
+                    tel.speed_exceeds.insert(odo_key, exceed);
+                };
+            }
+            state.telemetry.insert(area_id.clone(), tel);
+            state.jump_suggestion = JumpSuggestion {
+                suggested: jump_suggested,
+                point: jump_point_id.clone(), 
+            };
         } else {
-            state.dashboard.metrics.abs_total += (coords.speed.unwrap_or(0.0) / 1000.0) as f64;
-            state.dashboard.metrics.total += (coords.speed.unwrap_or(0.0) / 1000.0) as f64;
+            state.dashboard.sog = 0;
         }
-        state.dashboard.metrics.partial += (coords.speed.unwrap_or(0.0) / 1000.0) as f64;
+        state.dashboard.widget_shown.arrow = is_open || in_visiable_zone;
+        state.dashboard.max_speed = max_speed as u32;
         state.race.spec_area_state.prev_point = prev_point_id;
         state.race.spec_area_state.next_point = next_point_id;
-        if max_speed > 0 && sog > max_speed as u32 {
-            let exceed = Exceed::new(sog, max_speed, pos.timestamp, state.dashboard.metrics.total as u32);
-            let odo_key = ((state.dashboard.metrics.abs_total * 1000.0 / 150.0) as u32).to_string();
-            if let Some(exceed_at_key) = tel.speed_exceeds.get(&odo_key) {
-                if sog > exceed_at_key.speed {  
-                    tel.speed_exceeds.insert(odo_key, exceed);
-                }
-            } else {
-                tel.speed_exceeds.insert(odo_key, exceed);
-            };
-        }
-        state.telemetry.insert(area_id.clone(), tel);
-        state.dashboard.widget_shown.arrow = is_open || in_visiable_zone;
     }
     Ok(())
 }

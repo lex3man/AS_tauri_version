@@ -24,6 +24,8 @@ import Position from "./components/screens/position";
 import DebugScreen from "./components/screens/debug";
 import Roadbook from "./components/screens/roadbook";
 import SpeedExceedsScreen from "./components/screens/speed-exceeds";
+import JumpSuggestion from "./components/screens/jump";
+// import { toast } from "sonner";
 
 function App() {
   const [leftOpen, setLeftOpen] = useState(false);
@@ -34,6 +36,9 @@ function App() {
     mobileView,
     configLoading,
     nextPointName,
+    jumpSuggestion,
+    jumpPointID,
+    callView,
     setGpsAccuracy,
     setRaceNumber,
     setCodeOfDay,
@@ -55,8 +60,10 @@ function App() {
     setVisiable,
     setSpeedExceeds,
     setNextPointType,
+    setJumpSuggestion,
+    setJumpPointID,
   } = useAppState();
-  const { showBackground } = useSettings();
+  const { showBackground, jumpMode } = useSettings();
   const { width, height } = useWindowDimensions();
 
   const geoloc = async () => {
@@ -80,31 +87,40 @@ function App() {
             lon: geoData["longitude"],
           };
           setCoords(coords);
-          invoke<string>("sync_data").then((rawData) => {
-            setDebugData(rawData);
-            const data = JSON.parse(rawData);
-            if (data.next_point.split("-")[1] !== nextPointName) {
-              // playBeep();
-            }
-            setCog(data.cog);
-            setCtw(data.ctw);
-            setDtw(data.dtw);
-            setCurrentSpeed(data.sog);
-            setCpCounter(data.metrics.cp_counter);
-            setTotal(data.metrics.total);
-            setPartial(data.metrics.partial);
-            setNextPointNumber(data.next_point.split("-")[0]);
-            setNextPointName(data.next_point.split("-")[1]);
-            setNextPointType(data.next_point_type);
-            setMaxSpeed(data.max_speed);
-            setVisiable(data.visiable);
-          }).catch((_) => {
-            setDebugData("Failed to sync data");
-          });
+          invoke<string>("sync_data")
+            .then((rawData) => {
+              setDebugData(rawData);
+              const data = JSON.parse(rawData);
+              if (data.next_point.split("-")[1] !== nextPointName) {
+                // playBeep();
+              }
+              setCog(data.cog);
+              setCtw(data.ctw);
+              setDtw(data.dtw);
+              setCurrentSpeed(data.sog);
+              setCpCounter(data.metrics.cp_counter);
+              setTotal(data.metrics.total);
+              setPartial(data.metrics.partial);
+              setNextPointNumber(data.next_point.split("-")[0]);
+              setNextPointName(data.next_point.split("-")[1]);
+              setNextPointType(data.next_point_type);
+              setMaxSpeed(data.max_speed);
+              setVisiable(data.visiable);
+              setJumpSuggestion(data.jump_suggestion);
+              setJumpPointID(data.jump_point);
+
+              // toast.success(`Got data with jumpsuggestion: ${data.jump_suggestion}, for point: ${data.jump_point}`, {
+              //   position: "bottom-center",
+              //   duration: 3000,
+              // });
+            })
+            .catch((_) => {
+              setDebugData("Failed to sync data");
+            });
           if (pos) {
             setGpsAccuracy(pos.coords.accuracy as number);
           }
-          
+
           invoke<string>("get_exceeds").then((exceeds) => {
             setSpeedExceeds(exceeds);
           });
@@ -112,6 +128,12 @@ function App() {
       );
     }
   };
+
+  useEffect(() => {
+    if (jumpMode && jumpPointID.split("-")[1] !== nextPointName) {
+      callView("jump");
+    }
+  }, [jumpSuggestion]);
 
   useEffect(() => {
     const orientationChangeHandle = () => {
@@ -122,7 +144,7 @@ function App() {
       const rn = await invoke<string>("get_race_number");
       setRaceNumber(rn);
     };
-    setMobileView((width / height > 2) || (height / width) > 2);
+    setMobileView(width / height > 2 || height / width > 2);
     setRoadbookMode(width < height);
     check();
     geoloc();
@@ -134,100 +156,106 @@ function App() {
   }, []);
 
   const renderContent = () => {
-  switch (activeViewPort.name) {
-    case "request": {
-      let answerFunc = setCodeOfDay;
-      if (activeViewPort.type == "race number") answerFunc = setRaceNumber;
-      if (activeViewPort.type == "command") answerFunc = setCommand;
-      return (
-        <main className="gap-3 items-center justify-center">
-          <DataRequest
-            typeOfData={activeViewPort.type as TypeOfRequest}
-            setAnswer={answerFunc}
-          />
-        </main>
-      );
-    }
-    case "settings":
-      return (
-        <div className="relative h-screen">
-          <Settings />
-        </div>
-      );
-    case "admin-area":
-      return (
-        <div className="relative h-screen">
-          <AdminPanel />
-        </div>
-      );
-    case "position":
-      return (
-        <div className="relative h-screen">
-          <Position />
-        </div>
-      );
-    case "checkpoints":
-      return (
-        <div className="relative h-screen">
-          <CheckPoints />
-        </div>
-      );
-    case "exceeds":
-      return (
-        <div className="relative h-screen">
-          <SpeedExceedsScreen />
-        </div>
-      );
-    case "debug":
-      return (
-        <div className="relative h-screen">
-          <DebugScreen />
-        </div>
-      );
-    case "navigate":
-      return (
-        <>
-          {!mobileView && !roadbookMode && (
-            <SwipeZones
-              onOpenLeft={() => setLeftOpen(true)}
-              onOpenRight={() => setRightOpen(true)}
-              onCloseLeft={() => setLeftOpen(false)}
-              onCloseRight={() => setRightOpen(false)}
+    switch (activeViewPort.name) {
+      case "request": {
+        let answerFunc = setCodeOfDay;
+        if (activeViewPort.type == "race number") answerFunc = setRaceNumber;
+        if (activeViewPort.type == "command") answerFunc = setCommand;
+        return (
+          <main className="gap-3 items-center justify-center">
+            <DataRequest
+              typeOfData={activeViewPort.type as TypeOfRequest}
+              setAnswer={answerFunc}
             />
-          )}
-          {roadbookMode ? (
-            <main className="h-full gap-3 items-center justify-center overflow-hidden">
-              <Roadbook />
-            </main>
-          ) : (
-            <main
-              className={`${mobileView && "flex"} h-full gap-3 items-center justify-center overflow-hidden`}
-            >
-              {mobileView && (
-                <div className="w-1/6">
-                  <LeftContent />
-                </div>
-              )}
-              <div
-                className={`relative h-screen ${mobileView ? "w-2/3" : "w-full"} border-2 border-foreground ${showBackground ? 'bg-cover bg-center bg-no-repeat bg-[url("./assets/background.png")]' : ""}`}
+          </main>
+        );
+      }
+      case "settings":
+        return (
+          <div className="relative h-screen">
+            <Settings />
+          </div>
+        );
+      case "admin-area":
+        return (
+          <div className="relative h-screen">
+            <AdminPanel />
+          </div>
+        );
+      case "position":
+        return (
+          <div className="relative h-screen">
+            <Position />
+          </div>
+        );
+      case "checkpoints":
+        return (
+          <div className="relative h-screen">
+            <CheckPoints />
+          </div>
+        );
+      case "exceeds":
+        return (
+          <div className="relative h-screen">
+            <SpeedExceedsScreen />
+          </div>
+        );
+      case "jump":
+        return (
+          <div className="relative h-screen">
+            <JumpSuggestion />
+          </div>
+        );
+      case "debug":
+        return (
+          <div className="relative h-screen">
+            <DebugScreen />
+          </div>
+        );
+      case "navigate":
+        return (
+          <>
+            {!mobileView && !roadbookMode && (
+              <SwipeZones
+                onOpenLeft={() => setLeftOpen(true)}
+                onOpenRight={() => setRightOpen(true)}
+                onCloseLeft={() => setLeftOpen(false)}
+                onCloseRight={() => setRightOpen(false)}
+              />
+            )}
+            {roadbookMode ? (
+              <main className="h-full gap-3 items-center justify-center overflow-hidden">
+                <Roadbook />
+              </main>
+            ) : (
+              <main
+                className={`${mobileView && "flex"} h-full gap-3 items-center justify-center overflow-hidden`}
               >
-                <Ride />
-              </div>
-              {mobileView && (
-                <div className="w-1/6">
-                  <RightContent />
+                {mobileView && (
+                  <div className="w-1/6">
+                    <LeftContent />
+                  </div>
+                )}
+                <div
+                  className={`relative h-screen ${mobileView ? "w-2/3" : "w-full"} border-2 border-foreground ${showBackground ? 'bg-cover bg-center bg-no-repeat bg-[url("./assets/background.png")]' : ""}`}
+                >
+                  <Ride />
                 </div>
-              )}
+                {mobileView && (
+                  <div className="w-1/6">
+                    <RightContent />
+                  </div>
+                )}
                 <div className="flex">
                   <LeftMenu open={leftOpen} setOpen={setLeftOpen} />
                   <RightMenu open={rightOpen} setOpen={setRightOpen} />
                 </div>
-            </main>
-          )}
-        </>
-      );
-  }
-  return <main className="gap-3 items-center justify-center">{}</main>;
+              </main>
+            )}
+          </>
+        );
+    }
+    return <main className="gap-3 items-center justify-center">{}</main>;
   };
 
   return (
@@ -236,7 +264,9 @@ function App() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
           <div className="flex flex-col items-center gap-4">
             <div className="w-12 h-12 border-4 border-white border-t-transparent rounded-full animate-spin" />
-            <span className="text-white text-lg font-medium">Request for config update...</span>
+            <span className="text-white text-lg font-medium">
+              Request for config update...
+            </span>
           </div>
         </div>
       )}

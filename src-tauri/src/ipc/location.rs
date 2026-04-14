@@ -39,18 +39,19 @@ pub fn send_telemetry(
     checked: bool,
 ) -> Result<(), ()> {
     let data = json!({
-            "race_number": &state.race_number.clone(),
-            "device_id": "",
-            "etape": &state.race.active_code.clone(),
-            "exceeding": state.dashboard.sog > state.dashboard.max_speed,
-            "speed": state.dashboard.sog,
-            "lat": state.coords.as_ref().unwrap_or(&GPSData::default()).latitude,
-            "lon": state.coords.as_ref().unwrap_or(&GPSData::default()).longitude,
-            "accuracy": "",
-            "point_name": state.race.spec_area_state.next_point.clone(),
-            "checked": checked,
-            "time": ""})
+        "race_number": &state.race_number.clone(),
+        "device_id": "",
+        "etape": &state.race.active_code.clone(),
+        "exceeding": state.dashboard.sog > state.dashboard.max_speed,
+        "speed": state.dashboard.sog,
+        "lat": state.coords.as_ref().unwrap_or(&GPSData::default()).latitude,
+        "lon": state.coords.as_ref().unwrap_or(&GPSData::default()).longitude,
+        "accuracy": "",
+        "point_name": state.race.spec_area_state.next_point.clone(),
+        "checked": checked,
+        "time": ""})
     .to_string();
+
     match app.emit("send_telemetry", data) {
         Ok(_) => {
             return Ok(());
@@ -59,4 +60,23 @@ pub fn send_telemetry(
             return Err(());
         }
     };
+}
+
+#[tauri::command]
+pub fn jump_reaction(state: State<'_, Mutex<AppState>>, flag: &str) -> Result<(), ()> {
+    if let Ok(mut state) = state.lock() {
+        let jump_to = state.jump_suggestion.point.clone();
+        match flag {
+            "yes" => {
+                state.race.spec_area_state.point_controller.set_active(&jump_to);
+                state.race.spec_area_state.prev_point = state.race.spec_area_state.next_point.clone();
+                state.race.spec_area_state.next_point = jump_to;
+            },
+            _ => {}, 
+        }
+        state.settings.jump_mode_switch("off");
+        state.jump_suggestion.suggested = false;
+        return Ok(());
+    }
+    Err(())
 }

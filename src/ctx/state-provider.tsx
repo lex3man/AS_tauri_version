@@ -6,7 +6,13 @@ import { ViewPort } from "@/types/viewport";
 import Viewports from "@/viewports";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
-import { createContext, useCallback, useContext, useEffect, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 import { toast } from "sonner";
 import { getBatteryInfo, getDeviceInfo } from "tauri-plugin-device-info-api";
 
@@ -60,9 +66,11 @@ type AppStateProviderState = {
   nextPointNumber: number;
   nextPointName: string;
   nextPointType: string;
+  jumpPointID: string;
   total: number;
   partial: number;
   speedExceeds: string;
+  jumpSuggestion: boolean;
   telemetry: TelemetryData[];
 
   setRaceNumber: (rn: string) => void;
@@ -96,6 +104,8 @@ type AppStateProviderState = {
   setCurrentRBIndex: (val: number) => void;
   goNext: () => void;
   goPrev: () => void;
+  setJumpPointID: (val: string) => void;
+  setJumpSuggestion: (status: boolean) => void;
 };
 
 const initialState: AppStateProviderState = {
@@ -135,8 +145,10 @@ const initialState: AppStateProviderState = {
   nextPointNumber: 0,
   nextPointName: "",
   nextPointType: "",
+  jumpPointID: "",
   total: 0,
   partial: 0,
+  jumpSuggestion: false,
   telemetry: [],
   speedExceeds: "",
 
@@ -183,7 +195,7 @@ const initialState: AppStateProviderState = {
   setNextPointName: () => null,
   setMaxSpeed: () => null,
   setTotal: () => null,
-  setPartial: () => null, 
+  setPartial: () => null,
   setVisiable: () => null,
   setTelemetry: () => null,
   setSpeedExceeds: () => null,
@@ -193,6 +205,8 @@ const initialState: AppStateProviderState = {
   setCurrentRBIndex: () => null,
   goNext: () => null,
   goPrev: () => null,
+  setJumpPointID: () => null,
+  setJumpSuggestion: () => null,
 };
 
 const AppStateProviderContext =
@@ -233,11 +247,13 @@ export function StateProvider({
   const [nextPointNumber, setNextPointNumber] = useState(0);
   const [nextPointName, setNextPointName] = useState("");
   const [nextPointType, setNextPointType] = useState("");
+  const [jumpPointID, setJumpPointID] = useState("");
   const [debugData, setDebugData] = useState("");
   const [total, setTotal] = useState(0);
   const [partial, setPartial] = useState(0);
   const [telemetry, setTelemetry] = useState<TelemetryData[]>([]);
   const [speedExceeds, setSpeedExceeds] = useState("");
+  const [jumpSuggestion, setJumpSuggestion] = useState(false);
 
   // roadbook
   const [rbSlides, setRBSlides] = useState<RoadbookSlide[]>([]);
@@ -245,11 +261,11 @@ export function StateProvider({
   const [currentRBIndex, setCurrentRBIndex] = useState(0);
 
   const goNext = useCallback(() => {
-      setCurrentRBIndex(prev => Math.min(prev + 1, rbSlides.length - 1));
+    setCurrentRBIndex((prev) => Math.min(prev + 1, rbSlides.length - 1));
   }, [rbSlides.length]);
 
   const goPrev = useCallback(() => {
-      setCurrentRBIndex(prev => Math.max(prev - 1, 0));
+    setCurrentRBIndex((prev) => Math.max(prev - 1, 0));
   }, []);
 
   // indicators
@@ -305,9 +321,11 @@ export function StateProvider({
     };
 
     const fetchRoadbook = async () => {
-      const slidesList: RoadbookSlide[] = JSON.parse(await invoke("get_roadbook"));
+      const slidesList: RoadbookSlide[] = JSON.parse(
+        await invoke("get_roadbook"),
+      );
       setRBSlides(slidesList);
-    }
+    };
 
     fetchRoadbook();
     getState();
@@ -324,10 +342,12 @@ export function StateProvider({
     };
 
     const fetchRoadbook = async () => {
-      const slidesList: RoadbookSlide[] = JSON.parse(await invoke("get_roadbook"));
+      const slidesList: RoadbookSlide[] = JSON.parse(
+        await invoke("get_roadbook"),
+      );
       setRBSlides(slidesList);
-    }
-    
+    };
+
     fetchRoadbook();
     adminCheck();
     setCurrentRBIndex(0);
@@ -336,23 +356,23 @@ export function StateProvider({
   useEffect(() => {
     const loadImages = async () => {
       const loaded: Record<string, ImageData> = {};
-        for (const slide of rbSlides) {
-          const key = `${slide.subdir}/${slide.name}`;
-          try {
+      for (const slide of rbSlides) {
+        const key = `${slide.subdir}/${slide.name}`;
+        try {
           const img: ImageData = await invoke("get_roadbook_image", {
             subdir: slide.subdir,
             name: slide.name,
           });
           loaded[key] = img;
-          } catch (e) {
-            console.error(`Failed to load image ${key}:`, e);
-          }
+        } catch (e) {
+          console.error(`Failed to load image ${key}:`, e);
         }
-        setRBImages(loaded);
-      };
-      if (rbSlides.length > 0) {
-        loadImages();
       }
+      setRBImages(loaded);
+    };
+    if (rbSlides.length > 0) {
+      loadImages();
+    }
   }, [rbSlides]);
 
   useEffect(() => {
@@ -371,8 +391,6 @@ export function StateProvider({
         const device = await getDeviceInfo();
 
         telemetryData.device_id = device.uuid as string;
-        // telemetryData.lat = lat;
-        // telemetryData.lon = lon;
         await send_telemetry(telemetryData);
         setTelemetry((prev) => [...prev, telemetryData]);
       } catch (e) {
@@ -393,7 +411,7 @@ export function StateProvider({
 
   const setCodeOfDay = async (code: string) => {
     const device = await getDeviceInfo();
-    if (code === "") { 
+    if (code === "") {
       callView("navigate");
       setAM(false);
       await invoke<string>("activate_code", { code: "" });
@@ -410,28 +428,31 @@ export function StateProvider({
       return;
     }
     setCL(true);
-    request_config(device.uuid as string).then(async (resp) => {
-      if (resp) {
+    request_config(device.uuid as string)
+      .then(async (resp) => {
+        if (resp) {
+          await invoke<string>("activate_code", { code: code });
+          toast.success(`Config updated`, {
+            position: "bottom-center",
+            duration: 5000,
+          });
+        }
+      })
+      .catch(async (_) => {
         await invoke<string>("activate_code", { code: code });
-        toast.success(`Config updated`, {
+        toast.error(`Loaded config without update`, {
           position: "bottom-center",
           duration: 5000,
         });
-      }
-    }).catch(async (_) => {
-      await invoke<string>("activate_code", { code: code });
-      toast.error(`Loaded config without update`, {
-        position: "bottom-center",
-        duration: 5000,
+      })
+      .finally(async () => {
+        setCL(false);
+        setCoad(code);
+        if (code === "DEMO") {
+          setDemoMode(true);
+        }
+        callView("navigate");
       });
-    }).finally(async () => {
-      setCL(false);
-      setCoad(code);
-      if (code === "DEMO") {
-        setDemoMode(true);
-      }
-      callView("navigate");
-    });
   };
 
   const setCommand = async (cmd: string) => {
@@ -551,8 +572,10 @@ export function StateProvider({
     nextPointNumber,
     nextPointName,
     nextPointType,
+    jumpPointID,
     total,
     partial,
+    jumpSuggestion,
     telemetry,
     speedExceeds,
 
@@ -595,6 +618,8 @@ export function StateProvider({
     setCurrentRBIndex,
     goNext,
     goPrev,
+    setJumpPointID,
+    setJumpSuggestion,
   };
 
   return (

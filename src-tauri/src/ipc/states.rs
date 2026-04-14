@@ -123,6 +123,8 @@ pub fn sync_data(state: State<'_, Mutex<AppState>>) -> Result<String, ()> {
             "next_point": &state.race.spec_area_state.next_point,
             "next_point_type": next_point_type,
             "visiable": state.dashboard.widget_shown.arrow,
+            "jump_suggestion": state.jump_suggestion.suggested,
+            "jump_point": state.jump_suggestion.point.clone(),
         });
         Ok(response.to_string())
     } else {

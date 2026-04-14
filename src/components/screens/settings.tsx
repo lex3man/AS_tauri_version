@@ -4,8 +4,14 @@ import { useSettings } from "@/ctx/settings-provider";
 
 const Settings = () => {
   const { callView } = useAppState();
-  const { showBackground, setShowBackground, darkMode, setDarkMode } =
-    useSettings();
+  const {
+    showBackground,
+    setShowBackground,
+    darkMode,
+    setDarkMode,
+    jumpMode,
+    setJumpMode,
+  } = useSettings();
 
   return (
     <div>
@@ -52,6 +58,18 @@ const Settings = () => {
             }}
           >
             Dark Mode ON/OFF
+          </Button>
+          <Button
+            className={`p-6 text-2xl ${jumpMode? "bg-emerald-600" : "bg-red-500"}`}
+            onClick={() => {
+              if (jumpMode) {
+                setJumpMode(false);
+              } else {
+                setJumpMode(true);
+              }
+            }}
+          >
+            Jump Mode ON/OFF
           </Button>
           <Button className="p-6 text-2xl" onClick={() => {}}>
             GET REPORT

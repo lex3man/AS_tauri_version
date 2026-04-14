@@ -193,7 +193,7 @@ const Roadbook = () => {
                 <Arrow />
               </div>
             ) : (
-              <div className={`flex h-[25vh] justify-center mb-5`}>
+              <div className={`flex h-[25vh] items-center justify-center mb-5`}>
                 <div className="text-[clamp(10rem,5vw,22rem)] font-extrabold leading-none transform scale-x-60">
                   {cog.toFixed(0)}
                 </div>

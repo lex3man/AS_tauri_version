@@ -13,6 +13,7 @@ class Viewports {
         map.set("admin-area", ViewPort.new("admin-area"));
         map.set("debug", ViewPort.new("debug"));
         map.set("exceeds", ViewPort.new("exceeds"));
+        map.set("jump", ViewPort.new("jump"));
     }
 
     activate(name: string, type?: TypeOfRequest) {
