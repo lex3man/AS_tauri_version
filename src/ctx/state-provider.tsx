@@ -334,6 +334,28 @@ export function StateProvider({
   }, [coad]);
 
   useEffect(() => {
+    const loadImages = async () => {
+      const loaded: Record<string, ImageData> = {};
+        for (const slide of rbSlides) {
+          const key = `${slide.subdir}/${slide.name}`;
+          try {
+          const img: ImageData = await invoke("get_roadbook_image", {
+            subdir: slide.subdir,
+            name: slide.name,
+          });
+          loaded[key] = img;
+          } catch (e) {
+            console.error(`Failed to load image ${key}:`, e);
+          }
+        }
+        setRBImages(loaded);
+      };
+      if (rbSlides.length > 0) {
+        loadImages();
+      }
+  }, [rbSlides]);
+
+  useEffect(() => {
     const batteryCheck = async () => {
       const battery = await getBatteryInfo();
       setBatteryLevel(battery.level ? battery.level : 0);

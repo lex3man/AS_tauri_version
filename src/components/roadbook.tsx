@@ -1,11 +1,9 @@
 import { useAppState } from "@/ctx/state-provider";
-import { invoke } from "@tauri-apps/api/core";
-import { useEffect } from "react";
 import clsx from "clsx";
 import { RoadbookSlide, ImageData } from "@/types/roadbook";
 
 export const RoadbookSlides = () => {
-  const { mobileView, rbSlides, rbImages, setRBSlides, setRBImages, currentRBIndex, goNext, goPrev } = useAppState();
+  const { mobileView, rbSlides, rbImages, setRBSlides, currentRBIndex, goNext, goPrev } = useAppState();
 
   const renderSlideImage = (img: ImageData, slide: RoadbookSlide, className?: string) => (
     <div className={clsx("relative inline-block", className)}>
@@ -20,28 +18,6 @@ export const RoadbookSlides = () => {
       )}
     </div>
   );
-    
-  useEffect(() => {
-    const loadImages = async () => {
-      const loaded: Record<string, ImageData> = {};
-        for (const slide of rbSlides) {
-          const key = `${slide.subdir}/${slide.name}`;
-          try {
-          const img: ImageData = await invoke("get_roadbook_image", {
-            subdir: slide.subdir,
-            name: slide.name,
-          });
-          loaded[key] = img;
-          } catch (e) {
-            console.error(`Failed to load image ${key}:`, e);
-          }
-        }
-        setRBImages(loaded);
-      };
-      if (rbSlides.length > 0) {
-        loadImages();
-      }
-  }, [rbSlides]);
 
   const predictedSlides = mobileView ? [1, 2, 3] : [1, 2];
 
@@ -63,14 +39,14 @@ export const RoadbookSlides = () => {
     <div 
       className="flex-1 flex items-center justify-center w-full overflow-hidden border-10 border-red-700 rounded-2xl z-50"
       onDoubleClick={() => {
-          if (rbSlides[currentRBIndex]) {
-              if (rbSlides[currentRBIndex].marked) { rbSlides[currentRBIndex].marked = false; }
-              else { 
-                  rbSlides[currentRBIndex].marked = true; 
-                  goNext();
-              }
-              setRBSlides([...rbSlides]);
+        if (rbSlides[currentRBIndex]) {
+          if (rbSlides[currentRBIndex].marked) { rbSlides[currentRBIndex].marked = false; }
+          else { 
+            rbSlides[currentRBIndex].marked = true; 
+            goNext();
           }
+          setRBSlides([...rbSlides]);
+        }
       }}
     >
       {rbSlides.length > 0 && currentRBIndex >= 0 && currentRBIndex < rbSlides.length ? (() => {
