@@ -58,7 +58,7 @@ impl PointLinkedList {
         self.length += 1;
     }
 
-    pub fn prepend(&mut self, point_id: String) {
+    pub fn _prepend(&mut self, point_id: String) {
         let new_node = PointNode {
             point_id: point_id.clone(),
             prev: None,
@@ -133,11 +133,11 @@ impl PointLinkedList {
         None
     }
 
-    pub fn get_first(&self) -> Option<&String> {
+    pub fn _get_first(&self) -> Option<&String> {
         self.head.as_ref()
     }
 
-    pub fn get_last(&self) -> Option<&String> {
+    pub fn _get_last(&self) -> Option<&String> {
         self.tail.as_ref()
     }
 
@@ -150,7 +150,7 @@ impl PointLinkedList {
         }
     }
 
-    pub fn move_to_last(&mut self) -> Option<String> {
+    pub fn _move_to_last(&mut self) -> Option<String> {
         if let Some(ref tail_id) = self.tail {
             self.active = Some(tail_id.clone());
             Some(tail_id.clone())
@@ -167,15 +167,15 @@ impl PointLinkedList {
         self.peek_prev().is_some()
     }
 
-    pub fn is_empty(&self) -> bool {
+    pub fn _is_empty(&self) -> bool {
         self.length == 0
     }
 
-    pub fn len(&self) -> usize {
+    pub fn _len(&self) -> usize {
         self.length
     }
 
-    pub fn to_vec(&self) -> Vec<String> {
+    pub fn _to_vec(&self) -> Vec<String> {
         let mut result = Vec::new();
         let mut current = self.head.clone();
 
@@ -191,7 +191,7 @@ impl PointLinkedList {
         result
     }
 
-    pub fn get_active_index(&self) -> Option<usize> {
+    pub fn _get_active_index(&self) -> Option<usize> {
         if let Some(ref active_id) = self.active {
             let mut current = self.head.clone();
             let mut index = 0;
@@ -211,7 +211,7 @@ impl PointLinkedList {
         None
     }
 
-    pub fn remove(&mut self, point_id: &str) -> Option<()> {
+    pub fn _remove(&mut self, point_id: &str) -> Option<()> {
         if let Some(node) = self.nodes.remove(point_id) {
             if let Some(ref prev_id) = node.prev {
                 if let Some(prev_node) = self.nodes.get_mut(prev_id) {
@@ -240,7 +240,7 @@ impl PointLinkedList {
         }
     }
 
-    pub fn clear(&mut self) {
+    pub fn _clear(&mut self) {
         self.nodes.clear();
         self.head = None;
         self.tail = None;

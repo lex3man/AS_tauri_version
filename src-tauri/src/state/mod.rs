@@ -35,18 +35,18 @@ pub struct Position {
 
 pub struct Flags {
     pub speed_exceeded: bool,
-    pub gps_signal_lost: bool,
-    pub low_battery: bool,
-    pub internert_disconnected: bool,
+    pub _gps_signal_lost: bool,
+    pub _low_battery: bool,
+    pub _internert_disconnected: bool,
 }
 
 impl Flags {
     pub fn new() -> Self {
         Flags {
             speed_exceeded: false,
-            gps_signal_lost: false,
-            low_battery: false,
-            internert_disconnected: false,
+            _gps_signal_lost: false,
+            _low_battery: false,
+            _internert_disconnected: false,
         }
     }
 }

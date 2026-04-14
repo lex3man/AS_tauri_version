@@ -8,9 +8,9 @@ fn test_basic_navigation() {
     list.append("point-2".to_string());
     list.append("point-3".to_string());
 
-    assert_eq!(list.len(), 3);
-    assert_eq!(list.get_first().unwrap(), "point-1");
-    assert_eq!(list.get_last().unwrap(), "point-3");
+    assert_eq!(list._len(), 3);
+    assert_eq!(list._get_first().unwrap(), "point-1");
+    assert_eq!(list._get_last().unwrap(), "point-3");
 
     list.move_to_first();
     assert_eq!(list.get_active().unwrap(), "point-1");
@@ -34,8 +34,8 @@ fn test_from_point_ids() {
 
     let list = PointLinkedList::from_point_ids(ids);
 
-    assert_eq!(list.len(), 3);
-    assert_eq!(list.to_vec(), vec!["A", "B", "C"]);
+    assert_eq!(list._len(), 3);
+    assert_eq!(list._to_vec(), vec!["A", "B", "C"]);
 }
 
 #[test]
@@ -63,11 +63,11 @@ fn test_remove() {
     list.append("point-3".to_string());
 
     list.set_active("point-2");
-    list.remove("point-2");
+    list._remove("point-2");
 
-    assert_eq!(list.len(), 2);
+    assert_eq!(list._len(), 2);
     assert_eq!(list.get_active().unwrap(), "point-3");
-    assert_eq!(list.to_vec(), vec!["point-1", "point-3"]);
+    assert_eq!(list._to_vec(), vec!["point-1", "point-3"]);
 }
 
 #[test]
@@ -78,10 +78,10 @@ fn test_boundaries() {
     list.append("B".to_string());
 
     list.move_to_first();
-    assert!(list.move_prev().is_none());
+    assert!(list._move_to_last().is_none());
 
-    list.move_to_last();
-    assert!(list.move_next().is_none());
+    list._move_to_last();
+    assert!(list.move_to_first().is_none());
 }
 
 #[test]
@@ -93,11 +93,11 @@ fn test_get_active_index() {
     list.append("C".to_string());
 
     list.set_active("B");
-    assert_eq!(list.get_active_index(), Some(1));
+    assert_eq!(list._get_active_index(), Some(1));
 
     list.move_to_first();
-    assert_eq!(list.get_active_index(), Some(0));
+    assert_eq!(list._get_active_index(), Some(0));
 
-    list.move_to_last();
-    assert_eq!(list.get_active_index(), Some(2));
+    list._move_to_last();
+    assert_eq!(list._get_active_index(), Some(2));
 }
