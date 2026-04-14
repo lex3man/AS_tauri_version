@@ -141,9 +141,9 @@ const Ride = () => {
       <div className="flex w-full justify-center">
         <div className={`flex flex-col w-1/4 h-[85vh]`}>
           {!visiable ? (
-            <div className={`flex flex-col justify-start ${mobileView ? "h-[32%]" : "h-[35%]"} px-3`}></div>
+            <div className={`flex flex-col justify-start h-[32%] px-3`}></div>
           ) : (
-            <div className={`flex flex-col justify-start ${mobileView ? "h-[32%]" : "h-[35%]"} px-3`}>
+            <div className={`flex flex-col justify-start h-[32%] px-3`}>
               <div
                 className={`flex justify-start ${mobileView ? "text-6xl" : "text-[clamp(4rem,10vw,8rem)]"} font-extrabold leading-none`}
               >

@@ -5,22 +5,20 @@ import clsx from "clsx";
 import { RoadbookSlide, ImageData } from "@/types/roadbook";
 
 export const RoadbookSlides = () => {
-    // const [slides, setSlides] = useState<RoadbookSlide[]>([]);
-    // const [images, setImages] = useState<Record<string, ImageData>>({});
     const { mobileView, rbSlides, rbImages, setRBSlides, setRBImages, currentRBIndex, goNext, goPrev } = useAppState();
 
     const renderSlideImage = (img: ImageData, slide: RoadbookSlide, className?: string) => (
-        <div className={clsx("relative inline-block", className)}>
-            <img src={`data:${img.mime_type};base64,${img.data}`} alt={slide.name} className="max-w-full max-h-full object-contain" />
-            {slide.marked && (
-                <div className="absolute inset-0 pointer-events-none overflow-hidden">
-                    <div className="w-full h-full rotate-25 absolute top-0 left-0 -translate-x-1/2 -translate-y-1/2" style={{
-                        borderTop: "10px solid rgba(239, 68, 68, 1)",
-                        width: "240%",
-                    }} />
-                </div>
-            )}
-        </div>
+      <div className={clsx("relative inline-block", className)}>
+        <img src={`data:${img.mime_type};base64,${img.data}`} alt={slide.name} className="max-w-full max-h-full object-contain" />
+        {slide.marked && (
+          <div className="absolute inset-0 pointer-events-none overflow-hidden">
+            <div className="w-full h-full -rotate-14 absolute bottom-0 left-0 " style={{
+                borderTop: "10px solid rgba(239, 68, 68, 1)",
+                width: "200%",
+            }} />
+          </div>
+        )}
+      </div>
     );
     
     useEffect(() => {
@@ -66,9 +64,12 @@ export const RoadbookSlides = () => {
             className="flex-1 flex items-center justify-center w-full overflow-hidden border-10 border-red-700 rounded-2xl z-50"
             onDoubleClick={() => {
                 if (rbSlides[currentRBIndex]) {
-                    rbSlides[currentRBIndex].marked = true;
+                    if (rbSlides[currentRBIndex].marked) { rbSlides[currentRBIndex].marked = false; }
+                    else { 
+                        rbSlides[currentRBIndex].marked = true; 
+                        goNext();
+                    }
                     setRBSlides([...rbSlides]);
-                    goNext();
                 }
             }}
         >
