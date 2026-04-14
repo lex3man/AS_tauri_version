@@ -46,12 +46,12 @@ impl Default for Defaults {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct PointTypes {
+pub struct _PointTypes {
     pub map: BTreeMap<String, Defaults>,
 }
 
-impl PointTypes {
-    pub fn add(&mut self, name: &str, def: &Defaults) {
+impl _PointTypes {
+    pub fn _add(&mut self, name: &str, def: &Defaults) {
         self.map.insert(name.to_string(), def.clone());
     }
 }
@@ -109,7 +109,7 @@ impl PointBuilder {
         }
     }
 
-    pub fn update_defaults(mut self, def: &Defaults) -> Self {
+    pub fn _update_defaults(mut self, def: &Defaults) -> Self {
         self.capture_radius = def.capture_radius;
         self.flags = def.flags.clone();
         self.countdown = def.countdown;
@@ -118,43 +118,43 @@ impl PointBuilder {
         self
     }
 
-    pub fn with_coords(mut self, coords: Coords) -> Self {
+    pub fn _with_coords(mut self, coords: Coords) -> Self {
         self.lat = coords.lat;
         self.lon = coords.lon;
         self
     }
 
-    pub fn with_odo(mut self, odo: u32) -> Self {
+    pub fn _with_odo(mut self, odo: u32) -> Self {
         self.odo = odo;
         self
     }
 
-    pub fn with_countdown(mut self, val: Minutes) -> Self {
+    pub fn _with_countdown(mut self, val: Minutes) -> Self {
         self.countdown = val;
         self
     }
 
-    pub fn set_capture_radius(mut self, value: u32) -> Self {
+    pub fn _set_capture_radius(mut self, value: u32) -> Self {
         self.capture_radius = value;
         self
     }
-    pub fn set_visible_radius(mut self, value: u32) -> Self {
+    pub fn _set_visible_radius(mut self, value: u32) -> Self {
         self.visible_radius = value;
         self
     }
-    pub fn set_speed_limit(mut self, value: u8) -> Self {
+    pub fn _set_speed_limit(mut self, value: u8) -> Self {
         self.speed_limit = value;
         self
     }
-    pub fn set_is_open(mut self, status: bool) -> Self {
+    pub fn _set_is_open(mut self, status: bool) -> Self {
         self.flags.is_open = status;
         self
     }
-    pub fn set_is_ghost(mut self, status: bool) -> Self {
+    pub fn _set_is_ghost(mut self, status: bool) -> Self {
         self.flags.is_ghost = status;
         self
     }
-    pub fn set_is_ingame(mut self, status: bool) -> Self {
+    pub fn _set_is_ingame(mut self, status: bool) -> Self {
         self.flags.in_game = status;
         self
     }
@@ -190,16 +190,16 @@ impl SpecArea {
     }
 }
 
-pub struct SpecAreaBuilder {
+pub struct _SpecAreaBuilder {
     pub id: SpecAreaID,
     pub activation_code: ActivationCode,
     pub points_set: Vec<Point>,
     pub roadbook: Vec<String>,
 }
 
-impl SpecAreaBuilder {
-    pub fn new(id: &str, code: &str) -> SpecAreaBuilder {
-        SpecAreaBuilder {
+impl _SpecAreaBuilder {
+    pub fn _new(id: &str, code: &str) -> _SpecAreaBuilder {
+        _SpecAreaBuilder {
             id: id.to_string(),
             activation_code: code.to_string(),
             points_set: vec![],
@@ -207,17 +207,17 @@ impl SpecAreaBuilder {
         }
     }
 
-    pub fn add_point(mut self, point: &Point) -> Self {
+    pub fn _add_point(mut self, point: &Point) -> Self {
         self.points_set.push(point.clone());
         self
     }
 
-    pub fn add_roadbook_slide_url(mut self, url: &str) -> Self {
+    pub fn _add_roadbook_slide_url(mut self, url: &str) -> Self {
         self.roadbook.push(url.to_string());
         self
     }
 
-    pub fn build(self) -> SpecArea {
+    pub fn _build(self) -> SpecArea {
         SpecArea {
             id: self.id,
             activation_code: self.activation_code,
@@ -235,16 +235,16 @@ pub struct Race {
     pub areas: HashMap<ActivationCode, SpecArea>,
 }
 
-pub struct RaceBuilder {
+pub struct _RaceBuilder {
     pub name: String,
     pub serial: String,
     pub expire_date: String,
     pub areas: HashMap<ActivationCode, SpecArea>,
 }
 
-impl RaceBuilder {
-    pub fn new(name: &str, serial: &str, exp_date: &str) -> RaceBuilder {
-        RaceBuilder {
+impl _RaceBuilder {
+    pub fn _new(name: &str, serial: &str, exp_date: &str) -> _RaceBuilder {
+        _RaceBuilder {
             name: name.to_string(),
             serial: serial.to_string(),
             expire_date: exp_date.to_string(),
@@ -252,13 +252,13 @@ impl RaceBuilder {
         }
     }
 
-    pub fn add_area(mut self, area: &SpecArea) -> Self {
+    pub fn _add_area(mut self, area: &SpecArea) -> Self {
         self.areas
             .insert(area.activation_code.clone(), area.clone());
         self
     }
 
-    pub fn build(self) -> Race {
+    pub fn _build(self) -> Race {
         Race {
             name: self.name,
             serial: self.serial,

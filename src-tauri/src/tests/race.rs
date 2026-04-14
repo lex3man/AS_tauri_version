@@ -8,20 +8,20 @@ use std::{
 use serde_json::json;
 
 use crate::race::types::{
-    Coords, Defaults, Flags, PointBuilder, PointTypes, RaceBuilder, SpecArea,
+    Coords, Defaults, Flags, PointBuilder, _PointTypes, _RaceBuilder, SpecArea,
 };
 
 #[test]
 fn test_structs() {
-    let mut point_types = PointTypes {
+    let mut point_types = _PointTypes {
         map: BTreeMap::new(),
     };
 
-    point_types.add(
+    point_types._add(
         "WPV",
         &Defaults {
             capture_radius: 200,
-            visible_radius: 800,
+            visible_radius: 800,    
             speed_limit: 170,
             countdown: 0,
             flags: Flags {
@@ -31,7 +31,7 @@ fn test_structs() {
             },
         },
     );
-    point_types.add(
+    point_types._add(
         "WPM",
         &Defaults {
             capture_radius: 200,
@@ -45,7 +45,7 @@ fn test_structs() {
             },
         },
     );
-    point_types.add(
+    point_types._add(
         "WPS",
         &Defaults {
             capture_radius: 50,
@@ -59,7 +59,7 @@ fn test_structs() {
             },
         },
     );
-    point_types.add(
+    point_types._add(
         "WPE",
         &Defaults {
             capture_radius: 200,
@@ -73,7 +73,7 @@ fn test_structs() {
             },
         },
     );
-    point_types.add(
+    point_types._add(
         "DSS",
         &Defaults {
             capture_radius: 100,
@@ -87,7 +87,7 @@ fn test_structs() {
             },
         },
     );
-    point_types.add(
+    point_types._add(
         "FZ",
         &Defaults {
             capture_radius: 100,
@@ -101,7 +101,7 @@ fn test_structs() {
             },
         },
     );
-    point_types.add(
+    point_types._add(
         "DZ",
         &Defaults {
             capture_radius: 200,
@@ -115,7 +115,7 @@ fn test_structs() {
             },
         },
     );
-    point_types.add(
+    point_types._add(
         "NZ",
         &Defaults {
             capture_radius: 200,
@@ -129,7 +129,7 @@ fn test_structs() {
             },
         },
     );
-    point_types.add(
+    point_types._add(
         "WPC",
         &Defaults {
             capture_radius: 200,
@@ -143,7 +143,7 @@ fn test_structs() {
             },
         },
     );
-    point_types.add(
+    point_types._add(
         "ASS",
         &Defaults {
             capture_radius: 200,
@@ -160,113 +160,113 @@ fn test_structs() {
 
     println!("{}", json!(point_types));
 
-    let mut race = RaceBuilder {
+    let mut race = _RaceBuilder {
         name: "Example".to_string(),
         serial: "AA 01012026".to_string(),
         expire_date: "31.12.2026".to_string(),
         areas: HashMap::new(),
     };
 
-    race = race.add_area(&SpecArea {
+    race = race._add_area(&SpecArea {
         id: "example-1".to_string(),
         activation_code: "111111".to_string(),
         points_set: vec![
             PointBuilder::new(1, "Bivuac 1", "WPV")
-                .with_coords(Coords {
+                ._with_coords(Coords {
                     lat: 45.544534,
                     lon: 52.235225,
                 })
-                .update_defaults(point_types.map.get("WPV").unwrap())
+                ._update_defaults(point_types.map.get("WPV").unwrap())
                 .build(),
             PointBuilder::new(2, "Start", "DSS")
-                .with_coords(Coords {
+                ._with_coords(Coords {
                     lat: 45.544534,
                     lon: 52.235225,
                 })
-                .update_defaults(point_types.map.get("DSS").unwrap())
+                ._update_defaults(point_types.map.get("DSS").unwrap())
                 .build(),
             PointBuilder::new(3, "TSC 1", "WPM")
-                .with_coords(Coords {
+                ._with_coords(Coords {
                     lat: 45.544534,
                     lon: 52.235225,
                 })
-                .update_defaults(point_types.map.get("WPM").unwrap())
-                .with_odo(1000)
+                ._update_defaults(point_types.map.get("WPM").unwrap())
+                ._with_odo(1000)
                 .build(),
             PointBuilder::new(4, "TSC 2", "WPM")
-                .with_coords(Coords {
+                ._with_coords(Coords {
                     lat: 45.544534,
                     lon: 52.235225,
                 })
-                .update_defaults(point_types.map.get("WPM").unwrap())
-                .with_odo(1500)
+                ._update_defaults(point_types.map.get("WPM").unwrap())
+                ._with_odo(1500)
                 .build(),
             PointBuilder::new(5, "TSC 3", "DZ")
-                .with_coords(Coords {
+                ._with_coords(Coords {
                     lat: 45.544534,
                     lon: 52.235225,
                 })
-                .update_defaults(point_types.map.get("DZ").unwrap())
-                .with_odo(2000)
+                ._update_defaults(point_types.map.get("DZ").unwrap())
+                ._with_odo(2000)
                 .build(),
             PointBuilder::new(6, "TSC 4", "FZ")
-                .with_coords(Coords {
+                ._with_coords(Coords {
                     lat: 45.544534,
                     lon: 52.235225,
                 })
-                .update_defaults(point_types.map.get("FZ").unwrap())
-                .with_odo(2500)
-                .set_speed_limit(50)
+                ._update_defaults(point_types.map.get("FZ").unwrap())
+                ._with_odo(2500)
+                ._set_speed_limit(50)
                 .build(),
             PointBuilder::new(7, "TSC 5", "WPM")
-                .with_coords(Coords {
+                ._with_coords(Coords {
                     lat: 45.544534,
                     lon: 52.235225,
                 })
-                .update_defaults(point_types.map.get("WPM").unwrap())
-                .with_odo(3000)
+                ._update_defaults(point_types.map.get("WPM").unwrap())
+                ._with_odo(3000)
                 .build(),
             PointBuilder::new(8, "TSC 6", "NZ")
-                .with_coords(Coords {
+                ._with_coords(Coords {
                     lat: 45.544534,
                     lon: 52.235225,
                 })
-                .update_defaults(point_types.map.get("NZ").unwrap())
-                .with_odo(3500)
-                .with_countdown(10)
+                ._update_defaults(point_types.map.get("NZ").unwrap())
+                ._with_odo(3500)
+                ._with_countdown(10)
                 .build(),
             PointBuilder::new(9, "TSC 7", "DZ")
-                .with_coords(Coords {
+                ._with_coords(Coords {
                     lat: 45.544534,
                     lon: 52.235225,
                 })
-                .update_defaults(point_types.map.get("DZ").unwrap())
-                .with_odo(4000)
+                ._update_defaults(point_types.map.get("DZ").unwrap())
+                ._with_odo(4000)
                 .build(),
             PointBuilder::new(10, "TSC 8", "FZ")
-                .with_coords(Coords {
+                ._with_coords(Coords {
                     lat: 45.544534,
                     lon: 52.235225,
                 })
-                .update_defaults(point_types.map.get("FZ").unwrap())
-                .with_odo(4500)
-                .set_speed_limit(60)
+                ._update_defaults(point_types.map.get("FZ").unwrap())
+                ._with_odo(4500)
+                ._set_speed_limit(60)
                 .build(),
             PointBuilder::new(11, "Finish", "ASS")
-                .with_coords(Coords {
+                ._with_coords(Coords {
                     lat: 45.544534,
                     lon: 52.235225,
                 })
-                .update_defaults(point_types.map.get("ASS").unwrap())
-                .with_odo(5000)
+                ._update_defaults(point_types.map.get("ASS").unwrap())
+                ._with_odo(5000)
                 .build(),
             PointBuilder::new(12, "Bivuac 2", "WPV")
-                .with_coords(Coords {
+                ._with_coords(Coords {
                     lat: 45.544534,
                     lon: 52.235225,
                 })
-                .update_defaults(point_types.map.get("WPV").unwrap())
-                .with_odo(5500)
+                ._update_defaults(point_types.map.get("WPV").unwrap())
+                ._with_odo(5500)
                 .build(),
         ],
         roadbook: vec![
@@ -291,106 +291,106 @@ fn test_structs() {
         ],
     });
 
-    race = race.add_area(&SpecArea {
+    race = race._add_area(&SpecArea {
         id: "example-2".to_string(),
         activation_code: "222222".to_string(),
         points_set: vec![
             PointBuilder::new(1, "Bivuac 1", "WPV")
-                .with_coords(Coords {
+                ._with_coords(Coords {
                     lat: 45.544534,
                     lon: 52.235225,
                 })
-                .update_defaults(point_types.map.get("WPV").unwrap())
+                ._update_defaults(point_types.map.get("WPV").unwrap())
                 .build(),
             PointBuilder::new(2, "Start", "DSS")
-                .with_coords(Coords {
+                ._with_coords(Coords {
                     lat: 45.544534,
                     lon: 52.235225,
                 })
-                .update_defaults(point_types.map.get("DSS").unwrap())
+                ._update_defaults(point_types.map.get("DSS").unwrap())
                 .build(),
             PointBuilder::new(3, "TSC 1", "WPM")
-                .with_coords(Coords {
+                ._with_coords(Coords {
                     lat: 45.544534,
                     lon: 52.235225,
                 })
-                .update_defaults(point_types.map.get("WPM").unwrap())
-                .with_odo(1000)
+                ._update_defaults(point_types.map.get("WPM").unwrap())
+                ._with_odo(1000)
                 .build(),
             PointBuilder::new(4, "TSC 2", "WPM")
-                .with_coords(Coords {
+                ._with_coords(Coords {
                     lat: 45.544534,
                     lon: 52.235225,
                 })
-                .update_defaults(point_types.map.get("WPM").unwrap())
-                .with_odo(1700)
+                ._update_defaults(point_types.map.get("WPM").unwrap())
+                ._with_odo(1700)
                 .build(),
             PointBuilder::new(5, "TSC 3", "DZ")
-                .with_coords(Coords {
+                ._with_coords(Coords {
                     lat: 45.544534,
                     lon: 52.235225,
                 })
-                .update_defaults(point_types.map.get("DZ").unwrap())
-                .with_odo(2500)
+                ._update_defaults(point_types.map.get("DZ").unwrap())
+                ._with_odo(2500)
                 .build(),
             PointBuilder::new(6, "TSC 4", "FZ")
-                .with_coords(Coords {
+                ._with_coords(Coords {
                     lat: 45.544534,
                     lon: 52.235225,
                 })
-                .update_defaults(point_types.map.get("FZ").unwrap())
-                .with_odo(3200)
-                .set_speed_limit(50)
+                ._update_defaults(point_types.map.get("FZ").unwrap())
+                ._with_odo(3200)
+                ._set_speed_limit(50)
                 .build(),
             PointBuilder::new(7, "TSC 5", "WPM")
-                .with_coords(Coords {
+                ._with_coords(Coords {
                     lat: 45.544534,
                     lon: 52.235225,
                 })
-                .update_defaults(point_types.map.get("WPM").unwrap())
-                .with_odo(4000)
+                ._update_defaults(point_types.map.get("WPM").unwrap())
+                ._with_odo(4000)
                 .build(),
             PointBuilder::new(8, "TSC 6", "NZ")
-                .with_coords(Coords {
+                ._with_coords(Coords {
                     lat: 45.544534,
                     lon: 52.235225,
                 })
-                .update_defaults(point_types.map.get("NZ").unwrap())
-                .with_odo(5000)
-                .with_countdown(10)
+                ._update_defaults(point_types.map.get("NZ").unwrap())
+                ._with_odo(5000)
+                ._with_countdown(10)
                 .build(),
             PointBuilder::new(9, "TSC 7", "DZ")
-                .with_coords(Coords {
+                ._with_coords(Coords {
                     lat: 45.544534,
                     lon: 52.235225,
                 })
-                .update_defaults(point_types.map.get("DZ").unwrap())
-                .with_odo(5500)
+                ._update_defaults(point_types.map.get("DZ").unwrap())
+                ._with_odo(5500)
                 .build(),
             PointBuilder::new(10, "TSC 8", "FZ")
-                .with_coords(Coords {
+                ._with_coords(Coords {
                     lat: 45.544534,
                     lon: 52.235225,
                 })
-                .update_defaults(point_types.map.get("FZ").unwrap())
-                .with_odo(6200)
-                .set_speed_limit(60)
+                ._update_defaults(point_types.map.get("FZ").unwrap())
+                ._with_odo(6200)
+                ._set_speed_limit(60)
                 .build(),
             PointBuilder::new(11, "Finish", "ASS")
-                .with_coords(Coords {
+                ._with_coords(Coords {
                     lat: 45.544534,
                     lon: 52.235225,
                 })
-                .update_defaults(point_types.map.get("ASS").unwrap())
-                .with_odo(6900)
+                ._update_defaults(point_types.map.get("ASS").unwrap())
+                ._with_odo(6900)
                 .build(),
             PointBuilder::new(12, "Bivuac 2", "WPV")
-                .with_coords(Coords {
+                ._with_coords(Coords {
                     lat: 45.544534,
                     lon: 52.235225,
                 })
-                .update_defaults(point_types.map.get("WPV").unwrap())
-                .with_odo(7200)
+                ._update_defaults(point_types.map.get("WPV").unwrap())
+                ._with_odo(7200)
                 .build(),
         ],
         roadbook: vec![
@@ -415,7 +415,7 @@ fn test_structs() {
         ],
     });
 
-    let race = race.build();
+    let race = race._build();
 
     let outpath = Path::new("src/tests/output");
 
