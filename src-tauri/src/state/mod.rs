@@ -27,6 +27,20 @@ pub struct GPSData {
     pub heading: Option<f32>,
 }
 
+impl Default for GPSData {
+    fn default() -> Self {
+        GPSData {
+            latitude: 0.0,
+            longitude: 0.0,
+            accuracy: 0.0,
+            altitude_accuracy: None,
+            altitude: None,
+            speed: None,
+            heading: None,
+        }
+    }
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone, Copy)]
 pub struct Position {
     pub timestamp: u64,

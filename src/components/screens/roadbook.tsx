@@ -28,8 +28,8 @@ const Roadbook = () => {
   const { showBackground } = useSettings();
   const [exceeding, setExceeding] = useState(false);
   const [preExceeding, setPreExceeding] = useState(false);
-    const audioContextRef = useRef<AudioContext | null>(null);
     const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+    const audioContextRef = useRef<AudioContext | null>(null);
     const continuousOscRef = useRef<OscillatorNode | null>(null);
     const continuousGainRef = useRef<GainNode | null>(null);
   
@@ -128,15 +128,15 @@ const Roadbook = () => {
       <div
         className={`h-[35vh] w-full border-2 border-foreground ${showBackground ? 'bg-cover bg-center bg-no-repeat bg-[url("./assets/background_rb.png")]' : ""}`}
       >
-        <div className={`flex justify-center h-[6hv]`}>
+        <div className={`flex justify-center h-[12%]`}>
           <div className="flex pt-2 pl-2 justify-center w-1/4">
             <Indicators />
           </div>
-          <div className="flex justify-center text-[clamp(1rem,5vw,2rem)] leading-none font-extrabold w-1/2 my-auto pt-2">
+          <div className="flex justify-center text-[clamp(1rem,5vw,4rem)] leading-none font-extrabold w-1/2 my-auto pt-2">
             <div className="">{cpCounter} CP</div>
           </div>
           <div className="flex pt-2 pr-5 justify-center w-1/4">
-            <div className="flex justify-center text-[clamp(1rem,5vw,2rem)] leading-none font-extrabold my-auto">
+            <div className="flex justify-center text-[clamp(1rem,5vw,4rem)] leading-none font-extrabold my-auto">
               {exceeding ? (<div className="transform scale-x-60 font-extrabold text-red-600 animate-caret-blink">! ! !</div>) : (<div className="transform scale-x-60">{maxSpeed} V</div>)}
             </div>
           </div>

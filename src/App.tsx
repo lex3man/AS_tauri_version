@@ -33,6 +33,7 @@ function App() {
     activeViewPort,
     mobileView,
     configLoading,
+    nextPointName,
     setGpsAccuracy,
     setRaceNumber,
     setCodeOfDay,
@@ -82,6 +83,9 @@ function App() {
           invoke<string>("sync_data").then((rawData) => {
             setDebugData(rawData);
             const data = JSON.parse(rawData);
+            if (data.next_point.split("-")[1] !== nextPointName) {
+              // playBeep();
+            }
             setCog(data.cog);
             setCtw(data.ctw);
             setDtw(data.dtw);

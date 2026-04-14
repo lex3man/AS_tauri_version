@@ -1,11 +1,12 @@
 import { request_config, send_telemetry } from "@/lib/api";
 import { TypeOfRequest } from "@/types/request";
+import { RoadbookSlide, ImageData } from "@/types/roadbook";
 import { AppState, Coords, DashBoard, TelemetryData } from "@/types/state";
 import { ViewPort } from "@/types/viewport";
 import Viewports from "@/viewports";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { getBatteryInfo, getDeviceInfo } from "tauri-plugin-device-info-api";
 
@@ -43,6 +44,10 @@ type AppStateProviderState = {
   totalWidgetShown: boolean;
   partialWidgetShown: boolean;
   countdownWidgetShown: boolean;
+
+  rbSlides: RoadbookSlide[];
+  rbImages: Record<string, ImageData>;
+  currentRBIndex: number;
 
   lat: number;
   lon: number;
@@ -86,6 +91,11 @@ type AppStateProviderState = {
   setTelemetry: (val: TelemetryData[]) => void;
   setSpeedExceeds: (val: string) => void;
   setNextPointType: (val: string) => void;
+  setRBSlides: (val: RoadbookSlide[]) => void;
+  setRBImages: (val: Record<string, ImageData>) => void;
+  setCurrentRBIndex: (val: number) => void;
+  goNext: () => void;
+  goPrev: () => void;
 };
 
 const initialState: AppStateProviderState = {
@@ -109,6 +119,10 @@ const initialState: AppStateProviderState = {
   totalWidgetShown: false,
   partialWidgetShown: false,
   countdownWidgetShown: false,
+
+  rbSlides: [],
+  rbImages: {},
+  currentRBIndex: 0,
 
   lat: 0,
   lon: 0,
@@ -174,6 +188,11 @@ const initialState: AppStateProviderState = {
   setTelemetry: () => null,
   setSpeedExceeds: () => null,
   setNextPointType: () => null,
+  setRBSlides: () => null,
+  setRBImages: () => null,
+  setCurrentRBIndex: () => null,
+  goNext: () => null,
+  goPrev: () => null,
 };
 
 const AppStateProviderContext =
@@ -219,6 +238,19 @@ export function StateProvider({
   const [partial, setPartial] = useState(0);
   const [telemetry, setTelemetry] = useState<TelemetryData[]>([]);
   const [speedExceeds, setSpeedExceeds] = useState("");
+
+  // roadbook
+  const [rbSlides, setRBSlides] = useState<RoadbookSlide[]>([]);
+  const [rbImages, setRBImages] = useState<Record<string, ImageData>>({});
+  const [currentRBIndex, setCurrentRBIndex] = useState(0);
+
+  const goNext = useCallback(() => {
+      setCurrentRBIndex(prev => Math.min(prev + 1, rbSlides.length - 1));
+  }, [rbSlides.length]);
+
+  const goPrev = useCallback(() => {
+      setCurrentRBIndex(prev => Math.max(prev - 1, 0));
+  }, []);
 
   // indicators
   const [gpsAccurancy, setGpsAccuracy] = useState(5);
@@ -272,6 +304,12 @@ export function StateProvider({
       }
     };
 
+    const fetchRoadbook = async () => {
+      const slidesList: RoadbookSlide[] = JSON.parse(await invoke("get_roadbook"));
+      setRBSlides(slidesList);
+    }
+
+    fetchRoadbook();
     getState();
   }, []);
 
@@ -284,7 +322,15 @@ export function StateProvider({
         setAM(false);
       }
     };
+
+    const fetchRoadbook = async () => {
+      const slidesList: RoadbookSlide[] = JSON.parse(await invoke("get_roadbook"));
+      setRBSlides(slidesList);
+    }
+    
+    fetchRoadbook();
     adminCheck();
+    setCurrentRBIndex(0);
   }, [coad]);
 
   useEffect(() => {
@@ -296,13 +342,15 @@ export function StateProvider({
     batteryCheck();
   }, [speed]);
 
-  // Слушатель событий телеметрии от Rust-бэкенда
   useEffect(() => {
     const unlisten = listen<string>("send_telemetry", async (event) => {
       try {
         const telemetryData = JSON.parse(event.payload) as TelemetryData;
         const device = await getDeviceInfo();
+
         telemetryData.device_id = device.uuid as string;
+        // telemetryData.lat = lat;
+        // telemetryData.lon = lon;
         await send_telemetry(telemetryData);
         setTelemetry((prev) => [...prev, telemetryData]);
       } catch (e) {
@@ -486,6 +534,10 @@ export function StateProvider({
     telemetry,
     speedExceeds,
 
+    rbSlides,
+    rbImages,
+    currentRBIndex,
+
     gpsAccurancy,
     batteryLevel,
     charging,
@@ -516,6 +568,11 @@ export function StateProvider({
     setTelemetry,
     setSpeedExceeds,
     setNextPointType,
+    setRBSlides,
+    setRBImages,
+    setCurrentRBIndex,
+    goNext,
+    goPrev,
   };
 
   return (

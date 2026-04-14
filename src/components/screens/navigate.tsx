@@ -26,8 +26,8 @@ const Ride = () => {
   } = useAppState();
   const [exceeding, setExceeding] = useState(false);
   const [preExceeding, setPreExceeding] = useState(false);
-  const audioContextRef = useRef<AudioContext | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
   const continuousOscRef = useRef<OscillatorNode | null>(null);
   const continuousGainRef = useRef<GainNode | null>(null);
 
@@ -129,11 +129,11 @@ const Ride = () => {
         >
           <Indicators />
         </div>
-        <div className="flex justify-center text-[clamp(2rem,5vw,3.5rem)] leading-none font-extrabold w-1/2 my-auto">
+        <div className="flex justify-center text-[clamp(2rem,5vw,5.5rem)] leading-none font-extrabold w-1/2 my-auto">
           <div className="transform scale-x-60">{cpCounter} CP</div>
         </div>
         <div className="flex pt-5 pr-5 justify-center w-1/4">
-          <div className="flex justify-center text-[clamp(1.5rem,5vw,3rem)] leading-none font-extrabold my-auto">     
+          <div className="flex justify-center text-[clamp(1.5rem,5vw,5rem)] leading-none font-extrabold my-auto">     
             {exceeding ? (<div className="transform scale-x-60 font-extrabold text-red-600 animate-caret-blink">! ! !</div>) : (<div className="transform scale-x-60">{maxSpeed} V</div>)}
           </div>
         </div>
@@ -191,7 +191,7 @@ const Ride = () => {
           className={`flex flex-col justify-between ${roadbookMode ? "h-[25vh]" : "h-[85vh]"} w-2/4`}
         >
           <div
-            className={`${mobileView ? "text-3xl" : "text-[clamp(1.5rem,5vw,3rem)]"} leading-none mx-auto font-extrabold ${mobileView ? "p-2" : "p-5"}`}
+            className={`${mobileView ? "text-3xl" : "text-[clamp(1.5rem,5vw,4rem)]"} leading-none mx-auto font-extrabold ${mobileView ? "p-2" : "p-5"}`}
           >
             <div className="transform scale-x-60">WPT{nextPointNumber} {nextPointName}</div>
           </div>

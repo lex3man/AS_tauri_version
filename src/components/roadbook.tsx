@@ -1,35 +1,32 @@
 import { useAppState } from "@/ctx/state-provider";
 import { invoke } from "@tauri-apps/api/core";
-import { useEffect, useState, useCallback } from "react";
-
-type RoadbookSlide = {
-    subdir: string,
-    name: string,
-}
-
-type ImageData = {
-    data: string,
-    mime_type: string,
-}
+import { useEffect } from "react";
+import clsx from "clsx";
+import { RoadbookSlide, ImageData } from "@/types/roadbook";
 
 export const RoadbookSlides = () => {
-    const [slides, setSlides] = useState<RoadbookSlide[]>([]);
-    const [images, setImages] = useState<Record<string, ImageData>>({});
-    const [currentIndex, setCurrentIndex] = useState(0);
-    const { mobileView } = useAppState();
+    // const [slides, setSlides] = useState<RoadbookSlide[]>([]);
+    // const [images, setImages] = useState<Record<string, ImageData>>({});
+    const { mobileView, rbSlides, rbImages, setRBSlides, setRBImages, currentRBIndex, goNext, goPrev } = useAppState();
 
-    useEffect(() => {
-        const fetchRoadbook = async () => {
-            const slidesList: RoadbookSlide[] = JSON.parse(await invoke("get_roadbook"));
-            setSlides(slidesList);
-        }
-        fetchRoadbook();
-    }, []);
-
+    const renderSlideImage = (img: ImageData, slide: RoadbookSlide, className?: string) => (
+        <div className={clsx("relative inline-block", className)}>
+            <img src={`data:${img.mime_type};base64,${img.data}`} alt={slide.name} className="max-w-full max-h-full object-contain" />
+            {slide.marked && (
+                <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                    <div className="w-full h-full rotate-25 absolute top-0 left-0 -translate-x-1/2 -translate-y-1/2" style={{
+                        borderTop: "10px solid rgba(239, 68, 68, 1)",
+                        width: "240%",
+                    }} />
+                </div>
+            )}
+        </div>
+    );
+    
     useEffect(() => {
         const loadImages = async () => {
             const loaded: Record<string, ImageData> = {};
-            for (const slide of slides) {
+            for (const slide of rbSlides) {
                 const key = `${slide.subdir}/${slide.name}`;
                 try {
                     const img: ImageData = await invoke("get_roadbook_image", {
@@ -41,47 +38,48 @@ export const RoadbookSlides = () => {
                     console.error(`Failed to load image ${key}:`, e);
                 }
             }
-            setImages(loaded);
+            setRBImages(loaded);
         };
-        if (slides.length > 0) {
+        if (rbSlides.length > 0) {
             loadImages();
         }
-    }, [slides]);
-
-    const goNext = useCallback(() => {
-        setCurrentIndex(prev => Math.min(prev + 1, slides.length - 1));
-    }, [slides.length]);
-
-    const goPrev = useCallback(() => {
-        setCurrentIndex(prev => Math.max(prev - 1, 0));
-    }, []);
+    }, [rbSlides]);
 
     const predictedSlides = mobileView ? [1, 2, 3] : [1, 2];
 
     return (
     <div className="relative flex flex-col w-full h-full">
         <div className="shrink-0 h-[15vh] w-full flex items-center justify-center overflow-hidden bg-gray-800/40">
-            {slides.length > 0 && currentIndex > 0 && (() => {
-                const prevSlide = slides[currentIndex - 1];
+            {rbSlides.length > 0 && currentRBIndex > 0 && (() => {
+                const prevSlide = rbSlides[currentRBIndex - 1];
                 const prevKey = `${prevSlide.subdir}/${prevSlide.name}`;
-                const prevImg = images[prevKey];
+                const prevImg = rbImages[prevKey];
                 if (prevImg) {
                     return (
-                        <img src={`data:${prevImg.mime_type};base64,${prevImg.data}`} alt={`previous slide`} className="max-w-full max-h-full object-contain opacity-40 scale-90" />
+                        renderSlideImage(prevImg, prevSlide, "opacity-40 scale-90")
                     );
                 }
             })()}
         </div>
 
-        <div className="flex-1 flex items-center justify-center w-full overflow-hidden border-10 border-red-700 rounded-2xl">
-            {slides.length > 0 && currentIndex >= 0 && currentIndex < slides.length ? (() => {
-                const slide = slides[currentIndex];
+        <div 
+            className="flex-1 flex items-center justify-center w-full overflow-hidden border-10 border-red-700 rounded-2xl z-50"
+            onDoubleClick={() => {
+                if (rbSlides[currentRBIndex]) {
+                    rbSlides[currentRBIndex].marked = true;
+                    setRBSlides([...rbSlides]);
+                    goNext();
+                }
+            }}
+        >
+            {rbSlides.length > 0 && currentRBIndex >= 0 && currentRBIndex < rbSlides.length ? (() => {
+                const slide = rbSlides[currentRBIndex];
                 const key = `${slide.subdir}/${slide.name}`;
-                const img = images[key];
+                const img = rbImages[key];
                 return (
                     <div className="w-full h-full flex items-center justify-center">
                         {img
-                            ? <img src={`data:${img.mime_type};base64,${img.data}`} alt={`slide ${currentIndex}`} className="max-w-full max-h-full object-contain" />
+                            ? renderSlideImage(img, slide)
                             : <div className="text-gray-400">Loading...</div>
                         }
                     </div>
@@ -93,16 +91,16 @@ export const RoadbookSlides = () => {
 
         <div className="shrink-0 h-[32vh] w-full flex flex-col gap-1 p-1">
             {predictedSlides.map((offset) => {
-                const nextSlide = slides[currentIndex + offset];
+                const nextSlide = rbSlides[currentRBIndex + offset];
                 if (!nextSlide) {
                     return <div key={offset} className="flex-1 bg-gray-800/30" />;
                 }
                 const nextKey = `${nextSlide.subdir}/${nextSlide.name}`;
-                const nextImg = images[nextKey];
+                const nextImg = rbImages[nextKey];
                 return (
                     <div key={offset} className="flex-1 flex items-center justify-center overflow-hidden">
                         {nextImg ? (
-                            <img src={`data:${nextImg.mime_type};base64,${nextImg.data}`} alt={`next slide ${offset}`} className="max-w-full max-h-full object-contain" />
+                            renderSlideImage(nextImg, nextSlide)
                         ) : (
                             <div className="text-gray-500 text-xs">Loading...</div>
                         )}
@@ -111,11 +109,11 @@ export const RoadbookSlides = () => {
             })}
         </div>
 
-        {slides.length > 1 && (
+        {rbSlides.length > 1 && (
             <>
                 <button
                     onClick={goPrev}
-                    disabled={currentIndex === 0}
+                    disabled={currentRBIndex === 0}
                     className="absolute bottom-2 left-4 w-20 h-20 bg-black/30 hover:bg-black/50 disabled:bg-black/10 disabled:cursor-not-allowed backdrop-blur-sm rounded-lg flex items-center justify-center transition-all duration-200 active:scale-95 z-50"
                 >
                     <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -125,7 +123,7 @@ export const RoadbookSlides = () => {
 
                 <button
                     onClick={goNext}
-                    disabled={currentIndex === slides.length - 1}
+                    disabled={currentRBIndex === rbSlides.length - 1}
                     className="absolute bottom-2 right-4 w-20 h-20 bg-black/30 hover:bg-black/50 disabled:bg-black/10 disabled:cursor-not-allowed backdrop-blur-sm rounded-lg flex items-center justify-center transition-all duration-200 active:scale-95 z-50"
                 >
                     <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">

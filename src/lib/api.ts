@@ -85,7 +85,7 @@ export const send_telemetry = async (data: TelemetryData) => {
   });
 
   if (resp.status === 200) {
-    // toast.success("Telemetry data sent successfully", { 
+    // toast.success(`Telemetry data with lat: ${data.lat}, lon: ${data.lon} sent successfully`, { 
     //   position: "bottom-center",
     //   duration: 3000,
     // });

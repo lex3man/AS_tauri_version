@@ -1,4 +1,4 @@
-use crate::{state::Position, utils::actor::make_culc, AppState};
+use crate::{AppState, state::{GPSData, Position}, utils::actor::make_culc};
 use serde_json::json;
 use std::sync::{Mutex, MutexGuard};
 use tauri::{AppHandle, Emitter, State};
@@ -44,8 +44,8 @@ pub fn send_telemetry(
             "etape": &state.race.active_code.clone(),
             "exceeding": state.dashboard.sog > state.dashboard.max_speed,
             "speed": state.dashboard.sog,
-            "lat": state.dashboard.coords.lat,
-            "lon": state.dashboard.coords.lon,
+            "lat": state.coords.as_ref().unwrap_or(&GPSData::default()).latitude,
+            "lon": state.coords.as_ref().unwrap_or(&GPSData::default()).longitude,
             "accuracy": "",
             "point_name": state.race.spec_area_state.next_point.clone(),
             "checked": checked,
