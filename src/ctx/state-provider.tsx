@@ -54,6 +54,7 @@ type AppStateProviderState = {
   cpCounter: number;
   nextPointNumber: number;
   nextPointName: string;
+  nextPointType: string;
   total: number;
   partial: number;
   speedExceeds: string;
@@ -84,6 +85,7 @@ type AppStateProviderState = {
   setPartial: (val: number) => void;
   setTelemetry: (val: TelemetryData[]) => void;
   setSpeedExceeds: (val: string) => void;
+  setNextPointType: (val: string) => void;
 };
 
 const initialState: AppStateProviderState = {
@@ -118,6 +120,7 @@ const initialState: AppStateProviderState = {
   cpCounter: 0,
   nextPointNumber: 0,
   nextPointName: "",
+  nextPointType: "",
   total: 0,
   partial: 0,
   telemetry: [],
@@ -170,6 +173,7 @@ const initialState: AppStateProviderState = {
   setVisiable: () => null,
   setTelemetry: () => null,
   setSpeedExceeds: () => null,
+  setNextPointType: () => null,
 };
 
 const AppStateProviderContext =
@@ -209,6 +213,7 @@ export function StateProvider({
   const [cpCounter, setCpCounter] = useState(0);
   const [nextPointNumber, setNextPointNumber] = useState(0);
   const [nextPointName, setNextPointName] = useState("");
+  const [nextPointType, setNextPointType] = useState("");
   const [debugData, setDebugData] = useState("");
   const [total, setTotal] = useState(0);
   const [partial, setPartial] = useState(0);
@@ -475,6 +480,7 @@ export function StateProvider({
     cpCounter,
     nextPointNumber,
     nextPointName,
+    nextPointType,
     total,
     partial,
     telemetry,
@@ -509,6 +515,7 @@ export function StateProvider({
     setVisiable,
     setTelemetry,
     setSpeedExceeds,
+    setNextPointType,
   };
 
   return (

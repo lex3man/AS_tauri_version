@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 
-use crate::state::Position;
+use crate::state::{Position, race_config::PointID};
 
 #[derive(Serialize, Deserialize, Debug, Clone, Copy)]
 pub struct Exceed {
@@ -20,7 +20,8 @@ impl Exceed {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct PointCapture {
-    pub point: String,
+    pub point: PointID,
+    pub point_type: String,
     pub time: u64,
     pub speed: f32,
     pub accuracy: f64,

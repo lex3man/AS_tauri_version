@@ -27,8 +27,9 @@ pub fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position) -> Re
         if state.race.race.is_none() {
             return Ok(());
         }
-        let mut total_correction = None;
         let sog = (coords.speed.unwrap_or(0.0) * 3.6) as u32;
+        let next_point_type;
+        let mut total_correction = None;
         let mut next_point_id = "".to_string();
         let mut prev_point_id = "".to_string();
         let mut dtw = 0.0f64;
@@ -73,6 +74,7 @@ pub fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position) -> Re
             });
 
             if let Some(next_point) = area.get_point_by_id(&next_point_id) {
+                next_point_type = next_point.point_type.clone();
                 is_open = next_point.flags.is_open;
                 max_speed = next_point.speed_limit;
                 prev_point_id = state.race.spec_area_state.prev_point.clone();
@@ -170,6 +172,7 @@ pub fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position) -> Re
                         );
                         tel.captures.push(PointCapture {
                             point: state.race.spec_area_state.next_point.clone(),
+                            point_type: next_point_type,
                             time: pos.timestamp,
                             speed: coords.speed.unwrap_or(0.0) * 3.6,
                             accuracy: coords.accuracy,
@@ -195,6 +198,7 @@ pub fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position) -> Re
         if let Some(new_total) = total_correction {
             state.dashboard.metrics.total = new_total;
         } else {
+            state.dashboard.metrics.abs_total += (coords.speed.unwrap_or(0.0) / 1000.0) as f64;
             state.dashboard.metrics.total += (coords.speed.unwrap_or(0.0) / 1000.0) as f64;
         }
         state.dashboard.metrics.partial += (coords.speed.unwrap_or(0.0) / 1000.0) as f64;
@@ -202,7 +206,7 @@ pub fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position) -> Re
         state.race.spec_area_state.next_point = next_point_id;
         if max_speed > 0 && sog > max_speed as u32 {
             let exceed = Exceed::new(sog, max_speed, pos.timestamp, state.dashboard.metrics.total as u32);
-            let odo_key = ((state.dashboard.metrics.total * 1000.0 / 150.0) as u32).to_string();
+            let odo_key = ((state.dashboard.metrics.abs_total * 1000.0 / 150.0) as u32).to_string();
             if let Some(exceed_at_key) = tel.speed_exceeds.get(&odo_key) {
                 if sog > exceed_at_key.speed {  
                     tel.speed_exceeds.insert(odo_key, exceed);

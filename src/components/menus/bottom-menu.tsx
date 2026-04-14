@@ -26,7 +26,6 @@ export const BtmMenu = () => {
       const currentY = e.touches[0].clientY;
       const diff = startY - currentY;
       
-      // Если свайп вверх больше 50px — открываем меню
       if (diff > 50) {
         setOpen(true);
       }
@@ -35,9 +34,8 @@ export const BtmMenu = () => {
 
   return (
     <div className="m-auto flex justify-center">
-      {/* Зона свайпа внизу экрана */}
       <div
-        className="fixed bottom-1/3 left-0 right-0 h-1/3 z-40 touch-pan-y"
+        className="fixed bottom-0 left-0 right-0 h-2/3 z-40 touch-pan-y"
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
       />

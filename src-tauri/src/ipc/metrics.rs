@@ -41,6 +41,5 @@ pub async fn get_exceeds(state: State<'_, Mutex<AppState>>) -> Result<String, ()
         let area = state.race.current_sa.clone();
         result = state.telemetry.get(&area).unwrap_or(&Telemetry::new()).speed_exceeds.clone();
     }
-    println!("get_exceeds: {:?}", result);
     Ok(json!(result).to_string())
 }

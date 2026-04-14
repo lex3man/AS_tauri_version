@@ -36,7 +36,7 @@ pub fn get_coords(state: State<'_, Mutex<AppState>>) -> Option<String> {
 pub fn send_telemetry(
     app: &AppHandle,
     state: &MutexGuard<AppState>,
-    chacked: bool,
+    checked: bool,
 ) -> Result<(), ()> {
     let data = json!({
             "race_number": &state.race_number.clone(),
@@ -48,7 +48,7 @@ pub fn send_telemetry(
             "lon": state.dashboard.coords.lon,
             "accuracy": "",
             "point_name": state.race.spec_area_state.next_point.clone(),
-            "checked": chacked,
+            "checked": checked,
             "time": ""})
     .to_string();
     match app.emit("send_telemetry", data) {

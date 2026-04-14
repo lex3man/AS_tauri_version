@@ -53,6 +53,7 @@ function App() {
     setDebugData,
     setVisiable,
     setSpeedExceeds,
+    setNextPointType,
   } = useAppState();
   const { showBackground } = useSettings();
   const { width, height } = useWindowDimensions();
@@ -90,6 +91,7 @@ function App() {
             setPartial(data.metrics.partial);
             setNextPointNumber(data.next_point.split("-")[0]);
             setNextPointName(data.next_point.split("-")[1]);
+            setNextPointType(data.next_point_type);
             setMaxSpeed(data.max_speed);
             setVisiable(data.visiable);
           }).catch((_) => {

@@ -4,7 +4,7 @@ use serde_json::json;
 use tauri::{AppHandle, State};
 
 use crate::{
-    AppState, race::types::CheckPoint, state::{race_config::RaceState}, utils::{parser::FormatedData, rb_store::download_images}
+    AppState, race::types::{CheckPoint, Point, PointBuilder}, state::race_config::RaceState, utils::{parser::FormatedData, rb_store::download_images}
 };
 
 #[tauri::command]
@@ -99,6 +99,13 @@ pub fn sync_data(state: State<'_, Mutex<AppState>>) -> Result<String, ()> {
         if state.race.race.is_none() || state.race.active_code == "" {
             return Err(());
         }
+        let mut next_point_type = "none".to_string();
+        if let Some(race) = &state.race.race {
+            if let Some(area) = race.areas.get(&state.race.active_code) {
+                let next_point = area.get_point_by_id(&state.race.spec_area_state.next_point).unwrap_or(&PointBuilder::new(0, "none", "none").build()).clone();
+                next_point_type = next_point.point_type.clone();
+            }
+        }
         let response = json!({
             "cog": state.dashboard.cog,
             "sog": state.dashboard.sog,
@@ -114,6 +121,7 @@ pub fn sync_data(state: State<'_, Mutex<AppState>>) -> Result<String, ()> {
                 "cp_counter": state.dashboard.metrics.cp_counter
             },
             "next_point": &state.race.spec_area_state.next_point,
+            "next_point_type": next_point_type,
             "visiable": state.dashboard.widget_shown.arrow,
         });
         Ok(response.to_string())

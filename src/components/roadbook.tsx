@@ -60,7 +60,6 @@ export const RoadbookSlides = () => {
 
     return (
     <div className="relative flex flex-col w-full h-full">
-        {/* Previous slide zone */}
         <div className="shrink-0 h-[15vh] w-full flex items-center justify-center overflow-hidden bg-gray-800/40">
             {slides.length > 0 && currentIndex > 0 && (() => {
                 const prevSlide = slides[currentIndex - 1];
@@ -74,7 +73,6 @@ export const RoadbookSlides = () => {
             })()}
         </div>
 
-        {/* Current slide zone */}
         <div className="flex-1 flex items-center justify-center w-full overflow-hidden border-10 border-red-700 rounded-2xl">
             {slides.length > 0 && currentIndex >= 0 && currentIndex < slides.length ? (() => {
                 const slide = slides[currentIndex];
@@ -93,7 +91,6 @@ export const RoadbookSlides = () => {
             )}
         </div>
 
-        {/* Next slides zone */}
         <div className="shrink-0 h-[32vh] w-full flex flex-col gap-1 p-1">
             {predictedSlides.map((offset) => {
                 const nextSlide = slides[currentIndex + offset];
@@ -114,13 +111,12 @@ export const RoadbookSlides = () => {
             })}
         </div>
 
-        {/* Control Buttons */}
         {slides.length > 1 && (
             <>
                 <button
                     onClick={goPrev}
                     disabled={currentIndex === 0}
-                    className="absolute bottom-2 left-4 w-20 h-20 bg-black/30 hover:bg-black/50 disabled:bg-black/10 disabled:cursor-not-allowed backdrop-blur-sm rounded-lg flex items-center justify-center transition-all duration-200 active:scale-95 z-10"
+                    className="absolute bottom-2 left-4 w-20 h-20 bg-black/30 hover:bg-black/50 disabled:bg-black/10 disabled:cursor-not-allowed backdrop-blur-sm rounded-lg flex items-center justify-center transition-all duration-200 active:scale-95 z-50"
                 >
                     <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
@@ -130,7 +126,7 @@ export const RoadbookSlides = () => {
                 <button
                     onClick={goNext}
                     disabled={currentIndex === slides.length - 1}
-                    className="absolute bottom-2 right-4 w-20 h-20 bg-black/30 hover:bg-black/50 disabled:bg-black/10 disabled:cursor-not-allowed backdrop-blur-sm rounded-lg flex items-center justify-center transition-all duration-200 active:scale-95 z-10"
+                    className="absolute bottom-2 right-4 w-20 h-20 bg-black/30 hover:bg-black/50 disabled:bg-black/10 disabled:cursor-not-allowed backdrop-blur-sm rounded-lg flex items-center justify-center transition-all duration-200 active:scale-95 z-50"
                 >
                     <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />

@@ -7,7 +7,7 @@ import { PartialLiteWidget } from "../widgets/partial";
 import { Arrow } from "../arrow";
 import { RoadbookSlides } from "../roadbook";
 import { BtmMenu } from "../menus/bottom-menu";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 const Roadbook = () => {
   const {
@@ -22,14 +22,106 @@ const Roadbook = () => {
     countdownWidgetShown,
     nextPointName,
     nextPointNumber,
+    nextPointType,
     visiable,
   } = useAppState();
   const { showBackground } = useSettings();
   const [exceeding, setExceeding] = useState(false);
+  const [preExceeding, setPreExceeding] = useState(false);
+    const audioContextRef = useRef<AudioContext | null>(null);
+    const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+    const continuousOscRef = useRef<OscillatorNode | null>(null);
+    const continuousGainRef = useRef<GainNode | null>(null);
   
-  useEffect(() => {
-    setExceeding(speed > maxSpeed);
-  }, [speed, maxSpeed]);
+    const getAudioContext = useCallback(() => {
+      if (!audioContextRef.current) {
+        audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+      }
+      const ctx = audioContextRef.current;
+      if (ctx.state === "suspended") {
+        ctx.resume();
+      }
+      return ctx;
+    }, []);
+  
+    const playBeep = useCallback(() => {
+      const ctx = getAudioContext();
+      const oscillator = ctx.createOscillator();
+      const gainNode = ctx.createGain();
+  
+      oscillator.connect(gainNode);
+      gainNode.connect(ctx.destination);
+  
+      oscillator.type = "square";
+      oscillator.frequency.setValueAtTime(880, ctx.currentTime);
+      gainNode.gain.setValueAtTime(0.1, ctx.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
+  
+      oscillator.start(ctx.currentTime);
+      oscillator.stop(ctx.currentTime + 0.15);
+    }, [getAudioContext]);
+  
+    const startContinuousTone = useCallback(() => {
+      if (continuousOscRef.current) return;
+  
+      const ctx = getAudioContext();
+      const oscillator = ctx.createOscillator();
+      const gainNode = ctx.createGain();
+  
+      oscillator.connect(gainNode);
+      gainNode.connect(ctx.destination);
+  
+      oscillator.type = "square";
+      oscillator.frequency.setValueAtTime(880, ctx.currentTime);
+      gainNode.gain.setValueAtTime(0.1, ctx.currentTime);
+  
+      oscillator.start();
+      continuousOscRef.current = oscillator;
+      continuousGainRef.current = gainNode;
+    }, [getAudioContext]);
+  
+    const stopContinuousTone = useCallback(() => {
+      if (continuousOscRef.current) {
+        continuousOscRef.current.stop();
+        continuousOscRef.current.disconnect();
+        continuousOscRef.current = null;
+      }
+      if (continuousGainRef.current) {
+        continuousGainRef.current.disconnect();
+        continuousGainRef.current = null;
+      }
+    }, []);
+  
+    const stopBeeping = useCallback(() => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    }, []);
+  
+    useEffect(() => {
+      setExceeding(speed > maxSpeed && maxSpeed > 0);
+      setPreExceeding(speed > maxSpeed - 2 && maxSpeed > 0);
+    }, [speed, maxSpeed]);
+  
+    useEffect(() => {
+      if (exceeding) {
+        stopBeeping();
+        startContinuousTone();
+      } else if (preExceeding) {
+        stopContinuousTone();
+        playBeep();
+        intervalRef.current = setInterval(playBeep, 500);
+      } else {
+        stopBeeping();
+        stopContinuousTone();
+      }
+  
+      return () => {
+        stopBeeping();
+        stopContinuousTone();
+      };
+    }, [exceeding, preExceeding, playBeep, startContinuousTone, stopBeeping, stopContinuousTone]);
 
   return (
     <div className="flex flex-col">
@@ -45,7 +137,7 @@ const Roadbook = () => {
           </div>
           <div className="flex pt-2 pr-5 justify-center w-1/4">
             <div className="flex justify-center text-[clamp(1rem,5vw,2rem)] leading-none font-extrabold my-auto">
-              <div className="transform scale-x-60">{maxSpeed} V</div>
+              {exceeding ? (<div className="transform scale-x-60 font-extrabold text-red-600 animate-caret-blink">! ! !</div>) : (<div className="transform scale-x-60">{maxSpeed} V</div>)}
             </div>
           </div>
         </div>
@@ -64,13 +156,21 @@ const Roadbook = () => {
               <div className="flex flex-col justify-start h-[33%] p-3"></div>
             )}
             <div className="h-[33%]">
-            {exceeding && (
-              <div className={`flex items-center justify-center m-auto h-full border-15 border-red-500 rounded-full animate-pulse aspect-square`}>
-                <div className="text-[clamp(2rem,5vw,3.5rem)] font-extrabold">
-                  {maxSpeed}
+              {((preExceeding || nextPointType === "FZ") && !exceeding) && (
+                <div className={`flex items-center justify-center m-auto h-full border-15 border-zinc-600 rounded-full aspect-square`}>
+                  <div className="text-[clamp(2rem,5vw,3.5rem)] font-extrabold">
+                    {maxSpeed}
+                  </div>
                 </div>
-              </div>
-            )}</div>
+              )}
+              {exceeding && (
+                <div className={`flex items-center justify-center m-auto h-full border-15 border-red-500 rounded-full animate-caret-blink aspect-square`}>
+                  <div className="text-[clamp(2rem,5vw,3.5rem)] font-extrabold">
+                    {maxSpeed}
+                  </div>
+                </div>
+              )}
+            </div>
             <div className="flex flex-col justify-end h-[33%] p-3">
               <div className={`flex justify-start text-xl font-bold`}>SOG</div>
               <div
@@ -105,9 +205,9 @@ const Roadbook = () => {
               <div
                 className={`flex justify-end text-6xl font-extrabold leading-none`}
               >
-                <div className="transform origin-right scale-x-60">{ctw}</div>
+                <div className="transform origin-right scale-x-60">{visiable ? ctw : nextPointType}</div>
               </div>
-              <div className={`flex justify-end text-xl font-bold`}>CTW</div>
+              {visiable && <div className={`flex justify-end text-xl font-bold`}>CTW</div>}
             </div>
             <div className="h-[33%] p-1">
               {countdownWidgetShown ? (
