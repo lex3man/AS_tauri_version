@@ -4,12 +4,11 @@ use serde_json::json;
 use tauri::AppHandle;
 
 use crate::{
-    ipc::location::send_telemetry,
     race::types::Coords,
     state::{
         AppState, GPSData, JumpSuggestion, Position, telemetry::{Exceed, PointCapture, Telemetry}
     },
-    utils::converters::{course_in_degrees, distance},
+    utils::{converters::{course_in_degrees, distance}, send_data::send_telemetry},
 };
 
 pub fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position) -> Result<(), ()> {
