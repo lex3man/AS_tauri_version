@@ -1,8 +1,10 @@
+import { TypeOfRequest } from "./request"
+
 export class ViewPort {
     constructor(
         public name: string,
         private active: boolean,
-        public type?: string,
+        public type?: TypeOfRequest,
     ) {}
 
     activate() {
@@ -17,7 +19,7 @@ export class ViewPort {
         return this.active
     }
 
-    static new(name: string, type?: string): ViewPort {
+    static new(name: string, type?: TypeOfRequest): ViewPort {
         return new ViewPort(name, false, type)
     }
 }

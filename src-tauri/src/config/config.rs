@@ -28,7 +28,7 @@ impl Config {
             track_distance: Kilometers(30),
             jump_mode: false,
             road_book: false,
-            dtw_enabled: true
+            dtw_enabled: true,
         }
     }
 
@@ -38,5 +38,13 @@ impl Config {
 
     pub fn background_switch(&mut self) {
         self.background = !self.background
+    }
+
+    pub fn jump_mode_switch(&mut self, status: &str) {
+        match status {
+            "on" => { self.jump_mode = true },
+            "off" => { self.jump_mode = false },
+            _ => { self.jump_mode = false }
+        }
     }
 }

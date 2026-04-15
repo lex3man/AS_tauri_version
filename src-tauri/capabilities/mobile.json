@@ -9,11 +9,28 @@
     "opener:default",
     "os:default",
     "sql:default",
+    "fs:default",
     "store:default",
     "core:default",
     "geolocation:allow-check-permissions",
     "geolocation:allow-request-permissions",
     "geolocation:allow-get-current-position",
-    "geolocation:allow-watch-position"
+    "geolocation:allow-watch-position",
+    "app-control:default",
+    "device-info:default",
+    "android-fs:default",
+    {
+      "identifier": "http:default",
+      "allow": [{ "url": "https://map.rostexcabinet.ru" }],
+      "deny": []
+    },
+    {
+      "identifier": "android-fs:scope",
+      "allow": ["$APPDATA/*"]
+    },
+    {
+      "identifier": "fs:allow-exists",
+      "allow": [{ "path": "$APPDATA/*" }]
+    }
   ]
 }

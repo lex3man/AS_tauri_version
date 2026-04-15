@@ -1,5 +1,4 @@
 use std::sync::Mutex;
-// use serde_json::json;
 use tauri::State;
 
 use crate::AppState;

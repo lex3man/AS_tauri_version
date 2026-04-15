@@ -1,0 +1,467 @@
+{
+    "areas": {
+        "111111": {
+            "activation_code": "111111",
+            "id": "example-1",
+            "points_set": [
+                {
+                    "capture_radius": 200,
+                    "countdown": 0,
+                    "flags": {
+                        "in_game": true,
+                        "is_ghost": false,
+                        "is_open": true
+                    },
+                    "lat": 45.544532775878906,
+                    "lon": 52.235225677490234,
+                    "name": "Bivuac 1",
+                    "num": 1,
+                    "odo": 0,
+                    "point_type": "WPV",
+                    "speed_limit": 170,
+                    "visible_radius": 800
+                },
+                {
+                    "capture_radius": 100,
+                    "countdown": 0,
+                    "flags": {
+                        "in_game": true,
+                        "is_ghost": false,
+                        "is_open": true
+                    },
+                    "lat": 45.544532775878906,
+                    "lon": 52.235225677490234,
+                    "name": "Start",
+                    "num": 2,
+                    "odo": 0,
+                    "point_type": "DSS",
+                    "speed_limit": 170,
+                    "visible_radius": 800
+                },
+                {
+                    "capture_radius": 200,
+                    "countdown": 0,
+                    "flags": {
+                        "in_game": true,
+                        "is_ghost": false,
+                        "is_open": false
+                    },
+                    "lat": 45.544532775878906,
+                    "lon": 52.235225677490234,
+                    "name": "TSC 1",
+                    "num": 3,
+                    "odo": 1000,
+                    "point_type": "WPM",
+                    "speed_limit": 170,
+                    "visible_radius": 800
+                },
+                {
+                    "capture_radius": 200,
+                    "countdown": 0,
+                    "flags": {
+                        "in_game": true,
+                        "is_ghost": false,
+                        "is_open": false
+                    },
+                    "lat": 45.544532775878906,
+                    "lon": 52.235225677490234,
+                    "name": "TSC 2",
+                    "num": 4,
+                    "odo": 1500,
+                    "point_type": "WPM",
+                    "speed_limit": 170,
+                    "visible_radius": 800
+                },
+                {
+                    "capture_radius": 200,
+                    "countdown": 0,
+                    "flags": {
+                        "in_game": true,
+                        "is_ghost": false,
+                        "is_open": false
+                    },
+                    "lat": 45.544532775878906,
+                    "lon": 52.235225677490234,
+                    "name": "TSC 3",
+                    "num": 5,
+                    "odo": 2000,
+                    "point_type": "DZ",
+                    "speed_limit": 170,
+                    "visible_radius": 800
+                },
+                {
+                    "capture_radius": 100,
+                    "countdown": 0,
+                    "flags": {
+                        "in_game": true,
+                        "is_ghost": false,
+                        "is_open": true
+                    },
+                    "lat": 45.544532775878906,
+                    "lon": 52.235225677490234,
+                    "name": "TSC 4",
+                    "num": 6,
+                    "odo": 2500,
+                    "point_type": "FZ",
+                    "speed_limit": 50,
+                    "visible_radius": 800
+                },
+                {
+                    "capture_radius": 200,
+                    "countdown": 0,
+                    "flags": {
+                        "in_game": true,
+                        "is_ghost": false,
+                        "is_open": false
+                    },
+                    "lat": 45.544532775878906,
+                    "lon": 52.235225677490234,
+                    "name": "TSC 5",
+                    "num": 7,
+                    "odo": 3000,
+                    "point_type": "WPM",
+                    "speed_limit": 170,
+                    "visible_radius": 800
+                },
+                {
+                    "capture_radius": 200,
+                    "countdown": 10,
+                    "flags": {
+                        "in_game": true,
+                        "is_ghost": false,
+                        "is_open": false
+                    },
+                    "lat": 45.544532775878906,
+                    "lon": 52.235225677490234,
+                    "name": "TSC 6",
+                    "num": 8,
+                    "odo": 3500,
+                    "point_type": "NZ",
+                    "speed_limit": 170,
+                    "visible_radius": 800
+                },
+                {
+                    "capture_radius": 200,
+                    "countdown": 0,
+                    "flags": {
+                        "in_game": true,
+                        "is_ghost": false,
+                        "is_open": false
+                    },
+                    "lat": 45.544532775878906,
+                    "lon": 52.235225677490234,
+                    "name": "TSC 7",
+                    "num": 9,
+                    "odo": 4000,
+                    "point_type": "DZ",
+                    "speed_limit": 170,
+                    "visible_radius": 800
+                },
+                {
+                    "capture_radius": 100,
+                    "countdown": 0,
+                    "flags": {
+                        "in_game": true,
+                        "is_ghost": false,
+                        "is_open": true
+                    },
+                    "lat": 45.544532775878906,
+                    "lon": 52.235225677490234,
+                    "name": "TSC 8",
+                    "num": 10,
+                    "odo": 4500,
+                    "point_type": "FZ",
+                    "speed_limit": 60,
+                    "visible_radius": 800
+                },
+                {
+                    "capture_radius": 200,
+                    "countdown": 0,
+                    "flags": {
+                        "in_game": true,
+                        "is_ghost": false,
+                        "is_open": false
+                    },
+                    "lat": 45.544532775878906,
+                    "lon": 52.235225677490234,
+                    "name": "Finish",
+                    "num": 11,
+                    "odo": 5000,
+                    "point_type": "ASS",
+                    "speed_limit": 170,
+                    "visible_radius": 1000
+                },
+                {
+                    "capture_radius": 200,
+                    "countdown": 0,
+                    "flags": {
+                        "in_game": true,
+                        "is_ghost": false,
+                        "is_open": true
+                    },
+                    "lat": 45.544532775878906,
+                    "lon": 52.235225677490234,
+                    "name": "Bivuac 2",
+                    "num": 12,
+                    "odo": 5500,
+                    "point_type": "WPV",
+                    "speed_limit": 170,
+                    "visible_radius": 800
+                }
+            ],
+            "roadbook": [
+                "https://map.rostexcabinet.ru/upload/roadbooks/18/rb001.png",
+                "https://map.rostexcabinet.ru/upload/roadbooks/18/rb002.png",
+                "https://map.rostexcabinet.ru/upload/roadbooks/18/rb003.png",
+                "https://map.rostexcabinet.ru/upload/roadbooks/18/rb004.png",
+                "https://map.rostexcabinet.ru/upload/roadbooks/18/rb005.png",
+                "https://map.rostexcabinet.ru/upload/roadbooks/18/rb006.png",
+                "https://map.rostexcabinet.ru/upload/roadbooks/18/rb007.png",
+                "https://map.rostexcabinet.ru/upload/roadbooks/18/rb008.png",
+                "https://map.rostexcabinet.ru/upload/roadbooks/18/rb009.png",
+                "https://map.rostexcabinet.ru/upload/roadbooks/18/rb010.png",
+                "https://map.rostexcabinet.ru/upload/roadbooks/18/rb011.png",
+                "https://map.rostexcabinet.ru/upload/roadbooks/18/rb012.png",
+                "https://map.rostexcabinet.ru/upload/roadbooks/18/rb013.png",
+                "https://map.rostexcabinet.ru/upload/roadbooks/18/rb014.png",
+                "https://map.rostexcabinet.ru/upload/roadbooks/18/rb015.png",
+                "https://map.rostexcabinet.ru/upload/roadbooks/18/rb016.png",
+                "https://map.rostexcabinet.ru/upload/roadbooks/18/rb017.png",
+                "https://map.rostexcabinet.ru/upload/roadbooks/18/rb018.png"
+            ]
+        },
+        "222222": {
+            "activation_code": "222222",
+            "id": "example-2",
+            "points_set": [
+                {
+                    "capture_radius": 200,
+                    "countdown": 0,
+                    "flags": {
+                        "in_game": true,
+                        "is_ghost": false,
+                        "is_open": true
+                    },
+                    "lat": 45.544532775878906,
+                    "lon": 52.235225677490234,
+                    "name": "Bivuac 1",
+                    "num": 1,
+                    "odo": 0,
+                    "point_type": "WPV",
+                    "speed_limit": 170,
+                    "visible_radius": 800
+                },
+                {
+                    "capture_radius": 100,
+                    "countdown": 0,
+                    "flags": {
+                        "in_game": true,
+                        "is_ghost": false,
+                        "is_open": true
+                    },
+                    "lat": 45.544532775878906,
+                    "lon": 52.235225677490234,
+                    "name": "Start",
+                    "num": 2,
+                    "odo": 0,
+                    "point_type": "DSS",
+                    "speed_limit": 170,
+                    "visible_radius": 800
+                },
+                {
+                    "capture_radius": 200,
+                    "countdown": 0,
+                    "flags": {
+                        "in_game": true,
+                        "is_ghost": false,
+                        "is_open": false
+                    },
+                    "lat": 45.544532775878906,
+                    "lon": 52.235225677490234,
+                    "name": "TSC 1",
+                    "num": 3,
+                    "odo": 1000,
+                    "point_type": "WPM",
+                    "speed_limit": 170,
+                    "visible_radius": 800
+                },
+                {
+                    "capture_radius": 200,
+                    "countdown": 0,
+                    "flags": {
+                        "in_game": true,
+                        "is_ghost": false,
+                        "is_open": false
+                    },
+                    "lat": 45.544532775878906,
+                    "lon": 52.235225677490234,
+                    "name": "TSC 2",
+                    "num": 4,
+                    "odo": 1700,
+                    "point_type": "WPM",
+                    "speed_limit": 170,
+                    "visible_radius": 800
+                },
+                {
+                    "capture_radius": 200,
+                    "countdown": 0,
+                    "flags": {
+                        "in_game": true,
+                        "is_ghost": false,
+                        "is_open": false
+                    },
+                    "lat": 45.544532775878906,
+                    "lon": 52.235225677490234,
+                    "name": "TSC 3",
+                    "num": 5,
+                    "odo": 2500,
+                    "point_type": "DZ",
+                    "speed_limit": 170,
+                    "visible_radius": 800
+                },
+                {
+                    "capture_radius": 100,
+                    "countdown": 0,
+                    "flags": {
+                        "in_game": true,
+                        "is_ghost": false,
+                        "is_open": true
+                    },
+                    "lat": 45.544532775878906,
+                    "lon": 52.235225677490234,
+                    "name": "TSC 4",
+                    "num": 6,
+                    "odo": 3200,
+                    "point_type": "FZ",
+                    "speed_limit": 50,
+                    "visible_radius": 800
+                },
+                {
+                    "capture_radius": 200,
+                    "countdown": 0,
+                    "flags": {
+                        "in_game": true,
+                        "is_ghost": false,
+                        "is_open": false
+                    },
+                    "lat": 45.544532775878906,
+                    "lon": 52.235225677490234,
+                    "name": "TSC 5",
+                    "num": 7,
+                    "odo": 4000,
+                    "point_type": "WPM",
+                    "speed_limit": 170,
+                    "visible_radius": 800
+                },
+                {
+                    "capture_radius": 200,
+                    "countdown": 10,
+                    "flags": {
+                        "in_game": true,
+                        "is_ghost": false,
+                        "is_open": false
+                    },
+                    "lat": 45.544532775878906,
+                    "lon": 52.235225677490234,
+                    "name": "TSC 6",
+                    "num": 8,
+                    "odo": 5000,
+                    "point_type": "NZ",
+                    "speed_limit": 170,
+                    "visible_radius": 800
+                },
+                {
+                    "capture_radius": 200,
+                    "countdown": 0,
+                    "flags": {
+                        "in_game": true,
+                        "is_ghost": false,
+                        "is_open": false
+                    },
+                    "lat": 45.544532775878906,
+                    "lon": 52.235225677490234,
+                    "name": "TSC 7",
+                    "num": 9,
+                    "odo": 5500,
+                    "point_type": "DZ",
+                    "speed_limit": 170,
+                    "visible_radius": 800
+                },
+                {
+                    "capture_radius": 100,
+                    "countdown": 0,
+                    "flags": {
+                        "in_game": true,
+                        "is_ghost": false,
+                        "is_open": true
+                    },
+                    "lat": 45.544532775878906,
+                    "lon": 52.235225677490234,
+                    "name": "TSC 8",
+                    "num": 10,
+                    "odo": 6200,
+                    "point_type": "FZ",
+                    "speed_limit": 60,
+                    "visible_radius": 800
+                },
+                {
+                    "capture_radius": 200,
+                    "countdown": 0,
+                    "flags": {
+                        "in_game": true,
+                        "is_ghost": false,
+                        "is_open": false
+                    },
+                    "lat": 45.544532775878906,
+                    "lon": 52.235225677490234,
+                    "name": "Finish",
+                    "num": 11,
+                    "odo": 6900,
+                    "point_type": "ASS",
+                    "speed_limit": 170,
+                    "visible_radius": 1000
+                },
+                {
+                    "capture_radius": 200,
+                    "countdown": 0,
+                    "flags": {
+                        "in_game": true,
+                        "is_ghost": false,
+                        "is_open": true
+                    },
+                    "lat": 45.544532775878906,
+                    "lon": 52.235225677490234,
+                    "name": "Bivuac 2",
+                    "num": 12,
+                    "odo": 7200,
+                    "point_type": "WPV",
+                    "speed_limit": 170,
+                    "visible_radius": 800
+                }
+            ],
+            "roadbook": [
+                "https://map.rostexcabinet.ru/upload/roadbooks/19/rb002.png",
+                "https://map.rostexcabinet.ru/upload/roadbooks/19/rb003.png",
+                "https://map.rostexcabinet.ru/upload/roadbooks/19/rb001.png",
+                "https://map.rostexcabinet.ru/upload/roadbooks/19/rb005.png",
+                "https://map.rostexcabinet.ru/upload/roadbooks/19/rb006.png",
+                "https://map.rostexcabinet.ru/upload/roadbooks/19/rb004.png",
+                "https://map.rostexcabinet.ru/upload/roadbooks/19/rb007.png",
+                "https://map.rostexcabinet.ru/upload/roadbooks/19/rb008.png",
+                "https://map.rostexcabinet.ru/upload/roadbooks/19/rb009.png",
+                "https://map.rostexcabinet.ru/upload/roadbooks/19/rb010.png",
+                "https://map.rostexcabinet.ru/upload/roadbooks/19/rb011.png",
+                "https://map.rostexcabinet.ru/upload/roadbooks/19/rb012.png",
+                "https://map.rostexcabinet.ru/upload/roadbooks/19/rb013.png",
+                "https://map.rostexcabinet.ru/upload/roadbooks/19/rb014.png",
+                "https://map.rostexcabinet.ru/upload/roadbooks/19/rb015.png",
+                "https://map.rostexcabinet.ru/upload/roadbooks/19/rb016.png",
+                "https://map.rostexcabinet.ru/upload/roadbooks/19/rb017.png",
+                "https://map.rostexcabinet.ru/upload/roadbooks/19/rb018.png"
+            ]
+        }
+    },
+    "expire_date": "31.12.2026",
+    "name": "Example",
+    "serial": "AA 01012026"
+}

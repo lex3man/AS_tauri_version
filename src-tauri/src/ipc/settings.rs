@@ -1,7 +1,7 @@
-use std::sync::Mutex;
-use serde_json::json;
-use tauri::State;
 use crate::AppState;
+use serde_json::json;
+use std::sync::Mutex;
+use tauri::State;
 
 #[tauri::command]
 pub async fn get_settings(state: State<'_, Mutex<AppState>>) -> Result<String, ()> {
@@ -31,7 +31,7 @@ pub async fn switch_background(state: State<'_, Mutex<AppState>>) -> Result<(), 
 
 #[tauri::command]
 pub async fn switch_theme(state: State<'_, Mutex<AppState>>) -> Result<(), ()> {
-    if let Ok(mut s) = state.lock(){
+    if let Ok(mut s) = state.lock() {
         s.settings.theme_switch();
         if let Some(storage) = &s.storage {
             storage.set("settings", json!(s.settings));
