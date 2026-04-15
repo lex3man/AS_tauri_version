@@ -112,6 +112,7 @@ pub fn sync_data(state: State<'_, Mutex<AppState>>) -> Result<String, ()> {
             "ctw": state.dashboard.ctw,
             "dtw": state.dashboard.dtw,
             "max_speed": state.dashboard.max_speed,
+            "capture": state.current.capture,
             "activation_code": state.race.active_code,
             "metrics": {
                 "abs_total": state.dashboard.metrics.abs_total,

@@ -189,7 +189,7 @@ const Roadbook = () => {
               <div className="transform scale-x-60 text-center">WTP{nextPointNumber} {nextPointName}</div>
             </div>
             {visiable ? (
-              <div className={`flex h-[25vh] justify-center mb-5`}>
+              <div className={`flex h-[25vh] items-center justify-center mb-5`}>
                 <Arrow />
               </div>
             ) : (

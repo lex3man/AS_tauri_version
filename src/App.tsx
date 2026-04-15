@@ -25,7 +25,8 @@ import DebugScreen from "./components/screens/debug";
 import Roadbook from "./components/screens/roadbook";
 import SpeedExceedsScreen from "./components/screens/speed-exceeds";
 import JumpSuggestion from "./components/screens/jump";
-// import { toast } from "sonner";
+import { toast } from "sonner";
+import { playBeep } from "./lib/sound";
 
 function App() {
   const [leftOpen, setLeftOpen] = useState(false);
@@ -91,8 +92,12 @@ function App() {
             .then((rawData) => {
               setDebugData(rawData);
               const data = JSON.parse(rawData);
-              if (data.next_point.split("-")[1] !== nextPointName) {
-                // playBeep();
+              if (data.capture) {
+                toast.info(`ADJUST OK`, {
+                  position: "top-center",
+                  duration: 5000,
+                })
+                playBeep();
               }
               setCog(data.cog);
               setCtw(data.ctw);
@@ -130,8 +135,10 @@ function App() {
   };
 
   useEffect(() => {
-    if (jumpMode && jumpPointID.split("-")[1] !== nextPointName) {
+    if (jumpSuggestion && jumpMode && jumpPointID.split("-")[1] !== nextPointName) {
       callView("jump");
+    } else if (activeViewPort.name === "jump") {
+      callView("navigate")
     }
   }, [jumpSuggestion]);
 

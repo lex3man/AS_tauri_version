@@ -30,6 +30,7 @@ pub fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position) -> Re
         let sog = (coords.speed.unwrap_or(0.0) * 3.6) as u32;
         let next_point_type;
         let mut jump_suggested = false;
+        let mut capture = false;
         let mut jump_point_id = String::new();
         let mut total_correction = None;
         let mut next_point_id = "".to_string();
@@ -144,6 +145,7 @@ pub fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position) -> Re
                     // point capture
                     // ============================================================================
                     if dtw * 1000.0 <= next_point.capture_radius as f64 {
+                        capture = true;
                         prev_point_id = next_point_id.clone();
                         is_open = false;
                         if next_point.odo <= next_point.capture_radius {
@@ -207,7 +209,7 @@ pub fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position) -> Re
         // ============================================================================
         
         state.current.speed_exceeded = sog > max_speed as u32;
-        if (sog > 3) {
+        if sog > 3 {
             state.dashboard.dtw = dtw as f32;
             state.dashboard.cog = cog;
             state.dashboard.ctw = ctw;
@@ -239,6 +241,7 @@ pub fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position) -> Re
             state.dashboard.sog = 0;
         }
         state.dashboard.widget_shown.arrow = is_open || in_visiable_zone;
+        state.current.capture = capture;
         state.dashboard.max_speed = max_speed as u32;
         state.race.spec_area_state.prev_point = prev_point_id;
         state.race.spec_area_state.next_point = next_point_id;
