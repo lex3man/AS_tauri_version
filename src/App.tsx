@@ -25,7 +25,7 @@ import DebugScreen from "./components/screens/debug";
 import Roadbook from "./components/screens/roadbook";
 import SpeedExceedsScreen from "./components/screens/speed-exceeds";
 import JumpSuggestion from "./components/screens/jump";
-import { toast } from "sonner";
+// import { toast } from "sonner";
 import { playBeep } from "./lib/sound";
 
 function App() {
