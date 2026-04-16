@@ -8,7 +8,7 @@ use crate::{
     state::{
         AppState, GPSData, JumpSuggestion, Position, telemetry::{Exceed, PointCapture, Telemetry}
     },
-    utils::{converters::{course_in_degrees, distance}, send_data::send_telemetry},
+    utils::{converters::{course_in_degrees, distance}, send_data::{send_report, send_telemetry}},
 };
 
 pub fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position) -> Result<(), ()> {
@@ -196,6 +196,7 @@ pub fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position) -> Re
                             accuracy: coords.accuracy,
                         });
                         send_telemetry(app, &state, true).unwrap();
+                        send_report(app, &state, &tel).unwrap();
                     } else {
                         send_telemetry(app, &state, false).unwrap();
                     }
