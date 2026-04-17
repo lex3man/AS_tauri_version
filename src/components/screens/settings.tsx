@@ -1,6 +1,7 @@
 import { useAppState } from "@/ctx/state-provider";
 import { Button } from "../ui/button";
 import { useSettings } from "@/ctx/settings-provider";
+import { ArrowDown, ArrowUp } from "lucide-react";
 
 const Settings = () => {
   const { callView } = useAppState();
@@ -35,6 +36,19 @@ const Settings = () => {
           <Button
             className="p-6 text-2xl"
             onClick={() => {
+              if (darkMode) {
+                setDarkMode(false);
+              } else {
+                setDarkMode(true);
+                setShowBackground(false);
+              }
+            }}
+          >
+            Dark Mode ON/OFF
+          </Button>
+          <Button
+            className={`p-6 text-2xl ${showBackground ? "bg-emerald-600" : "bg-red-500"}`}
+            onClick={() => {
               if (showBackground) {
                 setShowBackground(false);
               } else {
@@ -47,20 +61,7 @@ const Settings = () => {
             Background ON/OFF
           </Button>
           <Button
-            className="p-6 text-2xl"
-            onClick={() => {
-              if (darkMode) {
-                setDarkMode(false);
-              } else {
-                setDarkMode(true);
-                setShowBackground(false);
-              }
-            }}
-          >
-            Dark Mode ON/OFF
-          </Button>
-          <Button
-            className={`p-6 text-2xl ${jumpMode? "bg-emerald-600" : "bg-red-500"}`}
+            className={`p-6 text-2xl ${jumpMode ? "bg-emerald-600" : "bg-red-500"}`}
             onClick={() => {
               if (jumpMode) {
                 setJumpMode(false);
@@ -71,7 +72,7 @@ const Settings = () => {
           >
             Jump Mode ON/OFF
           </Button>
-          <Button className="p-6 text-2xl" onClick={() => {}}>
+          <Button className="p-6 text-2xl" onClick={() => { }}>
             GET REPORT
           </Button>
           <Button
@@ -82,6 +83,17 @@ const Settings = () => {
           >
             SET RACE NUMBER
           </Button>
+          <div className="flex justify-between">
+            <div className="flex flex-col items-center">
+              <div className="text-center text-2xl font-extrabold">
+                DIST CORRECTION
+              </div>
+              <ArrowUp />
+              <div>100</div>
+              <ArrowDown />
+            </div>
+            <div className="flex flex-col"></div>
+          </div>
         </div>
       </div>
     </div>
