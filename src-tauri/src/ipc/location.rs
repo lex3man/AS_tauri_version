@@ -1,7 +1,7 @@
-use crate::{AppState, state::{GPSData, Position}, utils::actor::make_culc};
+use crate::{AppState, state::Position, utils::actor::make_culc};
 use serde_json::json;
-use std::sync::{Mutex, MutexGuard};
-use tauri::{AppHandle, Emitter, State};
+use std::sync::Mutex;
+use tauri::{AppHandle, State};
 
 #[tauri::command]
 pub fn location_update(app: AppHandle, state: State<'_, Mutex<AppState>>, data: &str) {

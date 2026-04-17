@@ -3,17 +3,23 @@ use std::sync::MutexGuard;
 use serde_json::json;
 use tauri::{AppHandle, Emitter};
 
-use crate::state::{AppState, GPSData};
+use crate::state::{AppState, GPSData, telemetry::Telemetry};
 
-pub fn _send_report(
+pub fn send_report(
     app: &AppHandle,
     state: &MutexGuard<AppState>,
+    tel: &Telemetry
 ) -> Result<(), ()> {
     let data = json!({
         "race_number": &state.race_number.clone(),
         "device_id": "",
         "etape": &state.race.active_code.clone(),
-        "report": {}
+        "report": {
+            "points_captures": tel.captures,
+            "speed_exceeds": tel.speed_exceeds,
+            "other_events": tel.events,
+        }
+    
     })
     .to_string();
 

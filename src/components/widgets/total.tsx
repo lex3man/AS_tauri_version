@@ -1,11 +1,11 @@
 import { useAppState } from "@/ctx/state-provider";
 
 export const TotalWidget = () => {
-  const { total, mobileView } = useAppState();
+  const { total, mobileView, captured } = useAppState();
 
   return (
     <div
-      className={`flex ${!mobileView && "flex-col"} justify-between border-4 border-primary h-full bg-primary-foreground p-2`}
+      className={`flex ${!mobileView && "flex-col"} justify-between border-4 border-primary h-full ${captured ? "bg-green-600" : "bg-primary-foreground"} p-2`}
     >
       <div className={`font-extrabold ${mobileView ? "text-xs" : "text-md"}`}>
         TOTAL
@@ -20,11 +20,11 @@ export const TotalWidget = () => {
 };
 
 export const TotalLiteWidget = () => {
-  const { total, mobileView } = useAppState();
+  const { total, mobileView, captured } = useAppState();
 
   return (
     <div
-      className={`flex justify-between border-2 border-primary h-full bg-primary-foreground p-1`}
+      className={`flex justify-between border-2 border-primary h-full ${captured ? "bg-green-400" : "bg-primary-foreground"} p-1`}
     >
       <div className={`font-extrabold text-xs transform origin-left scale-x-75 w-1/6`}>TOTAL</div>
       <div
