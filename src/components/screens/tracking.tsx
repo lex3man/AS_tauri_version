@@ -17,10 +17,14 @@ const Tracking = () => {
     const getPoints = async () => {
       try {
         const result = await invoke<string>("get_location_history");
+        
         const coords: Coords[] = JSON.parse(result);
         setPoints(coords);
       } catch (error) {
-        toast.error(`Error fetching location history: ${error}`);
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        if (!errorMessage.includes("Couldn't find callback id")) {
+          toast.error(`Error fetching location history: ${errorMessage}`);
+        }
       }
     }
     getPoints();
@@ -48,8 +52,14 @@ const Tracking = () => {
           </div>
         </div>
       </div>
-      <div className="flex justify-center text-center m-auto">
-        {points.toString()}
+      <div className="flex flex-col justify-center text-center m-auto">
+        <div>{points.length}</div>
+        {points.length > 0 && (
+          <>
+            <div>{points[0].lat}</div>
+            <div>{points[0].lon}</div>
+          </>
+        )}
       </div>
     </div>
   );
