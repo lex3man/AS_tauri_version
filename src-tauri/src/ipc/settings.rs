@@ -40,3 +40,29 @@ pub async fn switch_theme(state: State<'_, Mutex<AppState>>) -> Result<(), ()> {
     };
     Ok(())
 }
+
+#[tauri::command]
+pub fn set_dist_step(state: State<'_, Mutex<AppState>>, c: &str) -> Result<(), ()> {
+    if let Ok(mut state) = state.lock() {
+        match c {
+            "up" => { state.settings.increase_dist(); },
+            "down" => { state.settings.decrease_dist(); },
+            _ => {}
+        }
+        return Ok(());
+    }
+    Err(())
+}
+
+#[tauri::command]
+pub fn set_track_dist(state: State<'_, Mutex<AppState>>, c: &str) -> Result<(), ()> {
+    if let Ok(mut state) = state.lock() {
+        match c {
+            "up" => { state.settings.increase_track(); },
+            "down" => { state.settings.decrease_track(); },
+            _ => {}
+        }
+        return Ok(());
+    }
+    Err(())
+}

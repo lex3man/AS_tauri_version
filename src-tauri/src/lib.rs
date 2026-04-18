@@ -44,6 +44,8 @@ pub fn run() {
             ipc::settings::get_settings,
             ipc::settings::switch_background,
             ipc::settings::switch_theme,
+            ipc::settings::set_dist_step,
+            ipc::settings::set_track_dist,
             ipc::location::location_update,
             ipc::location::get_coords,
             ipc::location::jump_reaction,
