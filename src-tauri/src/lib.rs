@@ -12,7 +12,8 @@ use tauri::Manager;
 use tauri_plugin_store::StoreExt as _;
 
 use crate::{
-    config::Config, state::{AppState, dashboard::DashBoard, race_config::RaceState, telemetry::Telemetry}
+    config::Config,
+    state::{dashboard::DashBoard, race_config::RaceState, telemetry::Telemetry, AppState},
 };
 
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
@@ -43,6 +44,8 @@ pub fn run() {
             ipc::settings::get_settings,
             ipc::settings::switch_background,
             ipc::settings::switch_theme,
+            ipc::settings::set_dist_step,
+            ipc::settings::set_track_dist,
             ipc::location::location_update,
             ipc::location::get_coords,
             ipc::location::jump_reaction,
@@ -60,6 +63,7 @@ pub fn run() {
             ipc::metrics::decrease_total,
             ipc::metrics::reset_partial,
             ipc::metrics::get_exceeds,
+            ipc::metrics::update_total,
             ipc::admin::is_admin,
             ipc::admin::activate_cmd,
         ])
@@ -85,7 +89,8 @@ pub fn run() {
                 state.dashboard = serde_json::from_value::<DashBoard>(val).unwrap();
             }
             if let Some(val) = store.get("as_telemetry") {
-                state.telemetry = serde_json::from_value::<HashMap<String, Telemetry>>(val).unwrap();
+                state.telemetry =
+                    serde_json::from_value::<HashMap<String, Telemetry>>(val).unwrap();
             }
             state.storage = Some(store);
             Ok(())

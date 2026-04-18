@@ -27,6 +27,7 @@ import SpeedExceedsScreen from "./components/screens/speed-exceeds";
 import JumpSuggestion from "./components/screens/jump";
 // import { toast } from "sonner";
 import { playBeep } from "./lib/sound";
+import Adjust from "./components/screens/adjust";
 
 function App() {
   const [leftOpen, setLeftOpen] = useState(false);
@@ -216,6 +217,12 @@ function App() {
             <JumpSuggestion />
           </div>
         );
+      case "adjust":
+        return (
+          <div className="relative h-screen">
+            <Adjust />
+          </div>
+        )
       case "debug":
         return (
           <div className="relative h-screen">

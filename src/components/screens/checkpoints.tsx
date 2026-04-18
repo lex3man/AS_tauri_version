@@ -55,15 +55,7 @@ const CheckPoints = () => {
             </span>
           </div>
         </div>
-        <div className="flex pt-5 pr-5 justify-end w-1/3">
-          <Button
-            className="p-7 text-2xl"
-            onClick={() => {
-              callView("exceeds");
-            }}
-          >
-            EXCEEDS
-          </Button>
+        <div className="flex flex-col pt-5 pr-5 justify-start w-1/3">
           <Button
             className="p-7 text-2xl"
             onClick={() => {
@@ -71,6 +63,14 @@ const CheckPoints = () => {
             }}
           >
             BACK
+          </Button>
+          <Button
+            className="p-7 text-2xl"
+            onClick={() => {
+              callView("exceeds");
+            }}
+          >
+            EXCEEDS
           </Button>
         </div>
       </div>

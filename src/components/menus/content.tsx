@@ -3,7 +3,7 @@ import { useAppState } from "@/ctx/state-provider";
 import { invoke } from "@tauri-apps/api/core";
 
 export const LeftContent = () => {
-  const { switchWidget, setPartial, setTotal } = useAppState();
+  const { switchWidget, setPartial, setTotal, callView } = useAppState();
 
   return (
     <div className="flex flex-col gap-2">
@@ -36,7 +36,7 @@ export const LeftContent = () => {
         >
           TOTAL
         </Button>
-        <Button className="p-7 text-3xl w-full" onClick={() => { }}>
+        <Button className="p-7 text-3xl w-full" onClick={() => { callView("adjust") }}>
           ADJUST
         </Button>
       </div>

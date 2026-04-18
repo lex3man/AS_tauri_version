@@ -1,9 +1,10 @@
 import { useAppState } from "@/ctx/state-provider";
 import { Button } from "../ui/button";
 import { useSettings } from "@/ctx/settings-provider";
+import { ChevronDown, ChevronUp } from "lucide-react";
 
 const Settings = () => {
-  const { callView } = useAppState();
+  const { callView, roadbookMode } = useAppState();
   const {
     showBackground,
     setShowBackground,
@@ -11,10 +12,16 @@ const Settings = () => {
     setDarkMode,
     jumpMode,
     setJumpMode,
+    correctionDistance,
+    trackDistance,
+    increaseDistStep,
+    decreaseDistStep,
+    increaseTrackDist,
+    decreaseTrackDist,
   } = useSettings();
 
   return (
-    <div>
+    <div className="flex flex-col">
       <div className="flex justify-end">
         <div className="flex justify-center text-3xl font-extrabold w-1/3 pt-10">
           SETTINGS
@@ -30,22 +37,8 @@ const Settings = () => {
           </Button>
         </div>
       </div>
-      <div className="flex flex-col justify-center m-auto">
+      <div className="flex flex-col justify-center w-full m-auto max-h-[70vh] pt-[30vh] overflow-y-auto">
         <div className="flex flex-col justify-center m-auto md:w-1/2 sm:w-2/3 gap-2">
-          <Button
-            className="p-6 text-2xl"
-            onClick={() => {
-              if (showBackground) {
-                setShowBackground(false);
-              } else {
-                setShowBackground(true);
-                setDarkMode(false);
-              }
-              callView("navigate");
-            }}
-          >
-            Background ON/OFF
-          </Button>
           <Button
             className="p-6 text-2xl"
             onClick={() => {
@@ -60,7 +53,21 @@ const Settings = () => {
             Dark Mode ON/OFF
           </Button>
           <Button
-            className={`p-6 text-2xl ${jumpMode? "bg-emerald-600" : "bg-red-500"}`}
+            className={`p-6 text-2xl ${showBackground ? "bg-emerald-600" : "bg-red-500"}`}
+            onClick={() => {
+              if (showBackground) {
+                setShowBackground(false);
+              } else {
+                setShowBackground(true);
+                setDarkMode(false);
+              }
+              callView("navigate");
+            }}
+          >
+            Background ON/OFF
+          </Button>
+          <Button
+            className={`p-6 text-2xl ${jumpMode ? "bg-emerald-600" : "bg-red-500"}`}
             onClick={() => {
               if (jumpMode) {
                 setJumpMode(false);
@@ -71,7 +78,7 @@ const Settings = () => {
           >
             Jump Mode ON/OFF
           </Button>
-          <Button className="p-6 text-2xl" onClick={() => {}}>
+          <Button className="p-6 text-2xl" onClick={() => { }}>
             GET REPORT
           </Button>
           <Button
@@ -82,6 +89,25 @@ const Settings = () => {
           >
             SET RACE NUMBER
           </Button>
+          <div className={`flex ${roadbookMode && "flex-col"} justify-between`}>
+            <div className="flex flex-col w-1/2 items-center">
+              <div className="text-center text-2xl font-extrabold">
+                DIST STEP
+              </div>
+              <ChevronUp onClick={() => increaseDistStep()}/>
+              <div>{correctionDistance.value}</div>
+              <ChevronDown onClick={() => decreaseDistStep()}/>
+            </div>
+            <div className="flex flex-col w-1/2 items-center">
+              <div className="text-center text-2xl font-extrabold">
+                TRACK DIST
+              </div>
+              <ChevronUp onClick={() => increaseTrackDist()}/>
+              <div>{trackDistance.value}</div>
+              <ChevronDown onClick={() => decreaseTrackDist()}/>
+            </div>
+            <div className="flex flex-col"></div>
+          </div>
         </div>
       </div>
     </div>
