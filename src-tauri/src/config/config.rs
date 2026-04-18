@@ -42,9 +42,9 @@ impl Config {
 
     pub fn jump_mode_switch(&mut self, status: &str) {
         match status {
-            "on" => { self.jump_mode = true },
-            "off" => { self.jump_mode = false },
-            _ => { self.jump_mode = false }
+            "on" => self.jump_mode = true,
+            "off" => self.jump_mode = false,
+            _ => self.jump_mode = false,
         }
     }
 
@@ -53,7 +53,9 @@ impl Config {
     }
 
     pub fn decrease_dist(&mut self) {
-        if self.correction_distance.0 == 0 { return }
+        if self.correction_distance.0 == 0 {
+            return;
+        }
         self.correction_distance = Meters(self.correction_distance.0 - 10);
     }
 
@@ -62,7 +64,9 @@ impl Config {
     }
 
     pub fn decrease_track(&mut self) {
-        if self.track_distance.0 == 0 { return }
+        if self.track_distance.0 == 0 {
+            return;
+        }
         self.track_distance = Kilometers(self.track_distance.0 - 5);
     }
 

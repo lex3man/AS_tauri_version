@@ -51,7 +51,6 @@ pub async fn get_exceeds(state: State<'_, Mutex<AppState>>) -> Result<String, ()
     Ok(json!(result).to_string())
 }
 
-
 #[tauri::command]
 pub fn update_total(state: State<'_, Mutex<AppState>>, total: f64) -> Result<(), ()> {
     if let Ok(mut state) = state.lock() {

@@ -49,6 +49,7 @@ pub fn run() {
             ipc::location::location_update,
             ipc::location::get_coords,
             ipc::location::jump_reaction,
+            ipc::location::get_location_history,
             ipc::states::snapshot,
             ipc::states::get_snapshot,
             ipc::states::update_config,
