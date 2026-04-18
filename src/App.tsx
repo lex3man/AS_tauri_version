@@ -25,7 +25,7 @@ import DebugScreen from "./components/screens/debug";
 import Roadbook from "./components/screens/roadbook";
 import SpeedExceedsScreen from "./components/screens/speed-exceeds";
 import JumpSuggestion from "./components/screens/jump";
-import { toast } from "sonner";
+// import { toast } from "sonner";
 import { playBeep } from "./lib/sound";
 import Adjust from "./components/screens/adjust";
 import Tracking from "./components/screens/tracking";
@@ -65,6 +65,7 @@ function App() {
     setNextPointType,
     setJumpSuggestion,
     setJumpPointID,
+    setCaptured,
   } = useAppState();
   const { showBackground, jumpMode } = useSettings();
   const { width, height } = useWindowDimensions();
@@ -94,11 +95,13 @@ function App() {
             .then((rawData) => {
               setDebugData(rawData);
               const data = JSON.parse(rawData);
+              setCaptured(false);
               if (data.capture) {
-                toast.info(`ADJUST OK`, {
-                  position: "top-center",
-                  duration: 5000,
-                });
+                // toast.info(`ADJUST OK`, {
+                //   position: "top-center",
+                //   duration: 5000,
+                // })
+                setCaptured(true);
                 playBeep();
               }
               setCog(data.cog);

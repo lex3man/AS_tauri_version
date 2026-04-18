@@ -1,4 +1,4 @@
-import { request_config, send_telemetry } from "@/lib/api";
+import { request_config, send_report, send_telemetry } from "@/lib/api";
 import { TypeOfRequest } from "@/types/request";
 import { RoadbookSlide, ImageData } from "@/types/roadbook";
 import { AppState, Coords, DashBoard, TelemetryData } from "@/types/state";
@@ -72,6 +72,7 @@ type AppStateProviderState = {
   speedExceeds: string;
   jumpSuggestion: boolean;
   telemetry: TelemetryData[];
+  captured: boolean;
 
   setRaceNumber: (rn: string) => void;
   setRoadbookMode: (status: boolean) => void;
@@ -106,6 +107,7 @@ type AppStateProviderState = {
   goPrev: () => void;
   setJumpPointID: (val: string) => void;
   setJumpSuggestion: (status: boolean) => void;
+  setCaptured: (status: boolean) => void;
 };
 
 const initialState: AppStateProviderState = {
@@ -151,6 +153,7 @@ const initialState: AppStateProviderState = {
   jumpSuggestion: false,
   telemetry: [],
   speedExceeds: "",
+  captured: false,
 
   dashBoard: {
     cog: 0,
@@ -207,6 +210,7 @@ const initialState: AppStateProviderState = {
   goPrev: () => null,
   setJumpPointID: () => null,
   setJumpSuggestion: () => null,
+  setCaptured: () => null,
 };
 
 const AppStateProviderContext =
@@ -254,6 +258,7 @@ export function StateProvider({
   const [telemetry, setTelemetry] = useState<TelemetryData[]>([]);
   const [speedExceeds, setSpeedExceeds] = useState("");
   const [jumpSuggestion, setJumpSuggestion] = useState(false);
+  const [captured, setCaptured] = useState(false);
 
   // roadbook
   const [rbSlides, setRBSlides] = useState<RoadbookSlide[]>([]);
@@ -385,12 +390,14 @@ export function StateProvider({
   }, [speed]);
 
   useEffect(() => {
-    const unlisten = listen<string>("send_telemetry", async (event) => {
+    const unlistenTelemetry = listen<string>("send_telemetry", async (event) => {
       try {
         const telemetryData = JSON.parse(event.payload) as TelemetryData;
         const device = await getDeviceInfo();
 
         telemetryData.device_id = device.uuid as string;
+        telemetryData.time = Date.now();
+
         await send_telemetry(telemetryData);
         setTelemetry((prev) => [...prev, telemetryData]);
       } catch (e) {
@@ -398,8 +405,23 @@ export function StateProvider({
       }
     });
 
+    const unlistenReport = listen<string>("send_report", async (event) => {
+      try {
+        const reportData = JSON.parse(event.payload);
+        const device = await getDeviceInfo();
+
+        reportData.device_id = device.uuid as string;
+        reportData.time = Date.now();
+
+        await send_report(reportData);
+      } catch (e) {
+        console.error("Failed to parse report event:", e);
+      }
+    });
+
     return () => {
-      unlisten.then((u) => u());
+      unlistenTelemetry.then((u) => u());
+      unlistenReport.then((u) => u());
     };
   }, []);
 
@@ -578,6 +600,7 @@ export function StateProvider({
     jumpSuggestion,
     telemetry,
     speedExceeds,
+    captured,
 
     rbSlides,
     rbImages,
@@ -620,6 +643,7 @@ export function StateProvider({
     goPrev,
     setJumpPointID,
     setJumpSuggestion,
+    setCaptured,
   };
 
   return (
