@@ -132,38 +132,30 @@ export function SettingsProvider({
   };
 
   const increaseDistStep = async () => {
-    invoke("set_dist_step", { c: "up" }).then( () => {
+    invoke("set_dist_step", { c: "up" }).then(() => {
       setCorrectionDistance(new Meters(correctionDistance.value + 10));
-    })
-  }
+    });
+  };
 
   const decreaseDistStep = async () => {
-    invoke("set_dist_step", { c: "down" }).then( () => {
+    invoke("set_dist_step", { c: "down" }).then(() => {
       if (correctionDistance.value > 0) {
         setCorrectionDistance(new Meters(correctionDistance.value - 10));
       }
-    })
-  }
+    });
+  };
 
   const increaseTrackDist = async () => {
-    invoke("set_track_dist", { c: "up" }).then( async (_) => {
-      const config = await invoke<string>("get_settings");
-      const settings = parseSettings(config);
-      setCorrectionDistance(settings.correctionDistance);
-    }).catch((e) => {
-      toast.error(`Error on change: ${e}`);
-    })
-  }
+    invoke("set_track_dist", { c: "up" }).then(() => {
+      setTrackDistance(new Kilometers(trackDistance.value + 5));
+    });
+  };
 
   const decreaseTrackDist = async () => {
-    invoke("set_track_dist", { c: "down" }).then( async (_) => {
-      const config = await invoke<string>("get_settings");
-      const settings = parseSettings(config);
-      setCorrectionDistance(settings.correctionDistance);
-    }).catch((e) => {
-      toast.error(`Error on change: ${e}`);
-    })
-  }
+    invoke("set_track_dist", { c: "down" }).then(() => {
+      setTrackDistance(new Kilometers(trackDistance.value - 5));
+    });
+  };
 
   const value = {
     darkMode,

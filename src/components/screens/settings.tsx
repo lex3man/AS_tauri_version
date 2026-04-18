@@ -78,7 +78,7 @@ const Settings = () => {
           >
             Jump Mode ON/OFF
           </Button>
-          <Button className="p-6 text-2xl" onClick={() => { }}>
+          <Button className="p-6 text-2xl" onClick={() => {}}>
             GET REPORT
           </Button>
           <Button
@@ -94,17 +94,17 @@ const Settings = () => {
               <div className="text-center text-2xl font-extrabold">
                 DIST STEP
               </div>
-              <ChevronUp onClick={() => increaseDistStep()}/>
+              <ChevronUp onClick={() => increaseDistStep()} />
               <div>{correctionDistance.value}</div>
-              <ChevronDown onClick={() => decreaseDistStep()}/>
+              <ChevronDown onClick={() => decreaseDistStep()} />
             </div>
             <div className="flex flex-col w-1/2 items-center">
               <div className="text-center text-2xl font-extrabold">
                 TRACK DIST
               </div>
-              <ChevronUp onClick={() => increaseTrackDist()}/>
+              <ChevronUp onClick={() => increaseTrackDist()} />
               <div>{trackDistance.value}</div>
-              <ChevronDown onClick={() => decreaseTrackDist()}/>
+              <ChevronDown onClick={() => decreaseTrackDist()} />
             </div>
             <div className="flex flex-col"></div>
           </div>

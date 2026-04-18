@@ -22,34 +22,44 @@ const Position = () => {
           </Button>
         </div>
       </div>
-        <div className={`flex flex-col justify-center m-auto p-10 ${roadbookMode ? "w-full" : "w-2/3"}`}>
-          {roadbookMode ? (
+      <div
+        className={`flex flex-col justify-center m-auto p-10 ${roadbookMode ? "w-full" : "w-2/3"}`}
+      >
+        {roadbookMode ? (
           <div className="flex justify-between">
             <div className="text-2xl font-extrabold">LATITUDE:</div>
             <div className="text-2xl font-extrabold">{lat}</div>
           </div>
-          ) : (
+        ) : (
           <div className="flex justify-between">
             <div className="text-2xl font-extrabold">LATITUDE:</div>
             <div className="text-2xl font-extrabold">LONGITUDE:</div>
           </div>
-          )}
-          {roadbookMode ? (
+        )}
+        {roadbookMode ? (
           <div className="flex justify-between">
             <div className="text-2xl font-extrabold">LONGITUDE:</div>
             <div className="text-2xl font-extrabold">{lon}</div>
           </div>
-          ) : (
+        ) : (
           <div className="flex justify-between">
             <div className="text-4xl font-bold">{lat}</div>
             <div className="text-4xl font-bold">{lon}</div>
           </div>
-          )}
-          <div className="flex justify-center m-auto text-3xl font-extrabold mt-10">DATE:</div>
-          <div className="flex justify-center m-auto text-2xl font-bold">{formatDate(new Date(), "DD month YYYY")}</div>
-          <div className="flex justify-center m-auto text-3xl font-extrabold mt-5">TIME:</div>
-          <div className="flex justify-center m-auto text-2xl font-bold">{formatDate(new Date(), "HH:MM:ss")}</div>
+        )}
+        <div className="flex justify-center m-auto text-3xl font-extrabold mt-10">
+          DATE:
         </div>
+        <div className="flex justify-center m-auto text-2xl font-bold">
+          {formatDate(new Date(), "DD month YYYY")}
+        </div>
+        <div className="flex justify-center m-auto text-3xl font-extrabold mt-5">
+          TIME:
+        </div>
+        <div className="flex justify-center m-auto text-2xl font-bold">
+          {formatDate(new Date(), "HH:MM:ss")}
+        </div>
+      </div>
     </div>
   );
 };

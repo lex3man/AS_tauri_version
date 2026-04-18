@@ -28,6 +28,7 @@ import JumpSuggestion from "./components/screens/jump";
 // import { toast } from "sonner";
 import { playBeep } from "./lib/sound";
 import Adjust from "./components/screens/adjust";
+import Tracking from "./components/screens/tracking";
 
 function App() {
   const [leftOpen, setLeftOpen] = useState(false);
@@ -139,10 +140,14 @@ function App() {
   };
 
   useEffect(() => {
-    if (jumpSuggestion && jumpMode && jumpPointID.split("-")[1] !== nextPointName) {
+    if (
+      jumpSuggestion &&
+      jumpMode &&
+      jumpPointID.split("-")[1] !== nextPointName
+    ) {
       callView("jump");
     } else if (activeViewPort.name === "jump") {
-      callView("navigate")
+      callView("navigate");
     }
   }, [jumpSuggestion]);
 
@@ -222,7 +227,13 @@ function App() {
           <div className="relative h-screen">
             <Adjust />
           </div>
-        )
+        );
+      case "tracking":
+        return (
+          <div className="relative h-screen">
+            <Tracking />
+          </div>
+        );
       case "debug":
         return (
           <div className="relative h-screen">
