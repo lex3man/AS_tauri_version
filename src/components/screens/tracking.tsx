@@ -1,35 +1,8 @@
 import { useAppState } from "@/ctx/state-provider";
 import { Button } from "../ui/button";
-import { useState, useEffect } from "react";
-import { invoke } from "@tauri-apps/api/core";
-import { toast } from "sonner";
-
-interface Coords {
-  lat: number;
-  lon: number;
-}
 
 const Tracking = () => {
-  const { roadbookMode, callView } = useAppState();
-  const [points, setPoints] = useState<Coords[]>([]);
-
-  useEffect(() => {
-    const getPoints = async () => {
-      try {
-        const result = await invoke<string>("get_location_history");
-        
-        const coords: Coords[] = JSON.parse(result);
-        setPoints(coords);
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        if (!errorMessage.includes("Couldn't find callback id")) {
-          toast.error(`Error fetching location history: ${errorMessage}`);
-        }
-      }
-    }
-    getPoints();
-
-  }, []);
+  const { roadbookMode, trackPoints, callView } = useAppState();
 
   return (
     <div className="flex flex-col">
@@ -53,11 +26,11 @@ const Tracking = () => {
         </div>
       </div>
       <div className="flex flex-col justify-center text-center m-auto">
-        <div>{points.length}</div>
-        {points.length > 0 && (
+        <div>{trackPoints.length}</div>
+        {trackPoints.length > 0 && (
           <>
-            <div>{points[0].lat}</div>
-            <div>{points[0].lon}</div>
+            <div>{trackPoints[0].lat}</div>
+            <div>{trackPoints[0].lon}</div>
           </>
         )}
       </div>

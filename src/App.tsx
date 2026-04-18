@@ -66,6 +66,7 @@ function App() {
     setJumpSuggestion,
     setJumpPointID,
     setCaptured,
+    setTrackPoints,
   } = useAppState();
   const { showBackground, jumpMode } = useSettings();
   const { width, height } = useWindowDimensions();
@@ -118,6 +119,18 @@ function App() {
               setVisiable(data.visiable);
               setJumpSuggestion(data.jump_suggestion);
               setJumpPointID(data.jump_point);
+
+              const getPoints = async () => {
+                try {
+                  const result = await invoke<string>("get_location_history");
+                  
+                  const coords: Coords[] = JSON.parse(result);
+                  setTrackPoints(coords);
+                } catch(e) {
+                  console.log(e);
+                }
+              }
+              getPoints();
 
               // toast.success(`Got data with jumpsuggestion: ${data.jump_suggestion}, for point: ${data.jump_point}`, {
               //   position: "bottom-center",
