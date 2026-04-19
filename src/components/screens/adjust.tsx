@@ -11,6 +11,9 @@ const convertToDigits = (src: number) => {
     digits.push(num % 10);
     num = Math.floor(num / 10);
   }
+  while (digits.length < 6) {
+    digits.push(0);
+  }
   return digits.reverse();
 };
 
@@ -90,9 +93,11 @@ const Adjust = () => {
               <ArrowBigDownDash
                 className={`${roadbookMode ? "size-10" : "size-15"}`}
                 onClick={() => {
-                  setTotalUpdate(
-                    totalUpdate - 0.01 * 10 ** (digits.length - idx - 1),
-                  );
+                  if (num > 0) {
+                    setTotalUpdate(
+                      totalUpdate - 0.01 * 10 ** (digits.length - idx - 1),
+                    );
+                  }
                 }}
               />
             </div>
