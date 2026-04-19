@@ -19,7 +19,6 @@ const Settings = () => {
     increaseTrackDist,
     decreaseTrackDist,
   } = useSettings();
-
   return (
     <div className="flex flex-col">
       <div className="flex justify-end">
@@ -61,7 +60,7 @@ const Settings = () => {
                 setShowBackground(true);
                 setDarkMode(false);
               }
-              callView("navigate");
+              // callView("navigate");
             }}
           >
             Background ON/OFF

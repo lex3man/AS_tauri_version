@@ -1,8 +1,11 @@
 import { useAppState } from "@/ctx/state-provider";
 import { Button } from "../ui/button";
+import { RouteMap } from "../trackMap";
+import useWindowDimensions from "@/lib/viewport";
 
 const Tracking = () => {
   const { roadbookMode, trackPoints, callView } = useAppState();
+  const { width, height } = useWindowDimensions();
 
   return (
     <div className="flex flex-col">
@@ -26,13 +29,9 @@ const Tracking = () => {
         </div>
       </div>
       <div className="flex flex-col justify-center text-center m-auto">
-        <div>{trackPoints.length}</div>
-        {trackPoints.length > 0 && (
-          <>
-            <div>{trackPoints[0].lat}</div>
-            <div>{trackPoints[0].lon}</div>
-          </>
-        )}
+        <div id="canvas">
+          <RouteMap trackPoints={trackPoints} width={width * 0.9} height={height * 0.7} />
+        </div>
       </div>
     </div>
   );
