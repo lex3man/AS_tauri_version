@@ -3,7 +3,6 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { useTheme } from "./theme-provider";
 import { Kilometers, Meters } from "@/types/messure-units";
 import { Settings } from "@/types/settings";
-import { toast } from "sonner";
 
 type SettingsProviderProps = {
   children: React.ReactNode;
@@ -153,7 +152,9 @@ export function SettingsProvider({
 
   const decreaseTrackDist = async () => {
     invoke("set_track_dist", { c: "down" }).then(() => {
-      setTrackDistance(new Kilometers(trackDistance.value - 5));
+      if (trackDistance.value > 0) {
+        setTrackDistance(new Kilometers(trackDistance.value - 5));
+      }
     });
   };
 

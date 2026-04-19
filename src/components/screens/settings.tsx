@@ -37,7 +37,7 @@ const Settings = () => {
           </Button>
         </div>
       </div>
-      <div className="flex flex-col justify-center w-full m-auto max-h-[70vh] pt-[30vh] overflow-y-auto">
+      <div className={`flex flex-col justify-center w-full m-auto ${roadbookMode ? "max-h-[90vh] pt-[10vh]" : "max-h-[70vh] pt-[30vh]"} overflow-y-auto`}>
         <div className="flex flex-col justify-center m-auto md:w-1/2 sm:w-2/3 gap-2">
           <Button
             className="p-6 text-2xl"
@@ -89,13 +89,13 @@ const Settings = () => {
           >
             SET RACE NUMBER
           </Button>
-          <div className={`flex ${roadbookMode && "flex-col"} justify-between`}>
+          <div className={`flex ${roadbookMode ? "flex-col justify-center gap-10 items-center" : "justify-between"} pt-5`}>
             <div className="flex flex-col w-1/2 items-center">
               <div className="text-center text-2xl font-extrabold">
                 DIST STEP
               </div>
               <ChevronUp onClick={() => increaseDistStep()} />
-              <div>{correctionDistance.value}</div>
+              <div className="text-3xl font-extrabold">{correctionDistance.value}</div>
               <ChevronDown onClick={() => decreaseDistStep()} />
             </div>
             <div className="flex flex-col w-1/2 items-center">
@@ -103,7 +103,7 @@ const Settings = () => {
                 TRACK DIST
               </div>
               <ChevronUp onClick={() => increaseTrackDist()} />
-              <div>{trackDistance.value}</div>
+              <div className="text-3xl font-extrabold">{trackDistance.value}</div>
               <ChevronDown onClick={() => decreaseTrackDist()} />
             </div>
             <div className="flex flex-col"></div>

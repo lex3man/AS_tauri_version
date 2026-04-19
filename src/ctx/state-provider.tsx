@@ -73,6 +73,7 @@ type AppStateProviderState = {
   jumpSuggestion: boolean;
   telemetry: TelemetryData[];
   captured: boolean;
+  trackPoints: Coords[];
 
   setRaceNumber: (rn: string) => void;
   setRoadbookMode: (status: boolean) => void;
@@ -108,6 +109,7 @@ type AppStateProviderState = {
   setJumpPointID: (val: string) => void;
   setJumpSuggestion: (status: boolean) => void;
   setCaptured: (status: boolean) => void;
+  setTrackPoints: (points: Coords[]) => void;
 };
 
 const initialState: AppStateProviderState = {
@@ -154,6 +156,7 @@ const initialState: AppStateProviderState = {
   telemetry: [],
   speedExceeds: "",
   captured: false,
+  trackPoints: [],
 
   dashBoard: {
     cog: 0,
@@ -211,6 +214,7 @@ const initialState: AppStateProviderState = {
   setJumpPointID: () => null,
   setJumpSuggestion: () => null,
   setCaptured: () => null,
+  setTrackPoints: () => null,
 };
 
 const AppStateProviderContext =
@@ -259,6 +263,7 @@ export function StateProvider({
   const [speedExceeds, setSpeedExceeds] = useState("");
   const [jumpSuggestion, setJumpSuggestion] = useState(false);
   const [captured, setCaptured] = useState(false);
+  const [trackPoints, setTrackPoints] = useState<Coords[]>([]);
 
   // roadbook
   const [rbSlides, setRBSlides] = useState<RoadbookSlide[]>([]);
@@ -601,6 +606,7 @@ export function StateProvider({
     telemetry,
     speedExceeds,
     captured,
+    trackPoints,
 
     rbSlides,
     rbImages,
@@ -644,6 +650,7 @@ export function StateProvider({
     setJumpPointID,
     setJumpSuggestion,
     setCaptured,
+    setTrackPoints,
   };
 
   return (
