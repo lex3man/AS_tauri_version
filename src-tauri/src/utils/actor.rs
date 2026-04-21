@@ -1,4 +1,4 @@
-use std::{sync::Mutex};
+use std::sync::Mutex;
 
 use serde_json::json;
 use tauri::AppHandle;
@@ -6,9 +6,14 @@ use tauri::AppHandle;
 use crate::{
     race::types::Coords,
     state::{
-        AppState, GPSData, JumpSuggestion, Position, telemetry::{Exceed, PointCapture, Telemetry}
+        race_config::PointState,
+        telemetry::{Exceed, PointCapture, Telemetry},
+        AppState, GPSData, JumpSuggestion, Position,
     },
-    utils::{converters::{course_in_degrees, distance}, send_data::{send_report, send_telemetry}},
+    utils::{
+        converters::{course_in_degrees, distance},
+        send_data::{send_report, send_telemetry},
+    },
 };
 
 pub fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position) -> Result<(), ()> {
@@ -43,7 +48,7 @@ pub fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position) -> Re
         let mut is_open = false;
         let mut in_visiable_zone = false;
         let mut counter = 0;
-        let mut finished = false;
+        let mut finished = state.current.finished;
 
         // ============================================================================
         // loading current state
@@ -63,9 +68,8 @@ pub fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position) -> Re
                         lat: point.lat,
                         lon: point.lon,
                     },
-                ) * 1000.0; 
-                if distance_to_point
-                    <= point.capture_radius as f64
+                ) * 1000.0;
+                if distance_to_point <= point.capture_radius as f64
                     && !state
                         .race
                         .spec_area_state
@@ -77,8 +81,7 @@ pub fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position) -> Re
                     next_point_id = point.get_id();
                 }
 
-                if distance_to_point
-                    <= point.visible_radius as f64
+                if distance_to_point <= point.visible_radius as f64
                     && !state
                         .race
                         .spec_area_state
@@ -145,9 +148,16 @@ pub fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position) -> Re
                     // ============================================================================
                     // point capture
                     // ============================================================================
-                    if dtw * 1000.0 <= next_point.capture_radius as f64 && !state.current.finished {
-                        println!("Capture Point: {}", next_point.name);
-                        println!("Point Type: {}", next_point.point_type);
+                    let next_point_checked = state
+                        .race
+                        .spec_area_state
+                        .points
+                        .get(&next_point_id)
+                        .unwrap_or(&PointState::new())
+                        .checked;
+                    if dtw * 1000.0 <= next_point.capture_radius as f64
+                        && (!state.current.finished || !next_point_checked)
+                    {
                         capture = true;
                         prev_point_id = next_point_id.clone();
                         if next_point.point_type.contains("NZ") {
@@ -160,7 +170,7 @@ pub fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position) -> Re
                                     "speed": coords.speed.unwrap_or(0.0) * 3.6,
                                     "accuracy": coords.accuracy
                                 })
-                                .to_string()
+                                .to_string(),
                             );
                             println!("COUNTER: {}", counter);
                         }
@@ -227,7 +237,7 @@ pub fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position) -> Re
         // ============================================================================
         // updating current state
         // ============================================================================
-        
+
         state.current.speed_exceeded = sog > max_speed as u32;
         state.dashboard.metrics.countdown = counter;
         if sog > 3 {
@@ -243,10 +253,16 @@ pub fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position) -> Re
             }
             state.dashboard.metrics.partial += (coords.speed.unwrap_or(0.0) / 1000.0) as f64;
             if max_speed > 0 && sog > max_speed as u32 {
-                let exceed = Exceed::new(sog, max_speed, pos.timestamp, state.dashboard.metrics.total as u32);
-                let odo_key = ((state.dashboard.metrics.abs_total * 1000.0 / 150.0) as u32).to_string();
+                let exceed = Exceed::new(
+                    sog,
+                    max_speed,
+                    pos.timestamp,
+                    state.dashboard.metrics.total as u32,
+                );
+                let odo_key =
+                    ((state.dashboard.metrics.abs_total * 1000.0 / 150.0) as u32).to_string();
                 if let Some(exceed_at_key) = tel.speed_exceeds.get(&odo_key) {
-                    if sog > exceed_at_key.speed {  
+                    if sog > exceed_at_key.speed {
                         tel.speed_exceeds.insert(odo_key, exceed);
                     }
                 } else {
@@ -256,7 +272,7 @@ pub fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position) -> Re
             state.telemetry.insert(area_id.clone(), tel);
             state.jump_suggestion = JumpSuggestion {
                 suggested: jump_suggested,
-                point: jump_point_id.clone(), 
+                point: jump_point_id.clone(),
             };
         } else {
             state.dashboard.sog = 0;
