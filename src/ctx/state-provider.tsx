@@ -61,8 +61,10 @@ type AppStateProviderState = {
   cog: number;
   ctw: number;
   dtw: number;
+  time: number;
   maxSpeed: number;
   cpCounter: number;
+  countdown: number;
   nextPointNumber: number;
   nextPointName: string;
   nextPointType: string;
@@ -85,7 +87,10 @@ type AppStateProviderState = {
   setVisiable: (status: boolean) => void;
   callView: (name: string, type?: TypeOfRequest) => void;
   setCommand: (cmd: string) => void;
-  switchWidget: (caption: "total" | "partial" | "countdown") => void;
+  switchWidget: (
+    caption: "total" | "partial" | "countdown",
+    marker?: "on" | "off",
+  ) => void;
   setCoords: (update: Coords) => void;
   setCurrentSpeed: (update: number) => void;
   setGpsAccuracy: (val: number) => void;
@@ -110,6 +115,8 @@ type AppStateProviderState = {
   setJumpSuggestion: (status: boolean) => void;
   setCaptured: (status: boolean) => void;
   setTrackPoints: (points: Coords[]) => void;
+  setCountdown: (val: number) => void;
+  setTime: (val: number) => void;
 };
 
 const initialState: AppStateProviderState = {
@@ -144,8 +151,10 @@ const initialState: AppStateProviderState = {
   cog: 0,
   ctw: 0,
   dtw: 0,
+  time: 0,
   maxSpeed: 140,
   cpCounter: 0,
+  countdown: 0,
   nextPointNumber: 0,
   nextPointName: "",
   nextPointType: "",
@@ -215,6 +224,8 @@ const initialState: AppStateProviderState = {
   setJumpSuggestion: () => null,
   setCaptured: () => null,
   setTrackPoints: () => null,
+  setCountdown: () => null,
+  setTime: () => null,
 };
 
 const AppStateProviderContext =
@@ -242,6 +253,7 @@ export function StateProvider({
   const [totalWidgetShown, setTotalShow] = useState(false);
   const [partialWidgetShown, setPartialShow] = useState(false);
   const [countdownWidgetShown, setCountdownShow] = useState(false);
+  const [countdown, setCountdown] = useState(0);
 
   // data
   const [lat, setLat] = useState(0);
@@ -249,6 +261,7 @@ export function StateProvider({
   const [cog, setCog] = useState(0);
   const [ctw, setCtw] = useState(0);
   const [dtw, setDtw] = useState(0);
+  const [time, setTime] = useState(0);
   const [speed, setSpeed] = useState(0);
   const [maxSpeed, setMaxSpeed] = useState(140);
   const [cpCounter, setCpCounter] = useState(0);
@@ -395,20 +408,23 @@ export function StateProvider({
   }, [speed]);
 
   useEffect(() => {
-    const unlistenTelemetry = listen<string>("send_telemetry", async (event) => {
-      try {
-        const telemetryData = JSON.parse(event.payload) as TelemetryData;
-        const device = await getDeviceInfo();
+    const unlistenTelemetry = listen<string>(
+      "send_telemetry",
+      async (event) => {
+        try {
+          const telemetryData = JSON.parse(event.payload) as TelemetryData;
+          const device = await getDeviceInfo();
 
-        telemetryData.device_id = device.uuid as string;
-        telemetryData.time = Date.now();
+          telemetryData.device_id = device.uuid as string;
+          telemetryData.time = Date.now();
 
-        await send_telemetry(telemetryData);
-        setTelemetry((prev) => [...prev, telemetryData]);
-      } catch (e) {
-        console.error("Failed to parse telemetry event:", e);
-      }
-    });
+          await send_telemetry(telemetryData);
+          setTelemetry((prev) => [...prev, telemetryData]);
+        } catch (e) {
+          console.error("Failed to parse telemetry event:", e);
+        }
+      },
+    );
 
     const unlistenReport = listen<string>("send_report", async (event) => {
       try {
@@ -523,10 +539,27 @@ export function StateProvider({
     setRM(status);
   };
 
-  const switchWidget = (caption: "total" | "partial" | "countdown") => {
+  const switchWidget = (
+    caption: "total" | "partial" | "countdown",
+    marker?: "on" | "off",
+  ) => {
     let db = dashBoard;
     switch (caption) {
       case "total": {
+        if (marker) {
+          if (marker === "on") {
+            db.widgetShown.total = true;
+            setTotalShow(true);
+            setDB(db);
+            return;
+          }
+          if (marker === "off") {
+            db.widgetShown.total = false;
+            setTotalShow(false);
+            setDB(db);
+            return;
+          }
+        }
         if (db.widgetShown.total) {
           db.widgetShown.total = false;
           setTotalShow(false);
@@ -538,6 +571,24 @@ export function StateProvider({
         return;
       }
       case "countdown": {
+        if (marker) {
+          if (marker === "on") {
+            db.widgetShown.countdown = true;
+            db.widgetShown.total = false;
+            db.widgetShown.partial = false;
+            setCountdownShow(true);
+            setPartialShow(false);
+            setTotalShow(false);
+            setDB(db);
+            return;
+          }
+          if (marker === "off") {
+            db.widgetShown.countdown = false;
+            setCountdownShow(false);
+            setDB(db);
+            return;
+          }
+        }
         if (db.widgetShown.countdown) {
           db.widgetShown.countdown = false;
           setCountdownShow(false);
@@ -553,6 +604,20 @@ export function StateProvider({
         return;
       }
       case "partial": {
+        if (marker) {
+          if (marker === "on") {
+            db.widgetShown.partial = true;
+            setPartialShow(true);
+            setDB(db);
+            return;
+          }
+          if (marker === "off") {
+            db.widgetShown.partial = false;
+            setPartialShow(false);
+            setDB(db);
+            return;
+          }
+        }
         if (db.widgetShown.partial) {
           db.widgetShown.partial = false;
           setPartialShow(false);
@@ -593,9 +658,11 @@ export function StateProvider({
     cog,
     ctw,
     dtw,
+    time,
 
     maxSpeed,
     cpCounter,
+    countdown,
     nextPointNumber,
     nextPointName,
     nextPointType,
@@ -651,6 +718,8 @@ export function StateProvider({
     setJumpSuggestion,
     setCaptured,
     setTrackPoints,
+    setCountdown,
+    setTime,
   };
 
   return (

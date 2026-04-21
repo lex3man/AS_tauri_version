@@ -10,7 +10,7 @@ export const RoadbookSlides = () => {
       <img src={`data:${img.mime_type};base64,${img.data}`} alt={slide.name} className="max-w-full max-h-full object-contain" />
       {slide.marked && (
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          <div className="w-full h-full -rotate-14 absolute bottom-0 left-0 " style={{
+          <div className="w-full h-full -rotate-13 absolute bottom-0 left-0 " style={{
             borderTop: "10px solid rgba(239, 68, 68, 1)",
             width: "200%",
           }} />

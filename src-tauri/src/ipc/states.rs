@@ -4,7 +4,10 @@ use serde_json::json;
 use tauri::{AppHandle, State};
 
 use crate::{
-    AppState, race::types::{CheckPoint, PointBuilder}, state::race_config::RaceState, utils::{parser::FormatedData, rb_store::download_images}
+    race::types::{CheckPoint, PointBuilder},
+    state::race_config::RaceState,
+    utils::{parser::FormatedData, rb_store::download_images},
+    AppState,
 };
 
 #[tauri::command]
@@ -102,7 +105,10 @@ pub fn sync_data(state: State<'_, Mutex<AppState>>) -> Result<String, ()> {
         let mut next_point_type = "none".to_string();
         if let Some(race) = &state.race.race {
             if let Some(area) = race.areas.get(&state.race.active_code) {
-                let next_point = area.get_point_by_id(&state.race.spec_area_state.next_point).unwrap_or(&PointBuilder::new(0, "none", "none").build()).clone();
+                let next_point = area
+                    .get_point_by_id(&state.race.spec_area_state.next_point)
+                    .unwrap_or(&PointBuilder::new(0, "none", "none").build())
+                    .clone();
                 next_point_type = next_point.point_type.clone();
             }
         }
