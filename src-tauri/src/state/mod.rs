@@ -56,6 +56,7 @@ pub struct JumpSuggestion {
 pub struct Flags {
     pub speed_exceeded: bool,
     pub capture: bool,
+    pub finished: bool,
     pub _gps_signal_lost: bool,
     pub _low_battery: bool,
     pub _internert_disconnected: bool,
@@ -66,6 +67,7 @@ impl Flags {
         Flags {
             speed_exceeded: false,
             capture: false,
+            finished: false,
             _gps_signal_lost: false,
             _low_battery: false,
             _internert_disconnected: false,

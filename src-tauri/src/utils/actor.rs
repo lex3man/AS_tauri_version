@@ -42,6 +42,8 @@ pub fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position) -> Re
         let mut tel = Telemetry::new();
         let mut is_open = false;
         let mut in_visiable_zone = false;
+        let mut counter = 0;
+        let mut finished = false;
 
         // ============================================================================
         // loading current state
@@ -143,9 +145,25 @@ pub fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position) -> Re
                     // ============================================================================
                     // point capture
                     // ============================================================================
-                    if dtw * 1000.0 <= next_point.capture_radius as f64 {
+                    if dtw * 1000.0 <= next_point.capture_radius as f64 && !state.current.finished {
+                        println!("Capture Point: {}", next_point.name);
+                        println!("Point Type: {}", next_point.point_type);
                         capture = true;
                         prev_point_id = next_point_id.clone();
+                        if next_point.point_type.contains("NZ") {
+                            counter = next_point.name.replace("NZ", "").parse().unwrap_or(0);
+                            tel.events.push(
+                                json!({
+                                    "type": "neitrolization timer started",
+                                    "point": state.race.spec_area_state.next_point.clone(),
+                                    "time": pos.timestamp,
+                                    "speed": coords.speed.unwrap_or(0.0) * 3.6,
+                                    "accuracy": coords.accuracy
+                                })
+                                .to_string()
+                            );
+                            println!("COUNTER: {}", counter);
+                        }
                         is_open = false;
                         if next_point.odo <= next_point.capture_radius {
                             total_correction = Some(0.0);
@@ -160,15 +178,15 @@ pub fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position) -> Re
                             .spec_area_state
                             .point_controller
                             .set_active(&next_point_id);
+                        state
+                            .race
+                            .spec_area_state
+                            .points
+                            .get_mut(&next_point_id)
+                            .unwrap()
+                            .checked = true;
+                        state.dashboard.metrics.cp_counter += 1;
                         if state.race.spec_area_state.point_controller.has_next() {
-                            state
-                                .race
-                                .spec_area_state
-                                .points
-                                .get_mut(&next_point_id)
-                                .unwrap()
-                                .checked = true;
-                            state.dashboard.metrics.cp_counter += 1;
                             state.race.spec_area_state.point_controller.move_next();
                             next_point_id = state
                                 .race
@@ -177,17 +195,19 @@ pub fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position) -> Re
                                 .get_active()
                                 .unwrap()
                                 .clone();
+                        } else {
+                            finished = true;
                         }
-                        tel.events.push(
-                            json!({
-                                "type": "point_capture",
-                                "point": state.race.spec_area_state.next_point.clone(),
-                                "time": pos.timestamp,
-                                "speed": coords.speed.unwrap_or(0.0) * 3.6,
-                                "accuracy": coords.accuracy
-                            })
-                            .to_string(),
-                        );
+                        // tel.events.push(
+                        //     json!({
+                        //         "type": "point_capture",
+                        //         "point": state.race.spec_area_state.next_point.clone(),
+                        //         "time": pos.timestamp,
+                        //         "speed": coords.speed.unwrap_or(0.0) * 3.6,
+                        //         "accuracy": coords.accuracy
+                        //     })
+                        //     .to_string(),
+                        // );
                         tel.captures.push(PointCapture {
                             point: state.race.spec_area_state.next_point.clone(),
                             point_type: next_point_type,
@@ -209,6 +229,7 @@ pub fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position) -> Re
         // ============================================================================
         
         state.current.speed_exceeded = sog > max_speed as u32;
+        state.dashboard.metrics.countdown = counter;
         if sog > 3 {
             state.dashboard.dtw = dtw as f32;
             state.dashboard.cog = cog;
@@ -242,6 +263,7 @@ pub fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position) -> Re
         }
         state.dashboard.widget_shown.arrow = is_open || in_visiable_zone;
         state.current.capture = capture;
+        state.current.finished = finished;
         state.dashboard.max_speed = max_speed as u32;
         state.race.spec_area_state.prev_point = prev_point_id;
         state.race.spec_area_state.next_point = next_point_id;

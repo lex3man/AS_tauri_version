@@ -4,7 +4,7 @@ import { useSettings } from "@/ctx/settings-provider";
 import { ChevronDown, ChevronUp } from "lucide-react";
 
 const Settings = () => {
-  const { callView, roadbookMode } = useAppState();
+  const { callView, roadbookMode, mobileView } = useAppState();
   const {
     showBackground,
     setShowBackground,
@@ -88,7 +88,7 @@ const Settings = () => {
           >
             SET RACE NUMBER
           </Button>
-          <div className={`flex ${roadbookMode ? "flex-col justify-center gap-10 items-center" : "justify-between"} pt-5`}>
+          <div className={`flex ${roadbookMode && mobileView ? "flex-col justify-center gap-10 items-center" : "justify-between"} pt-5`}>
             <div className="flex flex-col w-1/2 items-center">
               <div className="text-center text-2xl font-extrabold">
                 DIST STEP

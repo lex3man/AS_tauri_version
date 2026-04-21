@@ -25,7 +25,6 @@ import DebugScreen from "./components/screens/debug";
 import Roadbook from "./components/screens/roadbook";
 import SpeedExceedsScreen from "./components/screens/speed-exceeds";
 import JumpSuggestion from "./components/screens/jump";
-// import { toast } from "sonner";
 import { playBeep } from "./lib/sound";
 import Adjust from "./components/screens/adjust";
 import Tracking from "./components/screens/tracking";
@@ -67,6 +66,9 @@ function App() {
     setJumpPointID,
     setCaptured,
     setTrackPoints,
+    setCountdown,
+    switchWidget,
+    setTime,
   } = useAppState();
   const { showBackground, jumpMode } = useSettings();
   const { width, height } = useWindowDimensions();
@@ -103,11 +105,16 @@ function App() {
                 //   duration: 5000,
                 // })
                 setCaptured(true);
+                if (data.metrics.countdown > 0) {
+                  switchWidget("countdown", "on");
+                  setCountdown(data.metrics.countdown * 60);
+                }
                 playBeep();
               }
               setCog(data.cog);
               setCtw(data.ctw);
               setDtw(data.dtw);
+              setTime(pos?.timestamp as number);
               setCurrentSpeed(data.sog);
               setCpCounter(data.metrics.cp_counter);
               setTotal(data.metrics.total);
@@ -123,13 +130,12 @@ function App() {
               const getPoints = async () => {
                 try {
                   const result = await invoke<string>("get_location_history");
-                  
                   const coords: Coords[] = JSON.parse(result);
                   setTrackPoints(coords);
-                } catch(e) {
+                } catch (e) {
                   console.log(e);
                 }
-              }
+              };
               getPoints();
 
               // toast.success(`Got data with jumpsuggestion: ${data.jump_suggestion}, for point: ${data.jump_point}`, {
