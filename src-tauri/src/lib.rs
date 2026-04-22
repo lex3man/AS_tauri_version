@@ -67,6 +67,7 @@ pub fn run() {
             ipc::metrics::update_total,
             ipc::admin::is_admin,
             ipc::admin::activate_cmd,
+            ipc::report::export_telemetry_report,
         ])
         .setup(|app| {
             app.manage(Mutex::new(AppState::default()));

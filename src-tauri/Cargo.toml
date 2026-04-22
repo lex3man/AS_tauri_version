@@ -38,6 +38,8 @@ tauri-plugin-android-fs = "28.1.0"
 reqwest = { version = "0.10", default-features = false, features = ["json", "rustls-tls", "blocking"] }
 rayon = "1.11.0"
 base64 = "0.22"
+rust_xlsxwriter = { version = "0.94.0", features = ["chrono", "serde"] }
+chrono = { version = "0.4.44", features = ["serde"] }
 # reqwest = { version = "0.13", features = ["json"] }
 # chrono = { version = "0.4.44", features = ["serde"] }
 

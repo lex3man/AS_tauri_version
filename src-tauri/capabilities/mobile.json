@@ -26,7 +26,7 @@
     },
     {
       "identifier": "android-fs:scope",
-      "allow": ["$APPDATA/*"]
+      "allow": ["$APPDATA/*", "$DOCUMENT/**"]
     },
     {
       "identifier": "fs:allow-exists",
