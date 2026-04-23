@@ -87,6 +87,7 @@ pub struct AppState {
     pub telemetry: HashMap<SpecAreaID, Telemetry>,
     pub current: Flags,
     pub jump_suggestion: JumpSuggestion,
+    pub gps_timestamp: u64,
 }
 
 impl Default for AppState {
@@ -105,7 +106,8 @@ impl Default for AppState {
             jump_suggestion: JumpSuggestion {
                 suggested: false,
                 point: "None".to_string()
-            }
+            },
+            gps_timestamp: 0,
         }
     }
 }

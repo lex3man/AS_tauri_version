@@ -1,7 +1,7 @@
 import { request_config, send_report, send_telemetry } from "@/lib/api";
 import { TypeOfRequest } from "@/types/request";
 import { RoadbookSlide, ImageData } from "@/types/roadbook";
-import { AppState, Coords, DashBoard, TelemetryData } from "@/types/state";
+import { AppState, Coords, DashBoard, GPSData, TelemetryData } from "@/types/state";
 import { ViewPort } from "@/types/viewport";
 import Viewports from "@/viewports";
 import { invoke } from "@tauri-apps/api/core";
@@ -42,6 +42,7 @@ type AppStateProviderState = {
 
   dashBoard: DashBoard;
   activeViewPort: ViewPort;
+  gpsData: GPSData;
 
   gpsAccurancy: number;
   batteryLevel: number;
@@ -117,6 +118,7 @@ type AppStateProviderState = {
   setTrackPoints: (points: Coords[]) => void;
   setCountdown: (val: number) => void;
   setTime: (val: string) => void;
+  setGPSData: (data: GPSData) => void;
 };
 
 const initialState: AppStateProviderState = {
@@ -132,6 +134,16 @@ const initialState: AppStateProviderState = {
   requestMode: true,
   configLoading: false,
   visiable: false,
+  gpsData: {
+    latitude: 0,
+    longitude: 0,
+    accuracy: 100,
+    altitudeAccuracy: 100,
+    altitude: 0,
+    speed: 0,
+    heading: 0,
+    timestamp: 0,
+  },
 
   gpsAccurancy: 5,
   batteryLevel: 100,
@@ -226,6 +238,7 @@ const initialState: AppStateProviderState = {
   setTrackPoints: () => null,
   setCountdown: () => null,
   setTime: () => null,
+  setGPSData: () => null,
 };
 
 const AppStateProviderContext =
@@ -277,6 +290,16 @@ export function StateProvider({
   const [jumpSuggestion, setJumpSuggestion] = useState(false);
   const [captured, setCaptured] = useState(false);
   const [trackPoints, setTrackPoints] = useState<Coords[]>([]);
+  const [gpsData, setGPSData] = useState<GPSData>({
+    latitude: 0,
+    longitude: 0,
+    accuracy: 100,
+    altitudeAccuracy: 100,
+    altitude: 0,
+    speed: 0,
+    heading: 0,
+    timestamp: 0,
+  });
 
   // roadbook
   const [rbSlides, setRBSlides] = useState<RoadbookSlide[]>([]);
@@ -425,7 +448,7 @@ export function StateProvider({
           const device = await getDeviceInfo();
 
           telemetryData.device_id = device.uuid as string;
-          telemetryData.time = Date.now();
+          // telemetryData.time = gpsData.timestamp;
 
           await send_telemetry(telemetryData);
           setTelemetry((prev) => [...prev, telemetryData]);
@@ -441,7 +464,7 @@ export function StateProvider({
         const device = await getDeviceInfo();
 
         reportData.device_id = device.uuid as string;
-        reportData.time = Date.now();
+        // reportData.time = gpsData.timestamp;
 
         await send_report(reportData);
       } catch (e) {
@@ -583,11 +606,7 @@ export function StateProvider({
         if (marker) {
           if (marker === "on") {
             db.widgetShown.countdown = true;
-            db.widgetShown.total = false;
-            db.widgetShown.partial = false;
             setCountdownShow(true);
-            setPartialShow(false);
-            setTotalShow(false);
             setDB(db);
             return;
           }
@@ -603,11 +622,7 @@ export function StateProvider({
           setCountdownShow(false);
         } else {
           db.widgetShown.countdown = true;
-          db.widgetShown.total = false;
-          db.widgetShown.partial = false;
           setCountdownShow(true);
-          setPartialShow(false);
-          setTotalShow(false);
         }
         setDB(db);
         return;
@@ -653,6 +668,7 @@ export function StateProvider({
     requestMode,
     configLoading,
     visiable,
+    gpsData,
 
     dashBoard,
     activeViewPort,
@@ -729,6 +745,7 @@ export function StateProvider({
     setTrackPoints,
     setCountdown,
     setTime,
+    setGPSData,
   };
 
   return (

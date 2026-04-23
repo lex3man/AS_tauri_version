@@ -68,6 +68,7 @@ function App() {
     setTrackPoints,
     setCountdown,
     switchWidget,
+    setGPSData,
   } = useAppState();
   const { showBackground, jumpMode } = useSettings();
   const { width, height } = useWindowDimensions();
@@ -92,6 +93,19 @@ function App() {
             lat: geoData["latitude"],
             lon: geoData["longitude"],
           };
+          if (pos) {
+            const gpsData = {
+              latitude: pos.coords.latitude,
+              longitude: pos.coords.longitude,
+              accuracy: pos.coords.accuracy,
+              altitudeAccuracy: pos.coords.altitudeAccuracy,
+              altitude: pos.coords.altitude,
+              speed: pos.coords.speed,
+              heading: pos.coords.heading,
+              timestamp: pos.timestamp,
+            };
+            setGPSData(gpsData);
+          }
           setCoords(coords);
           invoke<string>("sync_data")
             .then((rawData) => {

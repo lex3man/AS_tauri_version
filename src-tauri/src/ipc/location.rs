@@ -14,11 +14,13 @@ pub fn location_update(app: AppHandle, state: State<'_, Mutex<AppState>>, data: 
 
     if let Ok(mut state) = state.lock() {
         state.coords = Some(gps_data.coords.clone());
+        state.gps_timestamp = gps_data.timestamp;
         if let Some(store) = &state.storage {
             store.set("position", json!(gps_data.coords));
             store.set("sa_state", json!(state.race.spec_area_state));
             store.set("race_state", json!(state.race));
             store.set("dashboard", json!(state.dashboard));
+            store.set("timestamp", gps_data.timestamp);
         }
         state.sync();
     }

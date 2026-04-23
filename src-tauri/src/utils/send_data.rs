@@ -18,8 +18,8 @@ pub fn send_report(
             "points_captures": tel.captures,
             "speed_exceeds": tel.speed_exceeds,
             "other_events": tel.events,
-        }
-    
+        },
+        "time": state.gps_timestamp
     })
     .to_string();
 
@@ -49,7 +49,7 @@ pub fn send_telemetry(
         "accuracy": "",
         "point_name": state.race.spec_area_state.next_point.clone(),
         "checked": checked,
-        "time": "",
+        "time": state.gps_timestamp,
     })
     .to_string();
 
