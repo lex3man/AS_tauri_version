@@ -260,7 +260,7 @@ pub fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position) -> Re
                     state.dashboard.metrics.total as u32,
                 );
                 let odo_key =
-                    ((state.dashboard.metrics.abs_total * 1000.0 / 150.0) as u32).to_string();
+                    ((state.dashboard.metrics.total * 1000.0 / 150.0) as u32).to_string();
                 if let Some(exceed_at_key) = tel.speed_exceeds.get(&odo_key) {
                     if sog > exceed_at_key.speed {
                         tel.speed_exceeds.insert(odo_key, exceed);

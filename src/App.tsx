@@ -68,7 +68,6 @@ function App() {
     setTrackPoints,
     setCountdown,
     switchWidget,
-    setTime,
   } = useAppState();
   const { showBackground, jumpMode } = useSettings();
   const { width, height } = useWindowDimensions();
