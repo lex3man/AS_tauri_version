@@ -38,16 +38,14 @@ pub async fn export_telemetry_report<R: tauri::Runtime>(app: tauri::AppHandle<R>
                 {
                     let sheet = workbook.add_worksheet();
                     sheet.set_name("Exceeds").map_err(|e| e.to_string())?;
-                    sheet.write(0, 0, "Key").map_err(|e| e.to_string())?;
                     sheet.write(0, 1, "Speed").map_err(|e| e.to_string())?;
                     sheet.write(0, 2, "Limit").map_err(|e| e.to_string())?;
                     sheet.write(0, 3, "Time").map_err(|e| e.to_string())?;
                     sheet.write(0, 4, "Km").map_err(|e| e.to_string())?;
 
-                    for (row, (key, exceed)) in telemetry.speed_exceeds.iter().enumerate() {
+                    for (row, (_key, exceed)) in telemetry.speed_exceeds.iter().enumerate() {
                         let r = (row + 1) as u32;
                         let datetime: DateTime<Utc> = Utc.timestamp_millis_opt(exceed.time as i64).unwrap();
-                        sheet.write(r, 0, key.as_str()).map_err(|e| e.to_string())?;
                         sheet.write(r, 1, exceed.speed).map_err(|e| e.to_string())?;
                         sheet.write(r, 2, exceed.limit).map_err(|e| e.to_string())?;
                         sheet.write(r, 3, &datetime.to_string()).map_err(|e| e.to_string())?;
@@ -62,7 +60,6 @@ pub async fn export_telemetry_report<R: tauri::Runtime>(app: tauri::AppHandle<R>
                     sheet.write(0, 1, "Type").map_err(|e| e.to_string())?;
                     sheet.write(0, 2, "Time").map_err(|e| e.to_string())?;
                     sheet.write(0, 3, "Speed").map_err(|e| e.to_string())?;
-                    sheet.write(0, 4, "Accuracy").map_err(|e| e.to_string())?;
 
                     for (row, capture) in telemetry.captures.iter().enumerate() {
                         let r = (row + 1) as u32;
@@ -71,7 +68,6 @@ pub async fn export_telemetry_report<R: tauri::Runtime>(app: tauri::AppHandle<R>
                         sheet.write(r, 1, capture.point_type.as_str()).map_err(|e| e.to_string())?;
                         sheet.write(r, 2, &datetime.to_string()).map_err(|e| e.to_string())?;
                         sheet.write(r, 3, capture.speed).map_err(|e| e.to_string())?;
-                        sheet.write(r, 4, capture.accuracy).map_err(|e| e.to_string())?;
                     }
                 }
 
