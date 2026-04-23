@@ -35,7 +35,7 @@ const CountdownWidget = () => {
       <div
         className={`font-extrabold text-center ${mobileView ? "text-xs" : "text-xl"} leading-none`}
       >
-        NEUTRO TIME
+        NZ TIMER
       </div>
       <div
         className={`transform scale-x-70 flex justify-center ${mobileView ? (roadbookMode ? "text-4xl" : "text-6xl") : "text-[clamp(3rem,7vw,10rem)]"} font-extrabold leading-none my-auto`}

@@ -2,6 +2,8 @@ import { useAppState } from "@/ctx/state-provider";
 import { Button } from "../ui/button";
 import { useSettings } from "@/ctx/settings-provider";
 import { ChevronDown, ChevronUp } from "lucide-react";
+import { invoke } from "@tauri-apps/api/core";
+import { toast } from "sonner";
 
 const Settings = () => {
   const { callView, roadbookMode, mobileView } = useAppState();
@@ -36,7 +38,9 @@ const Settings = () => {
           </Button>
         </div>
       </div>
-      <div className={`flex flex-col justify-center w-full m-auto ${roadbookMode ? "max-h-[90vh] pt-[10vh]" : "max-h-[70vh] pt-[30vh]"} overflow-y-auto`}>
+      <div
+        className={`flex flex-col justify-center w-full m-auto ${roadbookMode ? "max-h-[90vh] pt-[10vh]" : "max-h-[70vh] pt-[30vh]"} overflow-y-auto`}
+      >
         <div className="flex flex-col justify-center m-auto md:w-1/2 sm:w-2/3 gap-2">
           <Button
             className="p-6 text-2xl"
@@ -77,7 +81,14 @@ const Settings = () => {
           >
             Jump Mode ON/OFF
           </Button>
-          <Button className="p-6 text-2xl" onClick={() => {}}>
+          <Button
+            className="p-6 text-2xl"
+            onClick={async () => {
+              invoke("export_telemetry_report")
+                .then((resp) => toast.info(`report saved at ${resp}`))
+                .catch((e) => toast.error(`Report generating error: ${e}`));
+            }}
+          >
             GET REPORT
           </Button>
           <Button
@@ -88,13 +99,17 @@ const Settings = () => {
           >
             SET RACE NUMBER
           </Button>
-          <div className={`flex ${roadbookMode && mobileView ? "flex-col justify-center gap-10 items-center" : "justify-between"} pt-5`}>
+          <div
+            className={`flex ${roadbookMode && mobileView ? "flex-col justify-center gap-10 items-center" : "justify-between"} pt-5`}
+          >
             <div className="flex flex-col w-1/2 items-center">
               <div className="text-center text-2xl font-extrabold">
                 DIST STEP
               </div>
               <ChevronUp onClick={() => increaseDistStep()} />
-              <div className="text-3xl font-extrabold">{correctionDistance.value}</div>
+              <div className="text-3xl font-extrabold">
+                {correctionDistance.value}
+              </div>
               <ChevronDown onClick={() => decreaseDistStep()} />
             </div>
             <div className="flex flex-col w-1/2 items-center">
@@ -102,7 +117,9 @@ const Settings = () => {
                 TRACK DIST
               </div>
               <ChevronUp onClick={() => increaseTrackDist()} />
-              <div className="text-3xl font-extrabold">{trackDistance.value}</div>
+              <div className="text-3xl font-extrabold">
+                {trackDistance.value}
+              </div>
               <ChevronDown onClick={() => decreaseTrackDist()} />
             </div>
             <div className="flex flex-col"></div>

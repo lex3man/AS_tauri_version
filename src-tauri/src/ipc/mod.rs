@@ -6,3 +6,4 @@ pub mod roadbook;
 pub mod settings;
 pub mod metrics;
 pub mod states;
+pub mod report;
