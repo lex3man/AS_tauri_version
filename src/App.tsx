@@ -114,7 +114,7 @@ function App() {
               setCog(data.cog);
               setCtw(data.ctw);
               setDtw(data.dtw);
-              setTime(pos?.timestamp as number);
+              // setTime(pos?.timestamp as number);
               setCurrentSpeed(data.sog);
               setCpCounter(data.metrics.cp_counter);
               setTotal(data.metrics.total);

@@ -61,7 +61,7 @@ type AppStateProviderState = {
   cog: number;
   ctw: number;
   dtw: number;
-  time: number;
+  time: string;
   maxSpeed: number;
   cpCounter: number;
   countdown: number;
@@ -116,7 +116,7 @@ type AppStateProviderState = {
   setCaptured: (status: boolean) => void;
   setTrackPoints: (points: Coords[]) => void;
   setCountdown: (val: number) => void;
-  setTime: (val: number) => void;
+  setTime: (val: string) => void;
 };
 
 const initialState: AppStateProviderState = {
@@ -151,7 +151,7 @@ const initialState: AppStateProviderState = {
   cog: 0,
   ctw: 0,
   dtw: 0,
-  time: 0,
+  time: "",
   maxSpeed: 140,
   cpCounter: 0,
   countdown: 0,
@@ -261,7 +261,7 @@ export function StateProvider({
   const [cog, setCog] = useState(0);
   const [ctw, setCtw] = useState(0);
   const [dtw, setDtw] = useState(0);
-  const [time, setTime] = useState(0);
+  const [time, setTime] = useState("");
   const [speed, setSpeed] = useState(0);
   const [maxSpeed, setMaxSpeed] = useState(140);
   const [cpCounter, setCpCounter] = useState(0);
@@ -353,6 +353,15 @@ export function StateProvider({
     fetchRoadbook();
     getState();
   }, []);
+
+  useEffect(() => {
+    const tick = () => setTime(new Date().toLocaleTimeString());
+
+    tick();
+    const id = setInterval(tick, 1000);
+
+    return () => clearInterval(id);
+  }, [])
 
   useEffect(() => {
     const adminCheck = async () => {
