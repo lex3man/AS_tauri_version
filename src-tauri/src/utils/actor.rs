@@ -1,4 +1,4 @@
-use std::sync::Mutex;
+use std::{sync::Mutex};
 
 use serde_json::json;
 use tauri::AppHandle;
@@ -16,7 +16,7 @@ use crate::{
     },
 };
 
-pub fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position) -> Result<(), ()> {
+pub async fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position) -> Result<(), ()> {
     if let Ok(mut state) = state.lock() {
         let coords = GPSData {
             latitude: pos.coords.latitude,
@@ -259,8 +259,7 @@ pub fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position) -> Re
                     pos.timestamp,
                     state.dashboard.metrics.total as u32,
                 );
-                let odo_key =
-                    ((state.dashboard.metrics.total * 1000.0 / 150.0) as u32).to_string();
+                let odo_key = ((state.dashboard.metrics.total * 1000.0 / 150.0) as u32).to_string();
                 if let Some(exceed_at_key) = tel.speed_exceeds.get(&odo_key) {
                     if sog > exceed_at_key.speed {
                         tel.speed_exceeds.insert(odo_key, exceed);

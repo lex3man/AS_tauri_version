@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 
-use crate::state::{Position, race_config::PointID};
+use crate::state::{race_config::PointID, Position};
 
 #[derive(Serialize, Deserialize, Debug, Clone, Copy)]
 pub struct Exceed {
@@ -14,7 +14,12 @@ pub struct Exceed {
 
 impl Exceed {
     pub fn new(speed: u32, limit: u8, time: u64, km: u32) -> Self {
-        Self { speed, limit, time, km }
+        Self {
+            speed,
+            limit,
+            time,
+            km,
+        }
     }
 }
 

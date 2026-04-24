@@ -19,6 +19,7 @@
     "app-control:default",
     "device-info:default",
     "android-fs:default",
+    "gamepad:default",
     {
       "identifier": "http:default",
       "allow": [{ "url": "https://map.rostexcabinet.ru" }],

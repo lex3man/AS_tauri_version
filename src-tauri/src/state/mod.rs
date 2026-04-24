@@ -50,7 +50,7 @@ pub struct Position {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct JumpSuggestion {
     pub suggested: bool,
-    pub point: String
+    pub point: String,
 }
 
 pub struct Flags {
@@ -105,7 +105,7 @@ impl Default for AppState {
             current: Flags::new(),
             jump_suggestion: JumpSuggestion {
                 suggested: false,
-                point: "None".to_string()
+                point: "None".to_string(),
             },
             gps_timestamp: 0,
         }

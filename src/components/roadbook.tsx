@@ -1,9 +1,83 @@
 import { useAppState } from "@/ctx/state-provider";
 import clsx from "clsx";
 import { RoadbookSlide, ImageData } from "@/types/roadbook";
+import { useGamepads } from 'react-gamepads';
+import { useEffect, useState } from "react";
 
 export const RoadbookSlides = () => {
   const { mobileView, rbSlides, rbImages, setRBSlides, currentRBIndex, goNext, goPrev } = useAppState();
+  const [gamepads, setGamepads] = useState({});
+  useGamepads(gamepads => setGamepads(gamepads));
+
+  const handleMark = () => {
+    if (rbSlides[currentRBIndex]) {
+      if (rbSlides[currentRBIndex].marked) { rbSlides[currentRBIndex].marked = false; }
+      else { 
+        rbSlides[currentRBIndex].marked = true; 
+        goNext();
+      }
+      setRBSlides([...rbSlides]);
+    }
+  }
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (rbSlides.length === 0) return;
+
+      switch (e.key) {
+        case "ArrowUp":
+          e.preventDefault();
+          goPrev();
+          break;
+
+        case "":
+          e.preventDefault();
+          goPrev();
+          break;
+
+        case "ArrowDown":
+          e.preventDefault();
+          goNext();
+          break;
+
+        case "Backspace":
+          e.preventDefault();
+          goNext();
+          break;
+
+        case "Enter":
+          e.preventDefault();
+          if (rbSlides[currentRBIndex]) {
+            handleMark();
+          }
+          break;
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [rbSlides, currentRBIndex, goPrev, goNext, handleMark]);
+
+  useEffect(() => {
+  const deadzone = 0.5;
+  const pad = Object.values(gamepads)[0] as any | undefined;
+  if (!pad || !pad.buttons) return;
+
+  const up =
+    pad.buttons[12]?.pressed || (pad.axes?.[1] ?? 0) < -deadzone; // D‑pad Up / left stick up
+  const down =
+    pad.buttons[13]?.pressed || (pad.axes?.[1] ?? 0) > deadzone; // D‑pad Down / left stick down
+  const a = pad.buttons[0]?.pressed;
+  const x = pad.buttons[2]?.pressed;
+
+  if (up) goPrev();
+  if (down) goNext();
+  if ((a || x) && rbSlides[currentRBIndex]) {
+    handleMark();
+  }
+}, [gamepads, rbSlides, currentRBIndex, goPrev, goNext, handleMark]);
 
   const renderSlideImage = (img: ImageData, slide: RoadbookSlide, className?: string) => (
     <div className={clsx("relative inline-block", className)}>
@@ -38,16 +112,7 @@ export const RoadbookSlides = () => {
 
     <div 
       className="flex-1 flex items-center justify-center w-full overflow-hidden border-10 border-red-700 rounded-2xl z-50"
-      onDoubleClick={() => {
-        if (rbSlides[currentRBIndex]) {
-          if (rbSlides[currentRBIndex].marked) { rbSlides[currentRBIndex].marked = false; }
-          else { 
-            rbSlides[currentRBIndex].marked = true; 
-            goNext();
-          }
-          setRBSlides([...rbSlides]);
-        }
-      }}
+      onDoubleClick={handleMark}
     >
       {rbSlides.length > 0 && currentRBIndex >= 0 && currentRBIndex < rbSlides.length ? (() => {
         const slide = rbSlides[currentRBIndex];
