@@ -48,6 +48,7 @@ pub fn activate_code(state: State<'_, Mutex<AppState>>, code: &str) -> Result<St
                     state.dashboard.metrics.countdown = 0;
                     state.dashboard.metrics.cp_counter = 0;
                     state.dashboard.metrics.abs_total = 0.0;
+                    state.collected = vec![];
                     state
                         .telemetry
                         .insert(area_id.clone(), crate::state::telemetry::Telemetry::new());

@@ -24,7 +24,8 @@ pub async fn location_update(app: AppHandle, state: State<'_, Mutex<AppState>>, 
         }
         state.sync();
     }
-    make_culc(&app, &state, &gps_data).await
+    make_culc(&app, &state, &gps_data).await?;
+    Ok(())
 }
 
 #[tauri::command]

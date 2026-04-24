@@ -95,6 +95,29 @@ export const send_telemetry = async (data: TelemetryData) => {
   }
 }
 
+export const send_collected = async (data: any) => {
+  const url = `${SCHEME}://${HOST}/api/report/collected`;
+
+  const resp = await fetch(url, {
+    method: "POST",
+    headers: {
+      authentication: TOKEN,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (resp.status === 200) {
+    // toast.success(`Collected data with sent successfully`, { 
+    //   position: "bottom-center",
+    //   duration: 3000,
+    // });
+    return true;
+  } else {
+    return false;
+  }
+}
+
 export const send_report = async (data: any) => {
   const url = `${SCHEME}://${HOST}/api/report/checkpoint`;
 

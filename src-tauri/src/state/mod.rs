@@ -88,6 +88,7 @@ pub struct AppState {
     pub current: Flags,
     pub jump_suggestion: JumpSuggestion,
     pub gps_timestamp: u64,
+    pub collected: Vec<String>,
 }
 
 impl Default for AppState {
@@ -108,6 +109,7 @@ impl Default for AppState {
                 point: "None".to_string(),
             },
             gps_timestamp: 0,
+            collected: vec![],
         }
     }
 }
