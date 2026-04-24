@@ -1,7 +1,7 @@
-use std::{sync::Mutex, thread::sleep, time::Duration};
+use std::sync::Mutex;
 
 use serde_json::json;
-use tauri::{AppHandle, async_runtime::spawn};
+use tauri::AppHandle;
 
 use crate::{
     race::types::Coords,
