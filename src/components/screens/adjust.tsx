@@ -40,7 +40,7 @@ const Adjust = () => {
         >
           <div className={`flex flex-col w-full`}>
             <Button
-              className="p-7 text-2xl"
+              className="p-7 text-xl"
               onClick={() => {
                 callView("navigate");
               }}
@@ -48,7 +48,7 @@ const Adjust = () => {
               BACK
             </Button>
             <Button
-              className="p-7 text-2xl"
+              className="p-7 text-xl"
               onClick={async () => {
                 await invoke("update_total", { total: totalUpdate });
                 setTotal(totalUpdate);
@@ -58,7 +58,7 @@ const Adjust = () => {
               APPLY
             </Button>
             <Button
-              className="p-7 text-2xl"
+              className="p-7 text-xl"
               onClick={() => {
                 setTotalUpdate(total);
               }}

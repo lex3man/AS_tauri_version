@@ -87,12 +87,21 @@ export function RouteMap({
       })
       .join(" ");
 
-    const scaleBarWidth = 500 * pixelsPerMeter;
+    let barWidth = 500
+
+    if (pixelsPerMeter < 10) {
+      barWidth = 1000
+    }
+    if (pixelsPerMeter < 1) {
+      barWidth = 5000
+    }
+
+    const scaleBarWidth = barWidth * pixelsPerMeter;
 
     return {
       polylinePoints,
       scaleBarWidth,
-      scaleBarLabel: "500 m",
+      scaleBarLabel: `${barWidth} m ${pixelsPerMeter.toFixed(2)}`,
       view: { offsetX, offsetY, contentWidthPx, contentHeightPx },
     };
   }, [trackPoints, width, height]);

@@ -6,17 +6,15 @@ use tauri::AppHandle;
 use crate::{
     race::types::Coords,
     state::{
-        race_config::PointState,
-        telemetry::{Exceed, PointCapture, Telemetry},
-        AppState, GPSData, JumpSuggestion, Position,
+        AppState, GPSData, JumpSuggestion, Position, race_config::PointState, telemetry::{Exceed, PointCapture, Telemetry}
     },
     utils::{
         converters::{course_in_degrees, distance},
-        send_data::{send_report, send_telemetry},
+        send_data::{send_collected, send_report, send_telemetry},
     },
 };
 
-pub fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position) -> Result<(), ()> {
+pub async fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position) -> Result<(), ()> {
     if let Ok(mut state) = state.lock() {
         let coords = GPSData {
             latitude: pos.coords.latitude,
@@ -208,16 +206,6 @@ pub fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position) -> Re
                         } else {
                             finished = true;
                         }
-                        // tel.events.push(
-                        //     json!({
-                        //         "type": "point_capture",
-                        //         "point": state.race.spec_area_state.next_point.clone(),
-                        //         "time": pos.timestamp,
-                        //         "speed": coords.speed.unwrap_or(0.0) * 3.6,
-                        //         "accuracy": coords.accuracy
-                        //     })
-                        //     .to_string(),
-                        // );
                         tel.captures.push(PointCapture {
                             point: state.race.spec_area_state.next_point.clone(),
                             point_type: next_point_type,
@@ -225,11 +213,38 @@ pub fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position) -> Re
                             speed: coords.speed.unwrap_or(0.0) * 3.6,
                             accuracy: coords.accuracy,
                         });
-                        send_telemetry(app, &state, true).unwrap();
-                        send_report(app, &state, &tel).unwrap();
-                    } else {
-                        send_telemetry(app, &state, false).unwrap();
+
+                        {
+                            let data = json!({
+                                "race_number": state.race_number.clone(),
+                                "device_id": "",
+                                "etape": &state.race.active_code.clone(),
+                                "report": {
+                                    "points_captures": tel.captures,
+                                    "speed_exceeds": tel.speed_exceeds,
+                                    "other_events": tel.events,
+                                },
+                                "time": state.gps_timestamp
+                            }).to_string();
+                            send_report(app, data).unwrap();
+                        }
                     }
+                    
+                    let data = json!({
+                        "race_number": state.race_number.clone(),
+                        "device_id": "",
+                        "etape": state.race.active_code.clone(),
+                        "exceeding": state.dashboard.sog > state.dashboard.max_speed,
+                        "speed": state.dashboard.sog,
+                        "lat": state.coords.as_ref().unwrap_or(&GPSData::default()).latitude,
+                        "lon": state.coords.as_ref().unwrap_or(&GPSData::default()).longitude,
+                        "accuracy": "",
+                        "point_name": state.race.spec_area_state.next_point.clone(),
+                        "checked": capture,
+                        "time": state.gps_timestamp,
+                    }).to_string();
+                    state.collected.push(data.clone());
+                    send_telemetry(app, data).unwrap();
                 }
             }
         }
@@ -259,8 +274,7 @@ pub fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position) -> Re
                     pos.timestamp,
                     state.dashboard.metrics.total as u32,
                 );
-                let odo_key =
-                    ((state.dashboard.metrics.total * 1000.0 / 150.0) as u32).to_string();
+                let odo_key = ((state.dashboard.metrics.total * 1000.0 / 150.0) as u32).to_string();
                 if let Some(exceed_at_key) = tel.speed_exceeds.get(&odo_key) {
                     if sog > exceed_at_key.speed {
                         tel.speed_exceeds.insert(odo_key, exceed);
@@ -283,6 +297,13 @@ pub fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position) -> Re
         state.dashboard.max_speed = max_speed as u32;
         state.race.spec_area_state.prev_point = prev_point_id;
         state.race.spec_area_state.next_point = next_point_id;
+
+        if capture {
+            match send_collected(app, state.collected.clone()) {
+                Ok(_) => { println!("Collected data sent!!!"); },
+                Err(_) => { println!("Collected data sending faild!!!"); },
+            }
+        }
     }
     Ok(())
 }

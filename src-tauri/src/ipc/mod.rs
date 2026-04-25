@@ -1,9 +1,9 @@
 pub mod admin;
 pub mod codes;
 pub mod location;
+pub mod metrics;
 pub mod race_number;
+pub mod report;
 pub mod roadbook;
 pub mod settings;
-pub mod metrics;
 pub mod states;
-pub mod report;

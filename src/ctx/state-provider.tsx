@@ -1,4 +1,4 @@
-import { request_config, send_report, send_telemetry } from "@/lib/api";
+import { request_config, send_report, send_telemetry, send_collected } from "@/lib/api";
 import { TypeOfRequest } from "@/types/request";
 import { RoadbookSlide, ImageData } from "@/types/roadbook";
 import { AppState, Coords, DashBoard, GPSData, TelemetryData } from "@/types/state";
@@ -448,8 +448,6 @@ export function StateProvider({
           const device = await getDeviceInfo();
 
           telemetryData.device_id = device.uuid as string;
-          // telemetryData.time = gpsData.timestamp;
-
           await send_telemetry(telemetryData);
           setTelemetry((prev) => [...prev, telemetryData]);
         } catch (e) {
@@ -464,7 +462,6 @@ export function StateProvider({
         const device = await getDeviceInfo();
 
         reportData.device_id = device.uuid as string;
-        // reportData.time = gpsData.timestamp;
 
         await send_report(reportData);
       } catch (e) {
@@ -472,9 +469,20 @@ export function StateProvider({
       }
     });
 
+    const unlistenCollected = listen<string>("send_collected", async (event) => {
+      try {
+        const collectedData = JSON.parse(event.payload);
+
+        await send_collected(collectedData);
+      } catch (e) {
+        console.error("Failed to parse report event:", e);
+      }
+    })
+
     return () => {
       unlistenTelemetry.then((u) => u());
       unlistenReport.then((u) => u());
+      unlistenCollected.then((u) => u());
     };
   }, []);
 

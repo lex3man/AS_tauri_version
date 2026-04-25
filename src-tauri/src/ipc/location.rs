@@ -9,7 +9,7 @@ use std::sync::Mutex;
 use tauri::{AppHandle, State};
 
 #[tauri::command]
-pub fn location_update(app: AppHandle, state: State<'_, Mutex<AppState>>, data: &str) {
+pub async fn location_update(app: AppHandle, state: State<'_, Mutex<AppState>>, data: &str) -> Result<(), ()> {
     let gps_data: Position = serde_json::from_str(data).unwrap();
 
     if let Ok(mut state) = state.lock() {
@@ -24,10 +24,8 @@ pub fn location_update(app: AppHandle, state: State<'_, Mutex<AppState>>, data: 
         }
         state.sync();
     }
-    match make_culc(&app, &state, &gps_data) {
-        Ok(_) => {}
-        Err(_) => {}
-    }
+    make_culc(&app, &state, &gps_data).await?;
+    Ok(())
 }
 
 #[tauri::command]

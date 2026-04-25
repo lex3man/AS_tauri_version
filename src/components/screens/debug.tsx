@@ -1,8 +1,21 @@
 import { useAppState } from "@/ctx/state-provider";
 import { Button } from "../ui/button";
+import { useEffect, useState } from "react";
 
 const DebugScreen = () => {
-  const { callView, debugData } = useAppState();
+  const { callView, debugData, setDebugData } = useAppState();
+  const [pasedkey, setPassedkey] = useState("")
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      setPassedkey(e.key.toString())
+    };
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [debugData, setDebugData]);
 
   return (
     <div>
@@ -24,6 +37,7 @@ const DebugScreen = () => {
       <div className="scrollable p-20">
         <div className="text-xl">
           <p>{debugData}</p>
+          <p>{pasedkey}</p>
         </div>
       </div>
     </div>
