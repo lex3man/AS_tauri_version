@@ -226,7 +226,8 @@ pub async fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position)
                                 },
                                 "time": state.gps_timestamp
                             }).to_string();
-                            send_report(app, data).unwrap();
+                            send_report(app, data.clone()).unwrap();
+                            state.last_report = data;
                         }
                     }
                     

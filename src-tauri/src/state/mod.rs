@@ -89,6 +89,7 @@ pub struct AppState {
     pub jump_suggestion: JumpSuggestion,
     pub gps_timestamp: u64,
     pub collected: Vec<String>,
+    pub last_report: String,
 }
 
 impl Default for AppState {
@@ -110,6 +111,7 @@ impl Default for AppState {
             },
             gps_timestamp: 0,
             collected: vec![],
+            last_report: String::from(""),
         }
     }
 }
