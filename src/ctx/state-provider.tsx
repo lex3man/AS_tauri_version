@@ -1,7 +1,7 @@
-import { request_config, send_telemetry } from "@/lib/api";
+import { request_config, send_report, send_telemetry, send_collected } from "@/lib/api";
 import { TypeOfRequest } from "@/types/request";
 import { RoadbookSlide, ImageData } from "@/types/roadbook";
-import { AppState, Coords, DashBoard, TelemetryData } from "@/types/state";
+import { AppState, Coords, DashBoard, GPSData, TelemetryData } from "@/types/state";
 import { ViewPort } from "@/types/viewport";
 import Viewports from "@/viewports";
 import { invoke } from "@tauri-apps/api/core";
@@ -42,6 +42,7 @@ type AppStateProviderState = {
 
   dashBoard: DashBoard;
   activeViewPort: ViewPort;
+  gpsData: GPSData;
 
   gpsAccurancy: number;
   batteryLevel: number;
@@ -61,8 +62,10 @@ type AppStateProviderState = {
   cog: number;
   ctw: number;
   dtw: number;
+  time: string;
   maxSpeed: number;
   cpCounter: number;
+  countdown: number;
   nextPointNumber: number;
   nextPointName: string;
   nextPointType: string;
@@ -72,6 +75,8 @@ type AppStateProviderState = {
   speedExceeds: string;
   jumpSuggestion: boolean;
   telemetry: TelemetryData[];
+  captured: boolean;
+  trackPoints: Coords[];
 
   setRaceNumber: (rn: string) => void;
   setRoadbookMode: (status: boolean) => void;
@@ -83,7 +88,10 @@ type AppStateProviderState = {
   setVisiable: (status: boolean) => void;
   callView: (name: string, type?: TypeOfRequest) => void;
   setCommand: (cmd: string) => void;
-  switchWidget: (caption: "total" | "partial" | "countdown") => void;
+  switchWidget: (
+    caption: "total" | "partial" | "countdown",
+    marker?: "on" | "off",
+  ) => void;
   setCoords: (update: Coords) => void;
   setCurrentSpeed: (update: number) => void;
   setGpsAccuracy: (val: number) => void;
@@ -106,6 +114,11 @@ type AppStateProviderState = {
   goPrev: () => void;
   setJumpPointID: (val: string) => void;
   setJumpSuggestion: (status: boolean) => void;
+  setCaptured: (status: boolean) => void;
+  setTrackPoints: (points: Coords[]) => void;
+  setCountdown: (val: number) => void;
+  setTime: (val: string) => void;
+  setGPSData: (data: GPSData) => void;
 };
 
 const initialState: AppStateProviderState = {
@@ -121,6 +134,16 @@ const initialState: AppStateProviderState = {
   requestMode: true,
   configLoading: false,
   visiable: false,
+  gpsData: {
+    latitude: 0,
+    longitude: 0,
+    accuracy: 100,
+    altitudeAccuracy: 100,
+    altitude: 0,
+    speed: 0,
+    heading: 0,
+    timestamp: 0,
+  },
 
   gpsAccurancy: 5,
   batteryLevel: 100,
@@ -140,8 +163,10 @@ const initialState: AppStateProviderState = {
   cog: 0,
   ctw: 0,
   dtw: 0,
+  time: "",
   maxSpeed: 140,
   cpCounter: 0,
+  countdown: 0,
   nextPointNumber: 0,
   nextPointName: "",
   nextPointType: "",
@@ -151,6 +176,8 @@ const initialState: AppStateProviderState = {
   jumpSuggestion: false,
   telemetry: [],
   speedExceeds: "",
+  captured: false,
+  trackPoints: [],
 
   dashBoard: {
     cog: 0,
@@ -207,6 +234,11 @@ const initialState: AppStateProviderState = {
   goPrev: () => null,
   setJumpPointID: () => null,
   setJumpSuggestion: () => null,
+  setCaptured: () => null,
+  setTrackPoints: () => null,
+  setCountdown: () => null,
+  setTime: () => null,
+  setGPSData: () => null,
 };
 
 const AppStateProviderContext =
@@ -234,6 +266,7 @@ export function StateProvider({
   const [totalWidgetShown, setTotalShow] = useState(false);
   const [partialWidgetShown, setPartialShow] = useState(false);
   const [countdownWidgetShown, setCountdownShow] = useState(false);
+  const [countdown, setCountdown] = useState(0);
 
   // data
   const [lat, setLat] = useState(0);
@@ -241,6 +274,7 @@ export function StateProvider({
   const [cog, setCog] = useState(0);
   const [ctw, setCtw] = useState(0);
   const [dtw, setDtw] = useState(0);
+  const [time, setTime] = useState("");
   const [speed, setSpeed] = useState(0);
   const [maxSpeed, setMaxSpeed] = useState(140);
   const [cpCounter, setCpCounter] = useState(0);
@@ -254,6 +288,18 @@ export function StateProvider({
   const [telemetry, setTelemetry] = useState<TelemetryData[]>([]);
   const [speedExceeds, setSpeedExceeds] = useState("");
   const [jumpSuggestion, setJumpSuggestion] = useState(false);
+  const [captured, setCaptured] = useState(false);
+  const [trackPoints, setTrackPoints] = useState<Coords[]>([]);
+  const [gpsData, setGPSData] = useState<GPSData>({
+    latitude: 0,
+    longitude: 0,
+    accuracy: 100,
+    altitudeAccuracy: 100,
+    altitude: 0,
+    speed: 0,
+    heading: 0,
+    timestamp: 0,
+  });
 
   // roadbook
   const [rbSlides, setRBSlides] = useState<RoadbookSlide[]>([]);
@@ -332,6 +378,15 @@ export function StateProvider({
   }, []);
 
   useEffect(() => {
+    const tick = () => setTime(new Date().toLocaleTimeString());
+
+    tick();
+    const id = setInterval(tick, 1000);
+
+    return () => clearInterval(id);
+  }, [])
+
+  useEffect(() => {
     const adminCheck = async () => {
       if (await invoke<boolean>("is_admin")) {
         setAM(true);
@@ -385,21 +440,49 @@ export function StateProvider({
   }, [speed]);
 
   useEffect(() => {
-    const unlisten = listen<string>("send_telemetry", async (event) => {
+    const unlistenTelemetry = listen<string>(
+      "send_telemetry",
+      async (event) => {
+        try {
+          const telemetryData = JSON.parse(event.payload) as TelemetryData;
+          const device = await getDeviceInfo();
+
+          telemetryData.device_id = device.uuid as string;
+          await send_telemetry(telemetryData);
+          setTelemetry((prev) => [...prev, telemetryData]);
+        } catch (e) {
+          console.error("Failed to parse telemetry event:", e);
+        }
+      },
+    );
+
+    const unlistenReport = listen<string>("send_report", async (event) => {
       try {
-        const telemetryData = JSON.parse(event.payload) as TelemetryData;
+        const reportData = JSON.parse(event.payload);
         const device = await getDeviceInfo();
 
-        telemetryData.device_id = device.uuid as string;
-        await send_telemetry(telemetryData);
-        setTelemetry((prev) => [...prev, telemetryData]);
+        reportData.device_id = device.uuid as string;
+
+        await send_report(reportData);
       } catch (e) {
-        console.error("Failed to parse telemetry event:", e);
+        console.error("Failed to parse report event:", e);
       }
     });
 
+    const unlistenCollected = listen<string>("send_collected", async (event) => {
+      try {
+        const collectedData = JSON.parse(event.payload);
+
+        await send_collected(collectedData);
+      } catch (e) {
+        console.error("Failed to parse report event:", e);
+      }
+    })
+
     return () => {
-      unlisten.then((u) => u());
+      unlistenTelemetry.then((u) => u());
+      unlistenReport.then((u) => u());
+      unlistenCollected.then((u) => u());
     };
   }, []);
 
@@ -496,10 +579,27 @@ export function StateProvider({
     setRM(status);
   };
 
-  const switchWidget = (caption: "total" | "partial" | "countdown") => {
+  const switchWidget = (
+    caption: "total" | "partial" | "countdown",
+    marker?: "on" | "off",
+  ) => {
     let db = dashBoard;
     switch (caption) {
       case "total": {
+        if (marker) {
+          if (marker === "on") {
+            db.widgetShown.total = true;
+            setTotalShow(true);
+            setDB(db);
+            return;
+          }
+          if (marker === "off") {
+            db.widgetShown.total = false;
+            setTotalShow(false);
+            setDB(db);
+            return;
+          }
+        }
         if (db.widgetShown.total) {
           db.widgetShown.total = false;
           setTotalShow(false);
@@ -511,21 +611,45 @@ export function StateProvider({
         return;
       }
       case "countdown": {
+        if (marker) {
+          if (marker === "on") {
+            db.widgetShown.countdown = true;
+            setCountdownShow(true);
+            setDB(db);
+            return;
+          }
+          if (marker === "off") {
+            db.widgetShown.countdown = false;
+            setCountdownShow(false);
+            setDB(db);
+            return;
+          }
+        }
         if (db.widgetShown.countdown) {
           db.widgetShown.countdown = false;
           setCountdownShow(false);
         } else {
           db.widgetShown.countdown = true;
-          db.widgetShown.total = false;
-          db.widgetShown.partial = false;
           setCountdownShow(true);
-          setPartialShow(false);
-          setTotalShow(false);
         }
         setDB(db);
         return;
       }
       case "partial": {
+        if (marker) {
+          if (marker === "on") {
+            db.widgetShown.partial = true;
+            setPartialShow(true);
+            setDB(db);
+            return;
+          }
+          if (marker === "off") {
+            db.widgetShown.partial = false;
+            setPartialShow(false);
+            setDB(db);
+            return;
+          }
+        }
         if (db.widgetShown.partial) {
           db.widgetShown.partial = false;
           setPartialShow(false);
@@ -552,6 +676,7 @@ export function StateProvider({
     requestMode,
     configLoading,
     visiable,
+    gpsData,
 
     dashBoard,
     activeViewPort,
@@ -566,9 +691,11 @@ export function StateProvider({
     cog,
     ctw,
     dtw,
+    time,
 
     maxSpeed,
     cpCounter,
+    countdown,
     nextPointNumber,
     nextPointName,
     nextPointType,
@@ -578,6 +705,8 @@ export function StateProvider({
     jumpSuggestion,
     telemetry,
     speedExceeds,
+    captured,
+    trackPoints,
 
     rbSlides,
     rbImages,
@@ -620,6 +749,11 @@ export function StateProvider({
     goPrev,
     setJumpPointID,
     setJumpSuggestion,
+    setCaptured,
+    setTrackPoints,
+    setCountdown,
+    setTime,
+    setGPSData,
   };
 
   return (

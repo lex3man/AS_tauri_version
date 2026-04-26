@@ -50,12 +50,13 @@ pub struct Position {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct JumpSuggestion {
     pub suggested: bool,
-    pub point: String
+    pub point: String,
 }
 
 pub struct Flags {
     pub speed_exceeded: bool,
     pub capture: bool,
+    pub finished: bool,
     pub _gps_signal_lost: bool,
     pub _low_battery: bool,
     pub _internert_disconnected: bool,
@@ -66,6 +67,7 @@ impl Flags {
         Flags {
             speed_exceeded: false,
             capture: false,
+            finished: false,
             _gps_signal_lost: false,
             _low_battery: false,
             _internert_disconnected: false,
@@ -85,6 +87,8 @@ pub struct AppState {
     pub telemetry: HashMap<SpecAreaID, Telemetry>,
     pub current: Flags,
     pub jump_suggestion: JumpSuggestion,
+    pub gps_timestamp: u64,
+    pub collected: Vec<String>,
 }
 
 impl Default for AppState {
@@ -102,8 +106,10 @@ impl Default for AppState {
             current: Flags::new(),
             jump_suggestion: JumpSuggestion {
                 suggested: false,
-                point: "None".to_string()
-            }
+                point: "None".to_string(),
+            },
+            gps_timestamp: 0,
+            collected: vec![],
         }
     }
 }

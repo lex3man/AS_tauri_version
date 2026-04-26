@@ -27,4 +27,3 @@ pub async fn download_images(
 
     Ok(())
 }
-

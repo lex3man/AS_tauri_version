@@ -4,10 +4,11 @@ export type GPSData = {
     latitude: number;
     longitude: number;
     accuracy: number;
-    altitudeAccuracy: number;
-    altitude: number;
-    speed: number;
-    heading: number;
+    altitudeAccuracy: number | null;
+    altitude: number | null;
+    speed: number | null;
+    heading: number | null;
+    timestamp: number;
 };
 
 export type Coords = {

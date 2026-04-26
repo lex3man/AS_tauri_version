@@ -55,15 +55,7 @@ const CheckPoints = () => {
             </span>
           </div>
         </div>
-        <div className="flex pt-5 pr-5 justify-end w-1/3">
-          <Button
-            className="p-7 text-2xl"
-            onClick={() => {
-              callView("exceeds");
-            }}
-          >
-            EXCEEDS
-          </Button>
+        <div className="flex flex-col pt-5 pr-5 justify-start w-1/3">
           <Button
             className="p-7 text-2xl"
             onClick={() => {
@@ -72,12 +64,22 @@ const CheckPoints = () => {
           >
             BACK
           </Button>
+          <Button
+            className="p-7 text-2xl"
+            onClick={() => {
+              callView("exceeds");
+            }}
+          >
+            EXCEEDS
+          </Button>
         </div>
       </div>
-      <div className={`flex flex-wrap justify-center ${mobileView ? "max-h-[50vh]" : "max-h-[70vh]"} overflow-y-auto`}>
+      <div
+        className={`flex flex-wrap justify-center ${mobileView ? "max-h-[50vh]" : "max-h-[70vh]"} overflow-y-auto`}
+      >
         {points.map((point) => (
           <div
-            className={`m-2 p-5 gap-15 border-2 ${point.next && "bg-gray-500"} ${point.checked && "bg-green-500"} border-foreground rounded-xl w-1/6`}
+            className={`m-2 p-5 gap-15 border-2 ${(point.next && !point.checked) && "bg-gray-500"} ${point.checked && "bg-green-500"} border-foreground rounded-xl w-1/6`}
             key={point.num}
           >
             <div className="flex justify-between">

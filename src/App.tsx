@@ -25,8 +25,9 @@ import DebugScreen from "./components/screens/debug";
 import Roadbook from "./components/screens/roadbook";
 import SpeedExceedsScreen from "./components/screens/speed-exceeds";
 import JumpSuggestion from "./components/screens/jump";
-import { toast } from "sonner";
 import { playBeep } from "./lib/sound";
+import Adjust from "./components/screens/adjust";
+import Tracking from "./components/screens/tracking";
 
 function App() {
   const [leftOpen, setLeftOpen] = useState(false);
@@ -63,6 +64,11 @@ function App() {
     setNextPointType,
     setJumpSuggestion,
     setJumpPointID,
+    setCaptured,
+    setTrackPoints,
+    setCountdown,
+    switchWidget,
+    setGPSData,
   } = useAppState();
   const { showBackground, jumpMode } = useSettings();
   const { width, height } = useWindowDimensions();
@@ -87,21 +93,41 @@ function App() {
             lat: geoData["latitude"],
             lon: geoData["longitude"],
           };
+          if (pos) {
+            const gpsData = {
+              latitude: pos.coords.latitude,
+              longitude: pos.coords.longitude,
+              accuracy: pos.coords.accuracy,
+              altitudeAccuracy: pos.coords.altitudeAccuracy,
+              altitude: pos.coords.altitude,
+              speed: pos.coords.speed,
+              heading: pos.coords.heading,
+              timestamp: pos.timestamp,
+            };
+            setGPSData(gpsData);
+          }
           setCoords(coords);
           invoke<string>("sync_data")
             .then((rawData) => {
               setDebugData(rawData);
               const data = JSON.parse(rawData);
+              setCaptured(false);
               if (data.capture) {
-                toast.info(`ADJUST OK`, {
-                  position: "top-center",
-                  duration: 5000,
-                })
+                // toast.info(`ADJUST OK`, {
+                //   position: "top-center",
+                //   duration: 5000,
+                // })
+                setCaptured(true);
+                if (data.metrics.countdown > 0) {
+                  switchWidget("countdown", "on");
+                  setCountdown(data.metrics.countdown * 60);
+                }
                 playBeep();
               }
               setCog(data.cog);
               setCtw(data.ctw);
               setDtw(data.dtw);
+              // setTime(pos?.timestamp as number);
               setCurrentSpeed(data.sog);
               setCpCounter(data.metrics.cp_counter);
               setTotal(data.metrics.total);
@@ -113,6 +139,17 @@ function App() {
               setVisiable(data.visiable);
               setJumpSuggestion(data.jump_suggestion);
               setJumpPointID(data.jump_point);
+
+              const getPoints = async () => {
+                try {
+                  const result = await invoke<string>("get_location_history");
+                  const coords: Coords[] = JSON.parse(result);
+                  setTrackPoints(coords);
+                } catch (e) {
+                  console.log(e);
+                }
+              };
+              getPoints();
 
               // toast.success(`Got data with jumpsuggestion: ${data.jump_suggestion}, for point: ${data.jump_point}`, {
               //   position: "bottom-center",
@@ -135,10 +172,14 @@ function App() {
   };
 
   useEffect(() => {
-    if (jumpSuggestion && jumpMode && jumpPointID.split("-")[1] !== nextPointName) {
+    if (
+      jumpSuggestion &&
+      jumpMode &&
+      jumpPointID.split("-")[1] !== nextPointName
+    ) {
       callView("jump");
     } else if (activeViewPort.name === "jump") {
-      callView("navigate")
+      callView("navigate");
     }
   }, [jumpSuggestion]);
 
@@ -211,6 +252,18 @@ function App() {
         return (
           <div className="relative h-screen">
             <JumpSuggestion />
+          </div>
+        );
+      case "adjust":
+        return (
+          <div className="relative h-screen">
+            <Adjust />
+          </div>
+        );
+      case "tracking":
+        return (
+          <div className="relative h-screen">
+            <Tracking />
           </div>
         );
       case "debug":

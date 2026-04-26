@@ -36,7 +36,7 @@ function parseSettings(json: string): Settings {
 type SettingsProviderState = {
   showBackground: boolean;
   correctionDistance: Meters;
-  trackDisttance: Kilometers;
+  trackDistance: Kilometers;
   dtwEnable: boolean;
   darkMode: boolean;
   demoMode: boolean;
@@ -44,19 +44,21 @@ type SettingsProviderState = {
   roadbookMode: boolean;
 
   setShowBackground: (status: boolean) => void;
-  setCorrectionDistance: (value: Meters) => void;
-  setTrackDistance: (value: Kilometers) => void;
   setDtwEnable: (status: boolean) => void;
   setDarkMode: (status: boolean) => void;
   setDemoMode: (status: boolean) => void;
   setJumpMode: (status: boolean) => void;
   setRoadbookMode: (status: boolean) => void;
+  increaseDistStep: () => void;
+  decreaseDistStep: () => void;
+  increaseTrackDist: () => void;
+  decreaseTrackDist: () => void;
 };
 
 const initialState: SettingsProviderState = {
   showBackground: true,
   correctionDistance: new Meters(100),
-  trackDisttance: new Kilometers(30),
+  trackDistance: new Kilometers(30),
   dtwEnable: true,
   darkMode: true,
   demoMode: false,
@@ -64,13 +66,15 @@ const initialState: SettingsProviderState = {
   roadbookMode: false,
 
   setShowBackground: () => null,
-  setCorrectionDistance: () => null,
-  setTrackDistance: () => null,
   setDtwEnable: () => null,
   setDarkMode: () => null,
   setDemoMode: () => null,
   setJumpMode: () => null,
   setRoadbookMode: () => null,
+  increaseDistStep: () => null,
+  decreaseDistStep: () => null,
+  increaseTrackDist: () => null,
+  decreaseTrackDist: () => null,
 };
 
 const SettingsProviderContext =
@@ -83,7 +87,7 @@ export function SettingsProvider({
 }: SettingsProviderProps) {
   const [showBackground, setShowBg] = useState(true);
   const [correctionDistance, setCorrectionDistance] = useState(new Meters(100));
-  const [trackDisttance, setTrackDistance] = useState(new Kilometers(30));
+  const [trackDistance, setTrackDistance] = useState(new Kilometers(30));
   const [dtwEnable, setDtwEnable] = useState(true);
   const [darkMode, setDM] = useState(true);
   const [demoMode, setDemoMode] = useState(false);
@@ -126,11 +130,39 @@ export function SettingsProvider({
     setShowBg(status);
   };
 
+  const increaseDistStep = async () => {
+    invoke("set_dist_step", { c: "up" }).then(() => {
+      setCorrectionDistance(new Meters(correctionDistance.value + 10));
+    });
+  };
+
+  const decreaseDistStep = async () => {
+    invoke("set_dist_step", { c: "down" }).then(() => {
+      if (correctionDistance.value > 0) {
+        setCorrectionDistance(new Meters(correctionDistance.value - 10));
+      }
+    });
+  };
+
+  const increaseTrackDist = async () => {
+    invoke("set_track_dist", { c: "up" }).then(() => {
+      setTrackDistance(new Kilometers(trackDistance.value + 5));
+    });
+  };
+
+  const decreaseTrackDist = async () => {
+    invoke("set_track_dist", { c: "down" }).then(() => {
+      if (trackDistance.value > 0) {
+        setTrackDistance(new Kilometers(trackDistance.value - 5));
+      }
+    });
+  };
+
   const value = {
     darkMode,
     showBackground,
     correctionDistance,
-    trackDisttance,
+    trackDistance,
     dtwEnable,
     demoMode,
     jumpMode,
@@ -138,12 +170,14 @@ export function SettingsProvider({
 
     setDarkMode,
     setShowBackground,
-    setCorrectionDistance,
-    setTrackDistance,
     setDtwEnable,
     setDemoMode,
     setJumpMode,
     setRoadbookMode,
+    increaseDistStep,
+    decreaseDistStep,
+    increaseTrackDist,
+    decreaseTrackDist,
   };
 
   return (

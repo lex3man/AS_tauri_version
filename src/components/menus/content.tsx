@@ -3,27 +3,33 @@ import { useAppState } from "@/ctx/state-provider";
 import { invoke } from "@tauri-apps/api/core";
 
 export const LeftContent = () => {
-  const { switchWidget, setPartial, setTotal } = useAppState();
+  const { switchWidget, setPartial, setTotal, callView } = useAppState();
 
   return (
     <div className="flex flex-col gap-2">
       <div className="flex justify-between">
-        <Button className="p-7 text-3xl w-1/2" onClick={async () => {
-          await invoke("decrease_total");
-          await invoke<string>("sync_data").then((rawData) => {
-            const data = JSON.parse(rawData);
-            setTotal(data.metrics.total);
-          });
-        }}>
+        <Button
+          className="p-7 text-3xl w-1/2"
+          onClick={async () => {
+            await invoke("decrease_total");
+            await invoke<string>("sync_data").then((rawData) => {
+              const data = JSON.parse(rawData);
+              setTotal(data.metrics.total);
+            });
+          }}
+        >
           DIST-
         </Button>
-        <Button className="p-7 text-3xl w-1/2" onClick={async () => {
-          await invoke("increase_total");
-          await invoke<string>("sync_data").then((rawData) => {
-            const data = JSON.parse(rawData);
-            setTotal(data.metrics.total);
-          });
-        }}>
+        <Button
+          className="p-7 text-3xl w-1/2"
+          onClick={async () => {
+            await invoke("increase_total");
+            await invoke<string>("sync_data").then((rawData) => {
+              const data = JSON.parse(rawData);
+              setTotal(data.metrics.total);
+            });
+          }}
+        >
           DIST+
         </Button>
       </div>
@@ -36,7 +42,12 @@ export const LeftContent = () => {
         >
           TOTAL
         </Button>
-        <Button className="p-7 text-3xl w-full" onClick={() => { }}>
+        <Button
+          className="p-7 text-3xl w-full"
+          onClick={() => {
+            callView("adjust");
+          }}
+        >
           ADJUST
         </Button>
       </div>
@@ -49,19 +60,24 @@ export const LeftContent = () => {
         >
           PARTIAL
         </Button>
-        <Button className="p-7 text-3xl w-full" onClick={async () => {
-        await invoke("reset_partial");
-        setPartial(0);
-      }}>
+        <Button
+          className="p-7 text-3xl w-full"
+          onClick={async () => {
+            await invoke("reset_partial");
+            setPartial(0);
+          }}
+        >
           RESET
         </Button>
       </div>
+      
     </div>
   );
 };
 
 export const RightContent = () => {
-  const { callView, adminMode, setNextPointNumber, setNextPointName } = useAppState();
+  const { callView, adminMode, setNextPointNumber, setNextPointName } =
+    useAppState();
 
   return (
     <div className="flex flex-col gap-2">
@@ -75,24 +91,30 @@ export const RightContent = () => {
         CHECK
       </Button>
       <div className="flex justify-between">
-        <Button className="p-7 text-3xl w-1/2" onClick={async () => {
-          await invoke("point_switch", { moveTo: "next" });
-          await invoke<string>("sync_data").then((rawData) => {
-            const data = JSON.parse(rawData);
-            setNextPointNumber(data.next_point.split("-")[0]);
-            setNextPointName(data.next_point.split("-")[1]);
-          });
-        }}>
+        <Button
+          className="p-7 text-3xl w-1/2"
+          onClick={async () => {
+            await invoke("point_switch", { moveTo: "next" });
+            await invoke<string>("sync_data").then((rawData) => {
+              const data = JSON.parse(rawData);
+              setNextPointNumber(data.next_point.split("-")[0]);
+              setNextPointName(data.next_point.split("-")[1]);
+            });
+          }}
+        >
           W+
         </Button>
-        <Button className="p-7 text-3xl w-1/2" onClick={async () => {
-          await invoke("point_switch", { moveTo: "prev" });
-          await invoke<string>("sync_data").then((rawData) => {
-            const data = JSON.parse(rawData);
-            setNextPointNumber(data.next_point.split("-")[0]);
-            setNextPointName(data.next_point.split("-")[1]);
-          });
-        }}>
+        <Button
+          className="p-7 text-3xl w-1/2"
+          onClick={async () => {
+            await invoke("point_switch", { moveTo: "prev" });
+            await invoke<string>("sync_data").then((rawData) => {
+              const data = JSON.parse(rawData);
+              setNextPointNumber(data.next_point.split("-")[0]);
+              setNextPointName(data.next_point.split("-")[1]);
+            });
+          }}
+        >
           W-
         </Button>
       </div>
@@ -104,7 +126,12 @@ export const RightContent = () => {
       >
         CODE
       </Button>
-      <Button className="p-7 text-3xl" onClick={() => { }}>
+      <Button
+        className="p-7 text-3xl"
+        onClick={() => {
+          callView("tracking");
+        }}
+      >
         TRACK
       </Button>
       <Button

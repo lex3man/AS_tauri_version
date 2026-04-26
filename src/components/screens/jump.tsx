@@ -3,7 +3,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { Button } from "../ui/button";
 
 const JumpSuggestion = () => {
-  const { callView, jumpPointID } = useAppState();
+  const { callView, jumpPointID, roadbookMode } = useAppState();
 
   return (
     <div>
@@ -22,11 +22,12 @@ const JumpSuggestion = () => {
           </Button>
         </div>
       </div>
-      <div className="flex flex-col justify-center m-auto p-10 w-2/3">
-        <div className="flex justify-center m-auto text-8xl font-extrabold p-20">JUMP TO</div>
+      <div className="flex flex-col justify-center m-auto w-5/6">
+        <div className={`flex justify-center m-auto ${roadbookMode ? "text-4xl" : "text-[clamp(3rem,5vw,10rem)]"} font-extrabold pt-5`}>JUMP TO</div>
+        <div className={`m-auto ${roadbookMode ? "text-4xl" : "text-[clamp(3rem,5vw,10rem)]"} font-extrabold pb-5`}>{jumpPointID.split("-")[1]}</div>  
         <div className="flex justify-between items-center">
           <div
-            className="border-3 rounded-lg font-extrabold text-5xl bg-green-600 px-20 py-10"
+            className={`border-3 rounded-lg font-extrabold ${roadbookMode ? "text-4xl p-5" : "text-[clamp(3rem,5vw,10rem)] px-20 py-10"} bg-green-600`}
             onClick={async () => {
               await invoke("jump_reaction", { flag: "yes" });
               callView("navigate");
@@ -34,9 +35,8 @@ const JumpSuggestion = () => {
           >
             YES
           </div>  
-          <div className="m-auto text-8xl font-extrabold">{jumpPointID.split("-")[1]}</div>  
           <div 
-            className="border-3 rounded-lg font-extrabold text-5xl bg-red-600 px-20 py-10"
+            className={`border-3 rounded-lg font-extrabold ${roadbookMode ? "text-4xl p-5" : "text-[clamp(3rem,5vw,10rem)] px-20 py-10"} bg-red-600`}
             onClick={async () => {
               await invoke("jump_reaction", { flag: "no" });
               callView("navigate");

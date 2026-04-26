@@ -8,7 +8,7 @@ use std::{
 use serde_json::json;
 
 use crate::race::types::{
-    Coords, Defaults, Flags, PointBuilder, _PointTypes, _RaceBuilder, SpecArea,
+    _PointTypes, _RaceBuilder, Coords, Defaults, Flags, PointBuilder, SpecArea,
 };
 
 #[test]
@@ -21,7 +21,7 @@ fn test_structs() {
         "WPV",
         &Defaults {
             capture_radius: 200,
-            visible_radius: 800,    
+            visible_radius: 800,
             speed_limit: 170,
             countdown: 0,
             flags: Flags {
