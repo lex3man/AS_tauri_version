@@ -13,6 +13,7 @@ const CheckPoints = () => {
     serial: "",
     raceNumber: "",
     raceCode: "",
+    updateTime: "",
   });
 
   useEffect(() => {
@@ -29,6 +30,7 @@ const CheckPoints = () => {
         serial: raceInfoRaw.split("-")[1],
         raceNumber: raceInfoRaw.split("-")[2],
         raceCode: raceInfoRaw.split("-")[3],
+        updateTime: raceInfoRaw.split("-")[4],
       });
     };
     getPoints();
@@ -37,12 +39,13 @@ const CheckPoints = () => {
   return (
     <div>
       <div className="flex justify-end">
-        <div className="flex justify-start w-1/3 pt-5">
-          <div className="flex flex-col p-8">
+        <div className="flex justify-start w-1/3">
+          <div className="flex flex-col p-5">
             <span>RACE NUMBER: {raceInfo.raceNumber}</span>
             <span>SERIAL: {raceInfo.serial}</span>
             <span>EVENT NAME: {raceInfo.name}</span>
             <span>ROUTE: {raceInfo.raceCode}</span>
+            <span>CONFIG UPDATED: {raceInfo.updateTime}</span>
           </div>
         </div>
         <div className="flex flex-col m-auto justify-center w-1/3 pt-5">

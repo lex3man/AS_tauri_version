@@ -1,5 +1,6 @@
 use std::sync::Mutex;
 
+use chrono::Utc;
 use serde_json::json;
 use tauri::{AppHandle, State};
 
@@ -48,6 +49,7 @@ pub async fn update_config(
             let mut state = state.lock().unwrap();
             state.race = RaceState::new();
             state.race.update(&cfg);
+            state.config_updated = Utc::now().to_rfc2822();
             state.race.race.as_ref().unwrap().areas.clone()
         };
         for area in areas {
@@ -86,11 +88,12 @@ pub fn get_race_info(state: State<'_, Mutex<AppState>>) -> Result<String, String
     let state = state.lock().unwrap();
     if let Some(race) = &state.race.race {
         return Ok(format!(
-            "{}-{}-{}-{}",
+            "{}-{}-{}-{}-{}",
             &race.name,
             &race.serial,
             &state.race_number.clone().unwrap_or_default(),
-            &state.race.active_code
+            &state.race.active_code,
+            &state.config_updated.clone()
         ));
     }
     Err("Race not found".to_string())

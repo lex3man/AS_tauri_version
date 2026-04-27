@@ -76,6 +76,7 @@ pub async fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position)
                         .unwrap()
                         .checked
                 {
+                    prev_point_id = next_point_id.clone();
                     next_point_id = point.get_id();
                 }
 
@@ -97,7 +98,9 @@ pub async fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position)
                 next_point_type = next_point.point_type.clone();
                 is_open = next_point.flags.is_open;
                 max_speed = next_point.speed_limit;
-                prev_point_id = state.race.spec_area_state.prev_point.clone();
+                if prev_point_id.is_empty() {
+                    prev_point_id = state.race.spec_area_state.prev_point.clone();
+                }
                 if let Some(telemetry) = state.telemetry.get(&area.id) {
                     //
                     // ============================================================================
@@ -198,6 +201,7 @@ pub async fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position)
                         state.dashboard.metrics.cp_counter += 1;
                         if state.race.spec_area_state.point_controller.has_next() {
                             state.race.spec_area_state.point_controller.move_next();
+                            prev_point_id = next_point_id.clone();
                             next_point_id = state
                                 .race
                                 .spec_area_state
@@ -209,7 +213,7 @@ pub async fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position)
                             finished = true;
                         }
                         tel.captures.push(PointCapture {
-                            point: state.race.spec_area_state.next_point.clone(),
+                            point: prev_point_id.clone(),
                             point_type: next_point_type,
                             time: pos.timestamp,
                             speed: coords.speed.unwrap_or(0.0) * 3.6,

@@ -90,6 +90,7 @@ pub struct AppState {
     pub gps_timestamp: u64,
     pub collected: Vec<String>,
     pub last_report: String,
+    pub config_updated: String,
 }
 
 impl Default for AppState {
@@ -112,6 +113,7 @@ impl Default for AppState {
             gps_timestamp: 0,
             collected: vec![],
             last_report: String::from(""),
+            config_updated: String::from(""),
         }
     }
 }
@@ -127,6 +129,8 @@ impl AppState {
             storage.set("as_race", json!(self.race));
             storage.set("as_dashboard", json!(self.dashboard));
             storage.set("as_telemetry", json!(self.telemetry));
+            storage.set("as_config_updayed_time", json!(self.config_updated));
+            storage.set("as_last_report", json!(self.last_report));
 
             storage.close_resource();
         }
