@@ -87,6 +87,7 @@ pub async fn export_telemetry_report(
                     sheet.write(0, 1, "Type").map_err(|e| e.to_string())?;
                     sheet.write(0, 2, "Time").map_err(|e| e.to_string())?;
                     sheet.write(0, 3, "Speed").map_err(|e| e.to_string())?;
+                    sheet.write(0, 4, "Odo").map_err(|e| e.to_string())?;
 
                     for (row, capture) in telemetry.captures.iter().enumerate() {
                         let r = (row + 1) as u32;
@@ -103,6 +104,9 @@ pub async fn export_telemetry_report(
                             .map_err(|e| e.to_string())?;
                         sheet
                             .write(r, 3, capture.speed)
+                            .map_err(|e| e.to_string())?;
+                        sheet
+                            .write(r, 4, capture.odo)
                             .map_err(|e| e.to_string())?;
                     }
                 }

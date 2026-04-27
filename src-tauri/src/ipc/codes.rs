@@ -30,6 +30,7 @@ pub fn activate_code(state: State<'_, Mutex<AppState>>, code: &str) -> Result<St
                 state.race.expired = "none".to_string();
                 state.race.current_sa = race.areas.get("demo").unwrap().id.clone();
                 state.race.race = Some(race);
+                state.last_report = String::from("");
             }
             return Ok("Demo mode activated".to_string());
         } else {
@@ -48,6 +49,7 @@ pub fn activate_code(state: State<'_, Mutex<AppState>>, code: &str) -> Result<St
                     state.dashboard.metrics.countdown = 0;
                     state.dashboard.metrics.cp_counter = 0;
                     state.dashboard.metrics.abs_total = 0.0;
+                    state.last_report = String::from("");
                     state.collected = vec![];
                     state
                         .telemetry

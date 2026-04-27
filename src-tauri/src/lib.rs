@@ -95,6 +95,12 @@ pub fn run() {
                 state.telemetry =
                     serde_json::from_value::<HashMap<String, Telemetry>>(val).unwrap();
             }
+            if let Some(val) = store.get("as_config_updayed_time") {
+                state.config_updated = val.to_string();
+            }
+            if let Some(val) = store.get("as_last_report") {
+                state.last_report = val.to_string();
+            }
             state.storage = Some(store);
             Ok(())
         })
