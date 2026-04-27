@@ -153,6 +153,8 @@ pub async fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position)
                         .get(&next_point_id)
                         .unwrap_or(&PointState::new())
                         .checked;
+
+                    let next_point_odo = next_point.odo;
                     if dtw * 1000.0 <= next_point.capture_radius as f64
                         && (!state.current.finished || !next_point_checked)
                     {
@@ -212,6 +214,7 @@ pub async fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position)
                             time: pos.timestamp,
                             speed: coords.speed.unwrap_or(0.0) * 3.6,
                             accuracy: coords.accuracy,
+                            odo: next_point_odo,
                         });
 
                         {

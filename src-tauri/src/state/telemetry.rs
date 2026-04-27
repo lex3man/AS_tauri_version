@@ -30,6 +30,7 @@ pub struct PointCapture {
     pub time: u64,
     pub speed: f32,
     pub accuracy: f64,
+    pub odo: u32,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
