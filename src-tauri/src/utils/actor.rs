@@ -231,7 +231,7 @@ pub async fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position)
                                     "speed_exceeds": tel.speed_exceeds,
                                     "other_events": tel.events,
                                 },
-                                "time": state.gps_timestamp
+                                "time": pos.timestamp,
                             }).to_string();
                             send_report(app, data.clone()).unwrap();
                             state.last_report = data;
@@ -247,9 +247,9 @@ pub async fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position)
                         "lat": state.coords.as_ref().unwrap_or(&GPSData::default()).latitude,
                         "lon": state.coords.as_ref().unwrap_or(&GPSData::default()).longitude,
                         "accuracy": "",
-                        "point_name": state.race.spec_area_state.next_point.clone(),
+                        "point_name": prev_point_id.split("-").nth(1).unwrap_or(&""),
                         "checked": capture,
-                        "time": state.gps_timestamp,
+                        "time": pos.timestamp,
                     }).to_string();
                     state.collected.push(data.clone());
                     send_telemetry(app, data).unwrap();

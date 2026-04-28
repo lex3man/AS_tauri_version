@@ -92,7 +92,7 @@ export function RouteMap({
     if (pixelsPerMeter < 10) {
       barWidth = 1000
     }
-    if (pixelsPerMeter < 1) {
+    if (pixelsPerMeter < 0.03) {
       barWidth = 5000
     }
 
@@ -101,7 +101,8 @@ export function RouteMap({
     return {
       polylinePoints,
       scaleBarWidth,
-      scaleBarLabel: `${barWidth} m ${pixelsPerMeter.toFixed(2)}`,
+      scaleBarLabel: `${barWidth} m`,
+      // scaleBarLabel: `${barWidth} m ${pixelsPerMeter.toFixed(2)}`,
       view: { offsetX, offsetY, contentWidthPx, contentHeightPx },
     };
   }, [trackPoints, width, height]);

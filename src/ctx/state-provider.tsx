@@ -514,16 +514,16 @@ export function StateProvider({
     request_config(device.uuid as string)
       .then(async (resp) => {
         if (resp) {
-          await invoke<string>("activate_code", { code: code });
-          toast.success(`Config updated`, {
+          const r = await invoke<string>("activate_code", { code: code });
+          toast.success(`${r}`, {
             position: "bottom-center",
             duration: 5000,
           });
         }
       })
       .catch(async (_) => {
-        await invoke<string>("activate_code", { code: code });
-        toast.error(`Loaded config without update`, {
+        const r = await invoke<string>("activate_code", { code: code });
+        toast.error(`There's no update! ${r}`, {
           position: "bottom-center",
           duration: 5000,
         });

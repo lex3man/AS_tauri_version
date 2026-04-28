@@ -4,9 +4,10 @@ import { useSettings } from "@/ctx/settings-provider";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { invoke } from "@tauri-apps/api/core";
 import { toast } from "sonner";
+import { send_report_file } from "@/lib/api";
 
 const Settings = () => {
-  const { callView, roadbookMode, mobileView } = useAppState();
+  const { callView, roadbookMode, mobileView, activeCode } = useAppState();
   const {
     showBackground,
     setShowBackground,
@@ -85,8 +86,15 @@ const Settings = () => {
             className="p-6 text-2xl"
             onClick={async () => {
               invoke("export_telemetry_report")
-                .then((resp) => toast.info(`report saved at ${resp}`))
-                .catch((e) => toast.error(`Report generating error: ${e}`));
+                .then((resp) => {
+                  toast.info(`report saved at ${resp}`);
+                  send_report_file(resp as string, activeCode).then(() => {
+                    toast.success("Report file sent successfully");
+                  }).catch((e) => {
+                    toast.error(`Report file sending error: ${e}`);
+                  });
+                })
+                .catch((e) => toast.error(`Report file generating error: ${e}`));
             }}
           >
             GET REPORT

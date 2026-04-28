@@ -13,22 +13,33 @@ interface Props {
 
 export const DataRequest = (props: Props) => {
   const [userInput, setUserInput] = useState("");
+  const [pswd, setPswd] = useState("");
   const { roadbookMode } = useAppState();
 
   return (
     <div className={`flex flex-col justify-center m-auto gap-10 ${roadbookMode ? "p-10" : "p-50"}`}>
-      <div className="flex gap-5 m-auto">
+      <div className={`flex ${props.typeOfData === "race number" && "flex-col gap-3"} m-auto`}>
         <input
           className="border-b-2 w-auto"
           value={userInput.toUpperCase()}
-          onChange={(e) => setUserInput(e.target.value)}
+          onChange={(e) => setUserInput(e.target.value.toUpperCase())}
+          placeholder={`${props.typeOfData.toUpperCase()}`}
           autoFocus
         ></input>
+        {props.typeOfData === "race number" && (
+          <input
+            className="border-b-2 w-auto"
+            value={pswd}
+            onChange={(e) => setPswd(e.target.value.toUpperCase())}
+            placeholder="PASSWORD"
+            type="password"
+          ></input>
+        )}
         <Button
           size={"lg"}
           onClick={() => {
             if (props.typeOfData === "race number") {
-              server_init(userInput)
+              server_init(userInput, pswd)
                 .then(() => {
                   start_polling(10);
                 })
