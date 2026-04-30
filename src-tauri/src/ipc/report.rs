@@ -11,7 +11,7 @@ pub async fn export_telemetry_report(
     app: tauri::AppHandle,
     state: State<'_, Mutex<AppState>>,
 ) -> Result<String, String> {
-    if let Ok(state) = state.lock() {
+    if let Ok(mut state) = state.lock() {
         let ps = app.path().document_dir().map_err(|e| e.to_string())?;
         let file_name = format!(
             "report_{}_{}_{}.xlsx",
@@ -111,10 +111,19 @@ pub async fn export_telemetry_report(
                     }
                 }
                 workbook.save(&output_path).map_err(|e| e.to_string())?;
+                state.report_sent = Local::now().format("%d.%m.%Y %H:%M:%S").to_string();
             }
         }
         send_report(&app, state.last_report.clone()).map_err(|_| "Can't send report".to_string())?;
         return Ok(output_path.to_str().unwrap().to_string());
+    }
+    Err("Failed to get state".to_string())
+}
+
+#[tauri::command]
+pub fn get_report_sent_time(state: State<'_, Mutex<AppState>>) -> Result<String, String> {
+    if let Ok(state) = state.lock() {
+        return Ok(state.report_sent.clone());
     }
     Err("Failed to get state".to_string())
 }

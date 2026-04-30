@@ -5,6 +5,7 @@ import { Arrow } from "../arrow";
 import Indicators from "../widgets/indicators";
 import { TotalWidget } from "../widgets/total";
 import { useEffect, useRef, useState, useCallback } from "react";
+import { invoke } from "@tauri-apps/api/core";
 
 const Ride = () => {
   const {
@@ -22,7 +23,11 @@ const Ride = () => {
     nextPointNumber,
     nextPointName,
     nextPointType,
-    visiable
+    visiable,
+    setNextPointNumber,
+    setNextPointName,
+    setTotal,
+    setPartial,
   } = useAppState();
   const [exceeding, setExceeding] = useState(false);
   const [preExceeding, setPreExceeding] = useState(false);
@@ -120,6 +125,77 @@ const Ride = () => {
       stopContinuousTone();
     };
   }, [exceeding, preExceeding, playBeep, startContinuousTone, stopBeeping, stopContinuousTone]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+
+      switch (e.key) {
+        case "ArrowUp":
+          e.preventDefault();
+          const increaseTotal = async () => {
+            await invoke("increase_total");
+            await invoke<string>("sync_data").then((rawData) => {
+              const data = JSON.parse(rawData);
+              setTotal(data.metrics.total);
+            });
+          }
+          increaseTotal();
+          break;
+
+        case "ArrowDown":
+          e.preventDefault();
+          const decreaseTotal = async () => {
+            await invoke("decrease_total");
+            await invoke<string>("sync_data").then((rawData) => {
+              const data = JSON.parse(rawData);
+              setTotal(data.metrics.total);
+            });
+          }
+          decreaseTotal();
+          break;
+
+        case "ArrowRight":
+          e.preventDefault();
+          const nextPoint = async () => {
+            await invoke("point_switch", { moveTo: "next" });
+            await invoke<string>("sync_data").then((rawData) => {
+              const data = JSON.parse(rawData);
+              setNextPointNumber(data.next_point.split("-")[0]);
+              setNextPointName(data.next_point.split("-")[1]);
+            });
+          };
+          nextPoint();
+          break;
+
+        case "ArrowLeft":
+          e.preventDefault();
+          const prevPoint = async () => {
+            await invoke("point_switch", { moveTo: "prev" });
+            await invoke<string>("sync_data").then((rawData) => {
+              const data = JSON.parse(rawData);
+              setNextPointNumber(data.next_point.split("-")[0]);
+              setNextPointName(data.next_point.split("-")[1]);
+            });
+          };
+          prevPoint();
+          break;
+
+        case "Backspace":
+          e.preventDefault();
+          const reset = async () => {
+            await invoke("reset_partial");
+            setPartial(0);
+          };
+          reset();
+          break;
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
 
   return (
     <div>

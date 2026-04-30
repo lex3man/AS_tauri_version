@@ -74,3 +74,39 @@ pub fn set_track_dist(state: State<'_, Mutex<AppState>>, c: &str) -> Result<(), 
     }
     Err(())
 }
+
+#[tauri::command]
+pub fn increase_angle(state: State<'_, Mutex<AppState>>) -> Result<(), ()> {
+    if let Ok(mut state) = state.lock() {
+        state.settings.increase_oncoming_angle();
+        return Ok(());
+    }
+    Err(())
+}
+
+#[tauri::command]
+pub fn decrease_angle(state: State<'_, Mutex<AppState>>) -> Result<(), ()> {
+    if let Ok(mut state) = state.lock() {
+        state.settings.decrease_oncoming_angle();
+        return Ok(());
+    }
+    Err(())
+}
+
+#[tauri::command]
+pub fn increase_detection(state: State<'_, Mutex<AppState>>) -> Result<(), ()> {
+    if let Ok(mut state) = state.lock() {
+        state.settings.increase_oncoming_detection();
+        return Ok(());
+    }
+    Err(())
+}
+
+#[tauri::command]
+pub fn decrease_detection(state: State<'_, Mutex<AppState>>) -> Result<(), ()> {
+    if let Ok(mut state) = state.lock() {
+        state.settings.decrease_oncoming_detection();
+        return Ok(());
+    }
+    Err(())
+}

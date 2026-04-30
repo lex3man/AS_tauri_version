@@ -78,6 +78,8 @@ type AppStateProviderState = {
   captured: boolean;
   trackPoints: Coords[];
 
+  reportSentTime: string;
+
   setRaceNumber: (rn: string) => void;
   setRoadbookMode: (status: boolean) => void;
   setDebugData: (data: string) => void;
@@ -119,6 +121,7 @@ type AppStateProviderState = {
   setCountdown: (val: number) => void;
   setTime: (val: string) => void;
   setGPSData: (data: GPSData) => void;
+  setReportSentTime: (val: string) => void;
 };
 
 const initialState: AppStateProviderState = {
@@ -178,6 +181,8 @@ const initialState: AppStateProviderState = {
   speedExceeds: "",
   captured: false,
   trackPoints: [],
+
+  reportSentTime: "",
 
   dashBoard: {
     cog: 0,
@@ -239,6 +244,7 @@ const initialState: AppStateProviderState = {
   setCountdown: () => null,
   setTime: () => null,
   setGPSData: () => null,
+  setReportSentTime: () => null,
 };
 
 const AppStateProviderContext =
@@ -300,6 +306,7 @@ export function StateProvider({
     heading: 0,
     timestamp: 0,
   });
+  const [reportSentTime, setReportSentTime] = useState("");
 
   // roadbook
   const [rbSlides, setRBSlides] = useState<RoadbookSlide[]>([]);
@@ -716,6 +723,8 @@ export function StateProvider({
     batteryLevel,
     charging,
 
+    reportSentTime,
+
     setRaceNumber,
     setDebugData,
     callView,
@@ -754,6 +763,7 @@ export function StateProvider({
     setCountdown,
     setTime,
     setGPSData,
+    setReportSentTime,
   };
 
   return (

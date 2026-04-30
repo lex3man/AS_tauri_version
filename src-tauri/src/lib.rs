@@ -47,6 +47,10 @@ pub fn run() {
             ipc::settings::switch_theme,
             ipc::settings::set_dist_step,
             ipc::settings::set_track_dist,
+            ipc::settings::increase_angle,
+            ipc::settings::decrease_angle,
+            ipc::settings::increase_detection,
+            ipc::settings::decrease_detection,
             ipc::location::location_update,
             ipc::location::get_coords,
             ipc::location::jump_reaction,
@@ -69,6 +73,7 @@ pub fn run() {
             ipc::admin::is_admin,
             ipc::admin::activate_cmd,
             ipc::report::export_telemetry_report,
+            ipc::report::get_report_sent_time,
         ])
         .setup(|app| {
             app.manage(Mutex::new(AppState::default()));
@@ -97,6 +102,9 @@ pub fn run() {
             }
             if let Some(val) = store.get("as_config_updayed_time") {
                 state.config_updated = val.to_string();
+            }
+            if let Some(val) = store.get("as_report_sent_time") {
+                state.report_sent = val.to_string();
             }
             if let Some(val) = store.get("as_last_report") {
                 state.last_report = val.to_string();

@@ -6,7 +6,9 @@ use tauri::AppHandle;
 use crate::{
     race::types::Coords,
     state::{
-        AppState, GPSData, JumpSuggestion, Position, race_config::PointState, telemetry::{Exceed, PointCapture, Telemetry}
+        race_config::PointState,
+        telemetry::{Exceed, PointCapture, Telemetry},
+        AppState, GPSData, JumpSuggestion, Position,
     },
     utils::{
         converters::{course_in_degrees, distance},
@@ -47,6 +49,7 @@ pub async fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position)
         let mut in_visiable_zone = false;
         let mut counter = 0;
         let mut finished = state.current.finished;
+        let mut oncoming = false;
 
         // ============================================================================
         // loading current state
@@ -147,6 +150,35 @@ pub async fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position)
                     tel.steps.push(*pos);
                     //
                     // ============================================================================
+                    // oncoming detection
+                    // ============================================================================
+                    if let Some(prev_point) = area.get_point_by_id(&prev_point_id) {
+                        let pathway = course_in_degrees(
+                            Coords {
+                                lat: prev_point.lat,
+                                lon: prev_point.lon,
+                            },
+                            Coords {
+                                lat: next_point.lat,
+                                lon: next_point.lon,
+                            },
+                        );
+                        let bearing = course_in_degrees(
+                            Coords {
+                                lat: coords.latitude,
+                                lon: coords.longitude,
+                            },
+                            Coords {
+                                lat: next_point.lat,
+                                lon: next_point.lon,
+                            },
+                        );
+                        let angle_diff = pathway - bearing;
+                        let oncoming_angle = state.settings.get_oncoming_angle() as u32;
+                        oncoming = angle_diff > 180 - (oncoming_angle / 2) && angle_diff < 180 + (oncoming_angle / 2);
+                    }
+                    //
+                    // ============================================================================
                     // point capture
                     // ============================================================================
                     let next_point_checked = state
@@ -232,12 +264,13 @@ pub async fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position)
                                     "other_events": tel.events,
                                 },
                                 "time": pos.timestamp,
-                            }).to_string();
+                            })
+                            .to_string();
                             send_report(app, data.clone()).unwrap();
                             state.last_report = data;
                         }
                     }
-                    
+
                     let data = json!({
                         "race_number": state.race_number.clone(),
                         "device_id": "",
@@ -250,7 +283,8 @@ pub async fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position)
                         "point_name": prev_point_id.split("-").nth(1).unwrap_or(&""),
                         "checked": capture,
                         "time": pos.timestamp,
-                    }).to_string();
+                    })
+                    .to_string();
                     state.collected.push(data.clone());
                     send_telemetry(app, data).unwrap();
                 }
@@ -305,11 +339,16 @@ pub async fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position)
         state.dashboard.max_speed = max_speed as u32;
         state.race.spec_area_state.prev_point = prev_point_id;
         state.race.spec_area_state.next_point = next_point_id;
+        state.current.oncoming = oncoming;
 
         if capture {
             match send_collected(app, state.collected.clone()) {
-                Ok(_) => { println!("Collected data sent!!!"); },
-                Err(_) => { println!("Collected data sending faild!!!"); },
+                Ok(_) => {
+                    println!("Collected data sent!!!");
+                }
+                Err(_) => {
+                    println!("Collected data sending faild!!!");
+                }
             }
         }
     }

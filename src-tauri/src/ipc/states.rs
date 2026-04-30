@@ -1,6 +1,6 @@
 use std::sync::Mutex;
 
-use chrono::Utc;
+use chrono::{Local};
 use serde_json::json;
 use tauri::{AppHandle, State};
 
@@ -49,7 +49,7 @@ pub async fn update_config(
             let mut state = state.lock().unwrap();
             state.race = RaceState::new();
             state.race.update(&cfg);
-            state.config_updated = Utc::now().to_rfc2822();
+            state.config_updated = Local::now().format("%d.%m.%Y %H:%M:%S").to_string();
             state.race.race.as_ref().unwrap().areas.clone()
         };
         for area in areas {

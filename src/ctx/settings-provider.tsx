@@ -19,6 +19,8 @@ function parseSettings(json: string): Settings {
     jump_mode: boolean;
     road_book: boolean;
     track_distance: number;
+    oncoming_angle: number;
+    oncoming_detection: number;
   };
 
   return {
@@ -30,6 +32,8 @@ function parseSettings(json: string): Settings {
     demoMode: parsed.demo_mode,
     jumpMode: parsed.jump_mode,
     roadbookMode: parsed.road_book,
+    oncomingAngle: parsed.oncoming_angle,
+    oncomingDetection: parsed.oncoming_detection,
   };
 }
 
@@ -42,7 +46,8 @@ type SettingsProviderState = {
   demoMode: boolean;
   jumpMode: boolean;
   roadbookMode: boolean;
-
+  oncomingAngle: number;
+  oncomingDetection: number;
   setShowBackground: (status: boolean) => void;
   setDtwEnable: (status: boolean) => void;
   setDarkMode: (status: boolean) => void;
@@ -53,6 +58,10 @@ type SettingsProviderState = {
   decreaseDistStep: () => void;
   increaseTrackDist: () => void;
   decreaseTrackDist: () => void;
+  increaseOncomingAngle: () => void;
+  decreaseOncomingAngle: () => void;
+  increaseOncomingDetection: () => void;
+  decreaseOncomingDetection: () => void;
 };
 
 const initialState: SettingsProviderState = {
@@ -64,6 +73,8 @@ const initialState: SettingsProviderState = {
   demoMode: false,
   jumpMode: false,
   roadbookMode: false,
+  oncomingAngle: 60,
+  oncomingDetection: 300,
 
   setShowBackground: () => null,
   setDtwEnable: () => null,
@@ -75,6 +86,10 @@ const initialState: SettingsProviderState = {
   decreaseDistStep: () => null,
   increaseTrackDist: () => null,
   decreaseTrackDist: () => null,
+  increaseOncomingAngle: () => null,
+  decreaseOncomingAngle: () => null,
+  increaseOncomingDetection: () => null,
+  decreaseOncomingDetection: () => null,
 };
 
 const SettingsProviderContext =
@@ -93,6 +108,8 @@ export function SettingsProvider({
   const [demoMode, setDemoMode] = useState(false);
   const [jumpMode, setJumpMode] = useState(false);
   const [roadbookMode, setRoadbookMode] = useState(false);
+  const [oncomingAngle, setOncomingAngle] = useState(60);
+  const [oncomingDetection, setOncomingDetection] = useState(300);
   const { setTheme } = useTheme();
 
   useEffect(() => {
@@ -158,6 +175,38 @@ export function SettingsProvider({
     });
   };
 
+  const increaseOncomingAngle = async () => {
+    invoke("increase_angle").then(() => {
+      if (oncomingAngle < 180) {
+        setOncomingAngle(oncomingAngle + 5);
+      }
+    });
+  };
+
+  const decreaseOncomingAngle = async () => {
+    invoke("decrease_angle").then(() => {
+      if (oncomingAngle > 10) {
+        setOncomingAngle(oncomingAngle - 5);
+      }
+    });
+  };
+
+  const increaseOncomingDetection = async () => {
+    invoke("increase_detection").then(() => {
+      if (oncomingDetection < 1000) {
+        setOncomingDetection(oncomingDetection + 50);
+      }
+    });
+  };
+
+  const decreaseOncomingDetection = async () => {
+    invoke("decrease_detection").then(() => {
+      if (oncomingDetection >= 50) {
+        setOncomingDetection(oncomingDetection - 50);
+      }
+    });
+  };
+
   const value = {
     darkMode,
     showBackground,
@@ -167,7 +216,8 @@ export function SettingsProvider({
     demoMode,
     jumpMode,
     roadbookMode,
-
+    oncomingAngle,
+    oncomingDetection,
     setDarkMode,
     setShowBackground,
     setDtwEnable,
@@ -178,6 +228,10 @@ export function SettingsProvider({
     decreaseDistStep,
     increaseTrackDist,
     decreaseTrackDist,
+    increaseOncomingAngle,
+    decreaseOncomingAngle,
+    increaseOncomingDetection,
+    decreaseOncomingDetection,
   };
 
   return (

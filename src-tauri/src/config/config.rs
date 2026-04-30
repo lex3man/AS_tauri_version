@@ -16,6 +16,8 @@ pub struct Config {
     jump_mode: bool,
     road_book: bool,
     dtw_enabled: bool,
+    oncoming_angle: u16,
+    oncoming_detection: u32,
 }
 
 impl Config {
@@ -29,6 +31,8 @@ impl Config {
             jump_mode: false,
             road_book: false,
             dtw_enabled: true,
+            oncoming_angle: 60,
+            oncoming_detection: 300,
         }
     }
 
@@ -76,5 +80,34 @@ impl Config {
 
     pub fn get_track(&self) -> u64 {
         self.track_distance.0
+    }
+
+    pub fn get_oncoming_angle(&self) -> u16 {
+        self.oncoming_angle
+    }
+
+    pub fn increase_oncoming_angle(&mut self) {
+        if self.oncoming_angle > 180 {
+            return;
+        }
+        self.oncoming_angle += 5;
+    }
+
+    pub fn decrease_oncoming_angle(&mut self) {
+        if self.oncoming_angle <= 10 {
+            return;
+        }
+        self.oncoming_angle -= 5;
+    }
+
+    pub fn increase_oncoming_detection(&mut self) {
+        self.oncoming_detection += 50;
+    }
+
+    pub fn decrease_oncoming_detection(&mut self) {
+        if self.oncoming_detection < 50 {
+            return;
+        }
+        self.oncoming_detection -= 50;
     }
 }

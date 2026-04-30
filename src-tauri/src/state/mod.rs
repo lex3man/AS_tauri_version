@@ -57,6 +57,7 @@ pub struct Flags {
     pub speed_exceeded: bool,
     pub capture: bool,
     pub finished: bool,
+    pub oncoming: bool,
     pub _gps_signal_lost: bool,
     pub _low_battery: bool,
     pub _internert_disconnected: bool,
@@ -68,6 +69,7 @@ impl Flags {
             speed_exceeded: false,
             capture: false,
             finished: false,
+            oncoming: false,
             _gps_signal_lost: false,
             _low_battery: false,
             _internert_disconnected: false,
@@ -91,6 +93,7 @@ pub struct AppState {
     pub collected: Vec<String>,
     pub last_report: String,
     pub config_updated: String,
+    pub report_sent: String,
 }
 
 impl Default for AppState {
@@ -114,6 +117,7 @@ impl Default for AppState {
             collected: vec![],
             last_report: String::from(""),
             config_updated: String::from(""),
+            report_sent: String::from(""),
         }
     }
 }
@@ -130,6 +134,7 @@ impl AppState {
             storage.set("as_dashboard", json!(self.dashboard));
             storage.set("as_telemetry", json!(self.telemetry));
             storage.set("as_config_updayed_time", json!(self.config_updated));
+            storage.set("as_report_sent_time", json!(self.report_sent));
             storage.set("as_last_report", json!(self.last_report));
 
             storage.close_resource();
