@@ -215,7 +215,6 @@ function App() {
     };
   }, []);
 
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const continuousOscRef = useRef<OscillatorNode | null>(null);
   const continuousGainRef = useRef<GainNode | null>(null);
