@@ -5,7 +5,7 @@ import { CheckPoint } from "@/types/state";
 import { invoke } from "@tauri-apps/api/core";
 
 const CheckPoints = () => {
-  const { callView, mobileView, adminMode } = useAppState();
+  const { callView, mobileView, adminMode, speed } = useAppState();
   const [points, setPoints] = useState<CheckPoint[]>([]);
   // const [raw, setRaw] = useState<string>("");
   const [raceInfo, setRaceInfo] = useState({
@@ -34,7 +34,7 @@ const CheckPoints = () => {
       });
     };
     getPoints();
-  }, []);
+  }, [speed]);
 
   return (
     <div>

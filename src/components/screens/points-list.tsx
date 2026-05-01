@@ -5,7 +5,7 @@ import { PointDebugInfo } from "@/types/state";
 import { invoke } from "@tauri-apps/api/core";
 
 const PointsList = () => {
-  const { callView, mobileView } = useAppState();
+  const { callView } = useAppState();
   const [points, setPoints] = useState<PointDebugInfo[]>([]);
 
   useEffect(() => {

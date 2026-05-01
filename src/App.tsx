@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import "./App.css";
 import {
@@ -215,10 +215,69 @@ function App() {
     };
   }, []);
 
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const continuousOscRef = useRef<OscillatorNode | null>(null);
+  const continuousGainRef = useRef<GainNode | null>(null);
+
+  const getAudioContext = useCallback(() => {
+    if (!audioContextRef.current) {
+      audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+    }
+    const ctx = audioContextRef.current;
+    if (ctx.state === "suspended") {
+      ctx.resume();
+    }
+    return ctx;
+  }, []);
+
+  const startContinuousTone = useCallback(() => {
+    if (continuousOscRef.current) return;
+
+    const ctx = getAudioContext();
+    const oscillator = ctx.createOscillator();
+    const gainNode = ctx.createGain();
+
+    oscillator.connect(gainNode);
+    gainNode.connect(ctx.destination);
+
+    oscillator.type = "square";
+    oscillator.frequency.setValueAtTime(880, ctx.currentTime);
+    gainNode.gain.setValueAtTime(0.1, ctx.currentTime);
+
+    oscillator.start();
+    continuousOscRef.current = oscillator;
+    continuousGainRef.current = gainNode;
+  }, [getAudioContext]);
+
+  const stopContinuousTone = useCallback(() => {
+    if (continuousOscRef.current) {
+      continuousOscRef.current.stop();
+      continuousOscRef.current.disconnect();
+      continuousOscRef.current = null;
+    }
+    if (continuousGainRef.current) {
+      continuousGainRef.current.disconnect();
+      continuousGainRef.current = null;
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isOncoming && (oncomingDistance > oncomingDetection)) {
+      startContinuousTone();
+    } else {
+      stopContinuousTone();
+    }
+
+    return () => {
+      stopContinuousTone();
+    };
+  }, [isOncoming, startContinuousTone, stopContinuousTone]);
+
   const renderContent = () => {
     if (isOncoming && (oncomingDistance > oncomingDetection)) {
       return (
-        <div className="flex flex-col items-center justify-center h-screen bg-red-600 text-white text-4xl font-bold">
+        <div className="flex flex-col items-center justify-center h-screen bg-red-600 text-white text-center text-4xl font-bold">
           <p>ONCOMING TRAFFIC AHEAD!</p>
           <p>Distance: {oncomingDistance.toFixed(1)} m</p>
           <div className="flex mt-10 gap-5">
@@ -227,17 +286,19 @@ function App() {
               onClick={() => {
                 setIsOncoming(false);
                 resetOncomingDistance();
+                stopContinuousTone();
               }}
             >
               Mark as Passed
             </Button>
             <Button
-              className="p-6 bg-yellow-600"
+              className="p-6"
               onClick={() => {
                 resetOncomingDistance();
+                stopContinuousTone();
               }}
             >
-              Update Distance
+              MUTE
             </Button>
           </div>
         </div>
