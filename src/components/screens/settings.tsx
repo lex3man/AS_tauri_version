@@ -68,9 +68,9 @@ const Settings = () => {
         </div>
       </div>
       <div
-        className={`flex flex-col justify-center w-full m-auto ${roadbookMode ? "max-h-[90vh] pt-[10vh]" : "max-h-[70vh] pt-[30vh]"} overflow-y-auto`}
+        className={`flex flex-col justify-center w-full m-auto ${roadbookMode ? "max-h-[90vh] pt-[10vh]" : "max-h-[70vh] pt-30"} overflow-y-auto`}
       >
-        <div className={`flex flex-col justify-center m-auto md:w-1/2 sm:w-2/3 gap-2 ${roadbookMode ? "max-h-[90vh] pt-[10vh]" : "max-h-[70vh] pt-[30vh]"}`}>
+        <div className={`flex flex-col justify-center m-auto md:w-1/2 sm:w-2/3 gap-2 ${roadbookMode ? "max-h-[90vh] pt-[10vh]" : "max-h-[70vh] pt-30"}`}>
           <Button
             className="p-6 text-2xl"
             onClick={() => {

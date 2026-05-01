@@ -84,11 +84,26 @@ pub fn get_current_cp_list(state: State<'_, Mutex<AppState>>) -> String {
 }
 
 #[tauri::command]
+pub fn get_points_list(state: State<'_, Mutex<AppState>>) -> String {
+    let mut point_list = Vec::new();
+    let state = state.lock().unwrap();
+    if let Some(race) = &state.race.race {
+        if &state.race.active_code == "" {
+            return "[]".to_string();
+        }
+        for p in &race.areas.get(&state.race.active_code).unwrap().points_set {
+            point_list.push(p.clone()); 
+        }
+    };
+    serde_json::to_string(&point_list).unwrap()
+}
+
+#[tauri::command]
 pub fn get_race_info(state: State<'_, Mutex<AppState>>) -> Result<String, String> {
     let state = state.lock().unwrap();
     if let Some(race) = &state.race.race {
         return Ok(format!(
-            "{}-{}-{}-{}-{}",
+            "{}={}={}={}={}",
             &race.name,
             &race.serial,
             &state.race_number.clone().unwrap_or_default(),
@@ -135,6 +150,7 @@ pub fn sync_data(state: State<'_, Mutex<AppState>>) -> Result<String, ()> {
             "visiable": state.dashboard.widget_shown.arrow,
             "jump_suggestion": state.jump_suggestion.suggested,
             "jump_point": state.jump_suggestion.point.clone(),
+            "oncoming": state.current.oncoming,
         });
         Ok(response.to_string())
     } else {

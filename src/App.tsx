@@ -28,6 +28,8 @@ import JumpSuggestion from "./components/screens/jump";
 import { playBeep } from "./lib/sound";
 import Adjust from "./components/screens/adjust";
 import Tracking from "./components/screens/tracking";
+import { Button } from "./components/ui/button";
+import PointsList from "./components/screens/points-list";
 
 function App() {
   const [leftOpen, setLeftOpen] = useState(false);
@@ -40,6 +42,8 @@ function App() {
     nextPointName,
     jumpSuggestion,
     jumpPointID,
+    isOncoming,
+    oncomingDistance,
     callView,
     setGpsAccuracy,
     setRaceNumber,
@@ -69,8 +73,10 @@ function App() {
     setCountdown,
     switchWidget,
     setGPSData,
+    setIsOncoming,
+    resetOncomingDistance,
   } = useAppState();
-  const { showBackground, jumpMode } = useSettings();
+  const { showBackground, jumpMode, oncomingDetection } = useSettings();
   const { width, height } = useWindowDimensions();
 
   const geoloc = async () => {
@@ -140,6 +146,12 @@ function App() {
               setJumpSuggestion(data.jump_suggestion);
               setJumpPointID(data.jump_point);
 
+              if (!data.oncoming) {
+                resetOncomingDistance();
+              } else {
+                setIsOncoming(true);
+              }
+
               const getPoints = async () => {
                 try {
                   const result = await invoke<string>("get_location_history");
@@ -204,6 +216,33 @@ function App() {
   }, []);
 
   const renderContent = () => {
+    if (isOncoming && (oncomingDistance > oncomingDetection)) {
+      return (
+        <div className="flex flex-col items-center justify-center h-screen bg-red-600 text-white text-4xl font-bold">
+          <p>ONCOMING TRAFFIC AHEAD!</p>
+          <p>Distance: {oncomingDistance.toFixed(1)} m</p>
+          <div className="flex mt-10 gap-5">
+            <Button
+              className="p-6 bg-green-600"
+              onClick={() => {
+                setIsOncoming(false);
+                resetOncomingDistance();
+              }}
+            >
+              Mark as Passed
+            </Button>
+            <Button
+              className="p-6 bg-yellow-600"
+              onClick={() => {
+                resetOncomingDistance();
+              }}
+            >
+              Update Distance
+            </Button>
+          </div>
+        </div>
+      );
+    }
     switch (activeViewPort.name) {
       case "request": {
         let answerFunc = setCodeOfDay;
@@ -248,6 +287,12 @@ function App() {
             <SpeedExceedsScreen />
           </div>
         );
+      case "points-list":
+        return (
+          <div className="relative h-screen">
+            <PointsList />
+          </div>
+        );
       case "jump":
         return (
           <div className="relative h-screen">
@@ -289,7 +334,7 @@ function App() {
               </main>
             ) : (
               <main
-                className={`${mobileView && "flex"} h-full gap-3 items-center justify-center overflow-hidden`}
+                className={`${mobileView && "flex"} h-full gap-3 items-start justify-center overflow-hidden`}
               >
                 {mobileView && (
                   <div className="w-1/6">

@@ -173,7 +173,7 @@ pub async fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position)
                                 lon: next_point.lon,
                             },
                         );
-                        let angle_diff = pathway - bearing;
+                        let angle_diff = (pathway as i64 - bearing as i64).abs() as u32;
                         let oncoming_angle = state.settings.get_oncoming_angle() as u32;
                         oncoming = angle_diff > 180 - (oncoming_angle / 2) && angle_diff < 180 + (oncoming_angle / 2);
                     }
@@ -207,7 +207,6 @@ pub async fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position)
                                 })
                                 .to_string(),
                             );
-                            println!("COUNTER: {}", counter);
                         }
                         is_open = false;
                         if next_point.odo <= next_point.capture_radius {

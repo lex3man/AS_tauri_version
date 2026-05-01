@@ -59,6 +59,7 @@ pub fn run() {
             ipc::states::get_snapshot,
             ipc::states::update_config,
             ipc::states::get_current_cp_list,
+            ipc::states::get_points_list,
             ipc::states::get_race_info,
             ipc::states::sync_data,
             ipc::states::point_switch,

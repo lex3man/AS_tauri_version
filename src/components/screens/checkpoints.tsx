@@ -5,7 +5,7 @@ import { CheckPoint } from "@/types/state";
 import { invoke } from "@tauri-apps/api/core";
 
 const CheckPoints = () => {
-  const { callView, mobileView } = useAppState();
+  const { callView, mobileView, adminMode } = useAppState();
   const [points, setPoints] = useState<CheckPoint[]>([]);
   // const [raw, setRaw] = useState<string>("");
   const [raceInfo, setRaceInfo] = useState({
@@ -26,11 +26,11 @@ const CheckPoints = () => {
 
       const raceInfoRaw = await invoke<string>("get_race_info");
       setRaceInfo({
-        name: raceInfoRaw.split("-")[0],
-        serial: raceInfoRaw.split("-")[1],
-        raceNumber: raceInfoRaw.split("-")[2],
-        raceCode: raceInfoRaw.split("-")[3],
-        updateTime: raceInfoRaw.split("-")[4],
+        name: raceInfoRaw.split("=")[0],
+        serial: raceInfoRaw.split("=")[1],
+        raceNumber: raceInfoRaw.split("=")[2],
+        raceCode: raceInfoRaw.split("=")[3],
+        updateTime: raceInfoRaw.split("=")[4],
       });
     };
     getPoints();
@@ -75,6 +75,16 @@ const CheckPoints = () => {
           >
             EXCEEDS
           </Button>
+          {adminMode && 
+            <Button
+              className="p-7 text-2xl"
+              onClick={() => {
+                callView("points-list");
+              }}
+            >
+              POINTS LIST
+            </Button>
+          }
         </div>
       </div>
       <div

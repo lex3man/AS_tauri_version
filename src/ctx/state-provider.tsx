@@ -77,6 +77,8 @@ type AppStateProviderState = {
   telemetry: TelemetryData[];
   captured: boolean;
   trackPoints: Coords[];
+  oncomingDistance: number;
+  isOncoming: boolean;
 
   reportSentTime: string;
 
@@ -122,6 +124,9 @@ type AppStateProviderState = {
   setTime: (val: string) => void;
   setGPSData: (data: GPSData) => void;
   setReportSentTime: (val: string) => void;
+  resetOncomingDistance: () => void;
+  increaseOncomingDistance: (val: number) => void;
+  setIsOncoming: (status: boolean) => void;
 };
 
 const initialState: AppStateProviderState = {
@@ -183,6 +188,8 @@ const initialState: AppStateProviderState = {
   trackPoints: [],
 
   reportSentTime: "",
+  oncomingDistance: 0,
+  isOncoming: false,
 
   dashBoard: {
     cog: 0,
@@ -245,6 +252,9 @@ const initialState: AppStateProviderState = {
   setTime: () => null,
   setGPSData: () => null,
   setReportSentTime: () => null,
+  resetOncomingDistance: () => null,
+  increaseOncomingDistance: () => null,
+  setIsOncoming: () => null,
 };
 
 const AppStateProviderContext =
@@ -325,6 +335,12 @@ export function StateProvider({
   const [gpsAccurancy, setGpsAccuracy] = useState(5);
   const [batteryLevel, setBatteryLevel] = useState(100);
   const [charging, setCharging] = useState(false);
+  const [oncomingDistance, setOncomingDistance] = useState(0);
+  const [isOncoming, setIsOncoming] = useState(false);
+
+  const resetOncomingDistance = () => setOncomingDistance(0);
+  const increaseOncomingDistance = (val: number) =>
+    setOncomingDistance((prev) => prev + val);
 
   // sync state
   const [dashBoard, setDB] = useState<DashBoard>({
@@ -414,6 +430,12 @@ export function StateProvider({
     adminCheck();
     setCurrentRBIndex(0);
   }, [coad]);
+
+  useEffect(() => {
+    if (isOncoming) {
+      increaseOncomingDistance(speed);
+    }
+  }, [isOncoming, speed]);
 
   useEffect(() => {
     const loadImages = async () => {
@@ -724,6 +746,8 @@ export function StateProvider({
     charging,
 
     reportSentTime,
+    oncomingDistance,
+    isOncoming,
 
     setRaceNumber,
     setDebugData,
@@ -764,6 +788,9 @@ export function StateProvider({
     setTime,
     setGPSData,
     setReportSentTime,
+    resetOncomingDistance,
+    increaseOncomingDistance,
+    setIsOncoming,
   };
 
   return (
