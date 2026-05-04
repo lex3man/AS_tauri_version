@@ -60,7 +60,7 @@ const CheckPoints = () => {
         </div>
         <div className="flex flex-col pt-5 pr-5 justify-start w-1/3">
           <Button
-            className="p-7 text-2xl"
+            className="p-7 text-xl"
             onClick={() => {
               callView("navigate");
             }}
@@ -68,7 +68,7 @@ const CheckPoints = () => {
             BACK
           </Button>
           <Button
-            className="p-7 text-2xl"
+            className="p-7 text-xl"
             onClick={() => {
               callView("exceeds");
             }}
@@ -77,7 +77,7 @@ const CheckPoints = () => {
           </Button>
           {adminMode && 
             <Button
-              className="p-7 text-2xl"
+              className="p-7 text-xl"
               onClick={() => {
                 callView("points-list");
               }}

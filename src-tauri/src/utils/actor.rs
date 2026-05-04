@@ -91,6 +91,7 @@ pub async fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position)
                         .get(&point.get_id())
                         .unwrap()
                         .checked
+                    && (point.get_id() != state.race.spec_area_state.next_point)
                 {
                     jump_suggested = true;
                     jump_point_id = point.get_id();
@@ -175,7 +176,8 @@ pub async fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position)
                         );
                         let angle_diff = (pathway as i64 - bearing as i64).abs() as u32;
                         let oncoming_angle = state.settings.get_oncoming_angle() as u32;
-                        oncoming = angle_diff > 180 - (oncoming_angle / 2) && angle_diff < 180 + (oncoming_angle / 2);
+                        oncoming = angle_diff > 180 - (oncoming_angle / 2)
+                            && angle_diff < 180 + (oncoming_angle / 2);
                     }
                     //
                     // ============================================================================
