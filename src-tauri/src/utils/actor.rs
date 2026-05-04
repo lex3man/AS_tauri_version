@@ -215,8 +215,7 @@ pub async fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position)
                             total_correction = Some(0.0);
                         } else {
                             total_correction = Some(
-                                ((next_point.odo as u32 - next_point.capture_radius as u32) / 1000)
-                                    as f64,
+                                (next_point_odo as f64 - next_point.capture_radius as f64) / 1000.0
                             );
                         }
                         state

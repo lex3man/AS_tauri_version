@@ -123,7 +123,7 @@ pub async fn export_telemetry_report(
 #[tauri::command]
 pub fn get_report_sent_time(state: State<'_, Mutex<AppState>>) -> Result<String, String> {
     if let Ok(state) = state.lock() {
-        return Ok(state.report_sent.clone());
+        return Ok(state.report_sent.clone().replace("\"", "").replace("\\", ""));
     }
     Err("Failed to get state".to_string())
 }
