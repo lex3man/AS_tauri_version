@@ -1,5 +1,13 @@
 import { useAppState } from "@/ctx/state-provider";
 import { Button } from "../ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
 import { useSettings } from "@/ctx/settings-provider";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { invoke } from "@tauri-apps/api/core";
@@ -16,6 +24,7 @@ const Settings = () => {
     reportSentTime,
     setReportSentTime,
     adminMode,
+    sync,
   } = useAppState();
   const {
     showBackground,
@@ -36,6 +45,7 @@ const Settings = () => {
     oncomingDetection,
     increaseOncomingDetection,
     decreaseOncomingDetection,
+    getSettings,
   } = useSettings();
 
   useEffect(() => {
@@ -143,9 +153,30 @@ const Settings = () => {
             SET RACE NUMBER
           </Button>
           {adminMode && (
-            <Button className="p-6 text-2xl" onClick={() => {}}>
-              RESET
-            </Button>
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button className="p-6 text-2xl">RESET</Button>
+              </DialogTrigger>
+              <DialogContent showCloseButton={false}>
+                <DialogHeader>
+                  <DialogTitle>Are you sure?</DialogTitle>
+                  <DialogDescription>
+                    This action will prune all reports, telemetry and race state!
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="flex gap-10">
+                  <Button className="p-6 text-2xl bg-red-600" onClick={async () => {
+                    await invoke("state_reset");
+                    getSettings();
+                    sync();
+                    await invoke("close_app");
+                  }}>RESET</Button>
+                  <Button className="p-6 text-2xl bg-green-600" onClick={() => {
+                    callView("settings");
+                  }}>CANCEL</Button>
+                </div>
+              </DialogContent>
+            </Dialog>
           )}
           <div
             className={`flex ${roadbookMode && mobileView ? "flex-col justify-center gap-10 items-center" : "justify-between"} pt-5`}

@@ -215,7 +215,7 @@ pub async fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position)
                             total_correction = Some(0.0);
                         } else {
                             total_correction = Some(
-                                (next_point_odo as f64 - next_point.capture_radius as f64) / 1000.0
+                                (next_point_odo as f64 - next_point.capture_radius as f64) / 1000.0,
                             );
                         }
                         state
@@ -302,10 +302,10 @@ pub async fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position)
             state.dashboard.cog = cog;
             state.dashboard.ctw = ctw;
             state.dashboard.sog = sog;
+            state.dashboard.metrics.abs_total += (coords.speed.unwrap_or(0.0) / 1000.0) as f64;
             if let Some(new_total) = total_correction {
                 state.dashboard.metrics.total = new_total;
             } else {
-                state.dashboard.metrics.abs_total += (coords.speed.unwrap_or(0.0) / 1000.0) as f64;
                 state.dashboard.metrics.total += (coords.speed.unwrap_or(0.0) / 1000.0) as f64;
             }
             state.dashboard.metrics.partial += (coords.speed.unwrap_or(0.0) / 1000.0) as f64;

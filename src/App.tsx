@@ -293,7 +293,6 @@ function App() {
             <Button
               className="p-6"
               onClick={() => {
-                resetOncomingDistance();
                 stopContinuousTone();
               }}
             >

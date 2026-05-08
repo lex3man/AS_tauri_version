@@ -57,6 +57,10 @@ pub async fn export_telemetry_report(
                     sheet
                         .write(7, 1, telemetry.speed_exceeds.len() as u32)
                         .map_err(|e| e.to_string())?;
+                    sheet.write(7, 0, "Absolute total").map_err(|e| e.to_string())?;
+                    sheet
+                        .write(7, 1, (state.dashboard.metrics.abs_total as u32 / 10) as f32 / 100.0)
+                        .map_err(|e| e.to_string())?;
                 }
 
                 {
