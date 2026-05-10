@@ -1,4 +1,4 @@
-use std::{process, sync::Mutex};
+use std::{sync::Mutex};
 
 use chrono::{Local};
 use serde_json::json;
