@@ -103,7 +103,9 @@ pub async fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position)
                 is_open = next_point.flags.is_open;
                 max_speed = next_point.speed_limit;
                 if prev_point_id.is_empty() {
-                    prev_point_id = state.race.spec_area_state.prev_point.clone();
+                    if let Some(point_id) = state.race.spec_area_state.point_controller.peek_prev() {
+                        prev_point_id = point_id.clone()
+                    }
                 }
                 if let Some(telemetry) = state.telemetry.get(&area.id) {
                     //
@@ -164,17 +166,7 @@ pub async fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position)
                                 lon: next_point.lon,
                             },
                         );
-                        let bearing = course_in_degrees(
-                            Coords {
-                                lat: coords.latitude,
-                                lon: coords.longitude,
-                            },
-                            Coords {
-                                lat: next_point.lat,
-                                lon: next_point.lon,
-                            },
-                        );
-                        let angle_diff = (pathway as i64 - bearing as i64).abs() as u32;
+                        let angle_diff = (pathway as i64 - cog as i64).abs() as u32;
                         let oncoming_angle = state.settings.get_oncoming_angle() as u32;
                         oncoming = angle_diff > 180 - (oncoming_angle / 2)
                             && angle_diff < 180 + (oncoming_angle / 2);
