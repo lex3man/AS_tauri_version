@@ -140,4 +140,29 @@ impl AppState {
             storage.close_resource();
         }
     }
+
+    pub fn reset(&mut self) {
+        if let Some(storage) = &self.storage {
+            storage.clear();
+        }
+        self.race = RaceState::new();
+        self.dashboard = DashBoard::new();
+        self.race_number = None;
+        self.is_admin = false;
+        self.settings = Config::new();
+        self.coords = None;
+        self.telemetry = HashMap::new();
+        self.current = Flags::new();
+        self.jump_suggestion = JumpSuggestion {
+            suggested: false,
+            point: "None".to_string(),
+        };
+        self.gps_timestamp = 0;
+        self.snapshot = None;
+        self.collected = vec![];
+        self.last_report = String::from("");
+        self.config_updated = String::from("");
+        self.report_sent = String::from("");
+        self.sync();
+    }
 }

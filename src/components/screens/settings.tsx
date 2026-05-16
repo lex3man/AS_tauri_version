@@ -1,5 +1,13 @@
 import { useAppState } from "@/ctx/state-provider";
 import { Button } from "../ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { useSettings } from "@/ctx/settings-provider";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { invoke } from "@tauri-apps/api/core";
@@ -16,6 +24,7 @@ const Settings = () => {
     reportSentTime,
     setReportSentTime,
     adminMode,
+    sync,
   } = useAppState();
   const {
     showBackground,
@@ -36,6 +45,7 @@ const Settings = () => {
     oncomingDetection,
     increaseOncomingDetection,
     decreaseOncomingDetection,
+    getSettings,
   } = useSettings();
 
   useEffect(() => {
@@ -70,7 +80,9 @@ const Settings = () => {
       <div
         className={`flex flex-col justify-center w-full m-auto ${roadbookMode ? "max-h-[90vh] pt-[10vh]" : "max-h-[70vh] pt-30"} overflow-y-auto`}
       >
-        <div className={`flex flex-col justify-center m-auto md:w-1/2 sm:w-2/3 gap-2 ${roadbookMode ? "max-h-[90vh] pt-[10vh]" : "max-h-[70vh] pt-30"}`}>
+        <div
+          className={`flex flex-col justify-center m-auto md:w-1/2 sm:w-2/3 gap-2 ${roadbookMode ? "max-h-[90vh] pt-[10vh]" : "max-h-[70vh] pt-30"}`}
+        >
           <Button
             className="p-6 text-2xl"
             onClick={() => {
@@ -143,9 +155,41 @@ const Settings = () => {
             SET RACE NUMBER
           </Button>
           {adminMode && (
-            <Button className="p-6 text-2xl" onClick={() => {}}>
-              RESET
-            </Button>
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button className="p-6 text-2xl">RESET</Button>
+              </DialogTrigger>
+              <DialogContent showCloseButton={false}>
+                <DialogHeader>
+                  <DialogTitle>Are you sure?</DialogTitle>
+                  <DialogDescription>
+                    This action will prune all reports, telemetry and race
+                    state!
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="flex gap-10">
+                  <Button
+                    className="p-6 text-2xl bg-red-600"
+                    onClick={async () => {
+                      await invoke("state_reset");
+                      getSettings();
+                      sync();
+                      await invoke("close_app");
+                    }}
+                  >
+                    RESET
+                  </Button>
+                  <Button
+                    className="p-6 text-2xl bg-green-600"
+                    onClick={() => {
+                      callView("settings");
+                    }}
+                  >
+                    CANCEL
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
           )}
           <div
             className={`flex ${roadbookMode && mobileView ? "flex-col justify-center gap-10 items-center" : "justify-between"} pt-5`}
@@ -174,9 +218,11 @@ const Settings = () => {
           </div>
           {adminMode && (
             <div
-              className={`flex ${roadbookMode && mobileView ? "flex-col justify-center gap-10 items-center" : "justify-between"} pt-5`}
+              className={`flex ${roadbookMode && mobileView ? "flex-col justify-center gap-5 items-center" : "justify-between pt-5"}`}
             >
-              <div className="flex flex-col w-1/2 items-center">
+              <div
+                className={`flex flex-col items-center border-2 rounded-xl p-5 ${!roadbookMode && "w-1/2"}`}
+              >
                 <div className="text-center text-2xl font-extrabold">
                   ONCOMING ANGLE
                 </div>
@@ -184,12 +230,16 @@ const Settings = () => {
                 <div className="text-3xl font-extrabold">{oncomingAngle}°</div>
                 <ChevronDown onClick={() => decreaseOncomingAngle()} />
               </div>
-              <div className="flex flex-col w-1/2 items-center">
+              <div
+                className={`flex flex-col items-center border-2 rounded-xl p-5 ${!roadbookMode && "w-1/2"}`}
+              >
                 <div className="text-center text-2xl font-extrabold">
                   ONCOMING DIST
                 </div>
                 <ChevronUp onClick={() => increaseOncomingDetection()} />
-                <div className="text-3xl font-extrabold">{oncomingDetection}</div>
+                <div className="text-3xl font-extrabold">
+                  {oncomingDetection}
+                </div>
                 <ChevronDown onClick={() => decreaseOncomingDetection()} />
               </div>
             </div>

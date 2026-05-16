@@ -57,6 +57,10 @@ pub async fn export_telemetry_report(
                     sheet
                         .write(7, 1, telemetry.speed_exceeds.len() as u32)
                         .map_err(|e| e.to_string())?;
+                    sheet.write(7, 0, "Absolute total").map_err(|e| e.to_string())?;
+                    sheet
+                        .write(7, 1, (state.dashboard.metrics.abs_total as u32 / 10) as f32 / 100.0)
+                        .map_err(|e| e.to_string())?;
                 }
 
                 {
@@ -123,7 +127,7 @@ pub async fn export_telemetry_report(
 #[tauri::command]
 pub fn get_report_sent_time(state: State<'_, Mutex<AppState>>) -> Result<String, String> {
     if let Ok(state) = state.lock() {
-        return Ok(state.report_sent.clone());
+        return Ok(state.report_sent.clone().replace("\"", "").replace("\\", ""));
     }
     Err("Failed to get state".to_string())
 }

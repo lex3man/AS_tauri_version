@@ -127,6 +127,7 @@ type AppStateProviderState = {
   resetOncomingDistance: () => void;
   increaseOncomingDistance: (val: number) => void;
   setIsOncoming: (status: boolean) => void;
+  sync: () => void;
 };
 
 const initialState: AppStateProviderState = {
@@ -255,6 +256,7 @@ const initialState: AppStateProviderState = {
   resetOncomingDistance: () => null,
   increaseOncomingDistance: () => null,
   setIsOncoming: () => null,
+  sync: () => null,
 };
 
 const AppStateProviderContext =
@@ -369,12 +371,13 @@ export function StateProvider({
 
   let screenState = new Viewports();
 
-  useEffect(() => {
-    const getState = async () => {
-      const rawState = await invoke<string>("get_snapshot");
+  const sync = async () => {
+    const rawState = await invoke<string>("get_snapshot");
       if (rawState) {
         const state: AppState = parseState(rawState);
-        setRN(state.raceNumber);
+        if (state.raceNumber !== null) {
+          setRN(state.raceNumber);
+        }
         setNM(state.navMode);
         setDB(state.dashBoard);
         setAVP(state.activeViewPort);
@@ -387,8 +390,9 @@ export function StateProvider({
         setDtw(state.dashBoard.dtw);
         setCpCounter(state.dashBoard.metrics.cpCounter);
       }
-    };
+  }
 
+  useEffect(() => {
     const fetchRoadbook = async () => {
       const slidesList: RoadbookSlide[] = JSON.parse(
         await invoke("get_roadbook"),
@@ -397,7 +401,7 @@ export function StateProvider({
     };
 
     fetchRoadbook();
-    getState();
+    sync();
   }, []);
 
   useEffect(() => {
@@ -433,7 +437,7 @@ export function StateProvider({
 
   useEffect(() => {
     if (isOncoming) {
-      increaseOncomingDistance(speed);
+      increaseOncomingDistance(speed / 3.6);
     }
   }, [isOncoming, speed]);
 
@@ -791,6 +795,7 @@ export function StateProvider({
     resetOncomingDistance,
     increaseOncomingDistance,
     setIsOncoming,
+    sync,
   };
 
   return (

@@ -34,6 +34,7 @@ import PointsList from "./components/screens/points-list";
 function App() {
   const [leftOpen, setLeftOpen] = useState(false);
   const [rightOpen, setRightOpen] = useState(false);
+  const [beeping, setBeeping] = useState(true);
   const {
     roadbookMode,
     activeViewPort,
@@ -221,7 +222,9 @@ function App() {
 
   const getAudioContext = useCallback(() => {
     if (!audioContextRef.current) {
-      audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+      audioContextRef.current = new (
+        window.AudioContext || (window as any).webkitAudioContext
+      )();
     }
     const ctx = audioContextRef.current;
     if (ctx.state === "suspended") {
@@ -261,20 +264,9 @@ function App() {
     }
   }, []);
 
-  useEffect(() => {
-    if (isOncoming && (oncomingDistance > oncomingDetection)) {
-      startContinuousTone();
-    } else {
-      stopContinuousTone();
-    }
-
-    return () => {
-      stopContinuousTone();
-    };
-  }, [isOncoming, startContinuousTone, stopContinuousTone]);
-
   const renderContent = () => {
-    if (isOncoming && (oncomingDistance > oncomingDetection)) {
+    if (isOncoming && oncomingDistance > oncomingDetection) {
+      beeping && startContinuousTone();
       return (
         <div className="flex flex-col items-center justify-center h-screen bg-red-600 text-white text-center text-4xl font-bold">
           <p>ONCOMING TRAFFIC AHEAD!</p>
@@ -293,7 +285,7 @@ function App() {
             <Button
               className="p-6"
               onClick={() => {
-                resetOncomingDistance();
+                setBeeping(false);
                 stopContinuousTone();
               }}
             >
@@ -302,6 +294,8 @@ function App() {
           </div>
         </div>
       );
+    } else {
+      setBeeping(true);
     }
     switch (activeViewPort.name) {
       case "request": {
@@ -420,7 +414,7 @@ function App() {
           </>
         );
     }
-    return <main className="gap-3 items-center justify-center">{}</main>;
+    return <main className="gap-3 items-center justify-center">{ }</main>;
   };
 
   return (

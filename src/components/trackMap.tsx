@@ -87,9 +87,11 @@ export function RouteMap({
       })
       .join(" ");
 
-    let barWidth = 500
-
-    if (pixelsPerMeter < 10) {
+    let barWidth = 100
+    if (pixelsPerMeter < 1) {
+      barWidth = 500
+    }  
+    if (pixelsPerMeter < 0.1) {
       barWidth = 1000
     }
     if (pixelsPerMeter < 0.03) {

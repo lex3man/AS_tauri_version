@@ -9,7 +9,11 @@ use std::sync::Mutex;
 use tauri::{AppHandle, State};
 
 #[tauri::command]
-pub async fn location_update(app: AppHandle, state: State<'_, Mutex<AppState>>, data: &str) -> Result<(), ()> {
+pub async fn location_update(
+    app: AppHandle,
+    state: State<'_, Mutex<AppState>>,
+    data: &str,
+) -> Result<(), ()> {
     let gps_data: Position = serde_json::from_str(data).unwrap();
 
     if let Ok(mut state) = state.lock() {
@@ -51,21 +55,37 @@ pub fn jump_reaction(state: State<'_, Mutex<AppState>>, flag: &str) -> Result<()
                     .spec_area_state
                     .point_controller
                     .set_active(&jump_to);
-                state.race.spec_area_state.prev_point =
-                    state.race.spec_area_state.next_point.clone();
-                state.race.spec_area_state.next_point = jump_to.clone();
-                tel.events.push(json!({
-                    "event": "jump",
-                    "to": jump_to,
-                    "time": state.gps_timestamp,
-                    "odo": state.dashboard.metrics.total
-                }).to_string());
+                state.race.spec_area_state.prev_point = state
+                    .race
+                    .spec_area_state
+                    .point_controller
+                    .peek_prev()
+                    .unwrap()
+                    .clone();
+                state.race.spec_area_state.next_point = state
+                    .race
+                    .spec_area_state
+                    .point_controller
+                    .active
+                    .as_ref()
+                    .unwrap()
+                    .clone();
+
+                tel.events.push(
+                    json!({
+                        "event": "jump",
+                        "to": jump_to,
+                        "time": state.gps_timestamp,
+                        "odo": state.dashboard.metrics.total
+                    })
+                    .to_string(),
+                );
+                state.telemetry.insert(current_sa, tel);
             }
             _ => {}
         }
         state.settings.jump_mode_switch("off");
         state.jump_suggestion.suggested = false;
-        state.telemetry.insert(current_sa, tel);
         return Ok(());
     }
     Err(())

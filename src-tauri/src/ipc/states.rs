@@ -1,14 +1,11 @@
-use std::sync::Mutex;
+use std::{sync::Mutex};
 
 use chrono::{Local};
 use serde_json::json;
 use tauri::{AppHandle, State};
 
 use crate::{
-    race::types::{CheckPoint, PointBuilder},
-    state::race_config::RaceState,
-    utils::{parser::FormatedData, rb_store::download_images},
-    AppState,
+    AppState, race::types::{CheckPoint, PointBuilder}, state::{race_config::RaceState}, utils::{parser::FormatedData, rb_store::download_images}
 };
 
 #[tauri::command]
@@ -145,7 +142,7 @@ pub fn sync_data(state: State<'_, Mutex<AppState>>) -> Result<String, ()> {
                 "countdown": state.dashboard.metrics.countdown,
                 "cp_counter": state.dashboard.metrics.cp_counter
             },
-            "next_point": &state.race.spec_area_state.next_point,
+            "next_point": state.race.spec_area_state.next_point.clone(),
             "next_point_type": next_point_type,
             "visiable": state.dashboard.widget_shown.arrow,
             "jump_suggestion": state.jump_suggestion.suggested,
@@ -196,4 +193,12 @@ pub fn point_switch(state: State<'_, Mutex<AppState>>, move_to: &str) -> Result<
         return Ok(());
     }
     Err(())
+}
+
+#[tauri::command]
+pub fn state_reset(state: State<'_, Mutex<AppState>>) -> Result<(), ()> {
+    if let Ok(mut state) = state.lock() {
+        state.reset();
+    }
+    Ok(())
 }
