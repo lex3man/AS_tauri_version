@@ -39,8 +39,8 @@ fn load_images_test() {
         "/Users/lex3man/Projects/FountCore/AS_tauri_version/src-tauri/src/tests/downloaded/",
     )
     .unwrap();
-    rb_images.par_iter().for_each(|url| {
-        download_image(url);
+    rb_images.par_iter().for_each(|slide| {
+        download_image(&slide.url);
     });
     assert!(Path::new("/Users/lex3man/Projects/FountCore/AS_tauri_version/src-tauri/src/tests/downloaded/18/rb001.png").exists());
     assert!(Path::new("/Users/lex3man/Projects/FountCore/AS_tauri_version/src-tauri/src/tests/downloaded/18/rb018.png").exists());

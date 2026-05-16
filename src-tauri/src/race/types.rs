@@ -177,11 +177,17 @@ impl PointBuilder {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct RBSlide {
+    pub url: String,
+    pub odo: u32,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct SpecArea {
     pub id: SpecAreaID,
     pub activation_code: ActivationCode,
     pub points_set: Vec<Point>,
-    pub roadbook: Vec<String>,
+    pub roadbook: Vec<RBSlide>,
 }
 
 impl SpecArea {
@@ -194,7 +200,7 @@ pub struct _SpecAreaBuilder {
     pub id: SpecAreaID,
     pub activation_code: ActivationCode,
     pub points_set: Vec<Point>,
-    pub roadbook: Vec<String>,
+    pub roadbook: Vec<RBSlide>,
 }
 
 impl _SpecAreaBuilder {
@@ -213,7 +219,11 @@ impl _SpecAreaBuilder {
     }
 
     pub fn _add_roadbook_slide_url(mut self, url: &str) -> Self {
-        self.roadbook.push(url.to_string());
+        let slide = RBSlide {
+            url: String::from(url),
+            odo: 0,
+        };
+        self.roadbook.push(slide);
         self
     }
 

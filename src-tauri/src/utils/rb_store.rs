@@ -3,16 +3,19 @@ use std::io::Write;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use tauri_plugin_android_fs::{AndroidFsExt, PrivateDir, Result};
 
+use crate::race::types::RBSlide;
+
 pub async fn download_images(
     app: tauri::AppHandle<impl tauri::Runtime>,
-    links: &Vec<String>,
+    links: &Vec<RBSlide>,
 ) -> Result<()> {
     let ps = app.android_fs_async().private_storage();
 
     let cache_dir_path: std::path::PathBuf = ps.resolve_path(PrivateDir::Cache).await?;
     let cache_dir_path = cache_dir_path.join("roadbooks");
 
-    links.par_iter().for_each(|url| {
+    links.par_iter().for_each(|slide| {
+        let url = &slide.url;
         let client = reqwest::blocking::Client::new();
         let response = client.get(url).send().unwrap();
         let mut strct: Vec<&str> = url.split("/").collect();
