@@ -179,7 +179,7 @@ impl PointBuilder {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct RBSlide {
     pub url: String,
-    pub odo: u32,
+    pub odo: i32,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -218,10 +218,10 @@ impl _SpecAreaBuilder {
         self
     }
 
-    pub fn _add_roadbook_slide_url(mut self, url: &str) -> Self {
+   pub fn _add_roadbook_slide_url(mut self, url: &str, odo: i32) -> Self {
         let slide = RBSlide {
             url: String::from(url),
-            odo: 0,
+            odo: odo,
         };
         self.roadbook.push(slide);
         self
