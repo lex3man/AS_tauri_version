@@ -1,6 +1,6 @@
 use crate::AppState;
 use serde_json::json;
-use std::sync::Mutex;
+use std::{process, sync::Mutex};
 use tauri::State;
 
 #[tauri::command]
@@ -109,4 +109,9 @@ pub fn decrease_detection(state: State<'_, Mutex<AppState>>) -> Result<(), ()> {
         return Ok(());
     }
     Err(())
+}
+
+#[tauri::command]
+pub fn close_app() {
+    process::exit(1);
 }

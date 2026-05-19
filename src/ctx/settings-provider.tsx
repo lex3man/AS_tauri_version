@@ -62,6 +62,7 @@ type SettingsProviderState = {
   decreaseOncomingAngle: () => void;
   increaseOncomingDetection: () => void;
   decreaseOncomingDetection: () => void;
+  getSettings: () => void;
 };
 
 const initialState: SettingsProviderState = {
@@ -90,6 +91,7 @@ const initialState: SettingsProviderState = {
   decreaseOncomingAngle: () => null,
   increaseOncomingDetection: () => null,
   decreaseOncomingDetection: () => null,
+  getSettings: () => null,
 };
 
 const SettingsProviderContext =
@@ -112,8 +114,8 @@ export function SettingsProvider({
   const [oncomingDetection, setOncomingDetection] = useState(300);
   const { setTheme } = useTheme();
 
-  useEffect(() => {
-    const getSettings = async () => {
+  const getSettings = () => {
+    const update = async () => {
       const config = await invoke<string>("get_settings");
       const settings = parseSettings(config);
 
@@ -126,7 +128,11 @@ export function SettingsProvider({
       setDemoMode(settings.demoMode);
       setJumpMode(settings.jumpMode);
       setRoadbookMode(settings.roadbookMode);
-    };
+    }
+    update();
+  }
+
+  useEffect(() => {
     getSettings();
   }, []);
 
@@ -232,6 +238,7 @@ export function SettingsProvider({
     decreaseOncomingAngle,
     increaseOncomingDetection,
     decreaseOncomingDetection,
+    getSettings,
   };
 
   return (
