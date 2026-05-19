@@ -19,7 +19,7 @@ pub fn get_roadbook(state: tauri::State<'_, Mutex<AppState>>) -> Result<String, 
             if let Some(area) = race.areas.get(&active_code) {
                 let mut slides = vec![];
                 for slide in &area.roadbook {
-                    let mut url_path: Vec<&str> = slide.split('/').collect();
+                    let mut url_path: Vec<&str> = slide.url.split('/').collect();
                     let name = url_path.pop().unwrap();
                     let subdir = url_path.pop().unwrap();
                     slides.push(Slide {
