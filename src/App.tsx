@@ -264,9 +264,13 @@ function App() {
     }
   }, []);
 
+  useEffect(() => {
+    setBeeping(true);
+  }, [isOncoming])
+
   const renderContent = () => {
     if (isOncoming && oncomingDistance > oncomingDetection) {
-      beeping && startContinuousTone();
+      if (beeping) { startContinuousTone(); }
       return (
         <div className="flex flex-col items-center justify-center h-screen bg-red-600 text-white text-center text-4xl font-bold">
           <p>ONCOMING TRAFFIC AHEAD!</p>
@@ -294,8 +298,6 @@ function App() {
           </div>
         </div>
       );
-    } else {
-      setBeeping(true);
     }
     switch (activeViewPort.name) {
       case "request": {
