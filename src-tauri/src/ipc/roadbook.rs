@@ -11,6 +11,7 @@ pub fn get_roadbook(state: tauri::State<'_, Mutex<AppState>>) -> Result<String, 
     struct Slide {
         subdir: String,
         name: String,
+        odo: i32,
     }
 
     if let Ok(state) = state.lock() {
@@ -25,6 +26,7 @@ pub fn get_roadbook(state: tauri::State<'_, Mutex<AppState>>) -> Result<String, 
                     slides.push(Slide {
                         subdir: subdir.to_string(),
                         name: name.to_string(),
+                        odo: slide.odo,
                     })
                 }
                 return Ok(serde_json::to_string(&slides).unwrap());
