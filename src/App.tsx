@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import "./App.css";
 import {
@@ -28,10 +28,13 @@ import JumpSuggestion from "./components/screens/jump";
 import { playBeep } from "./lib/sound";
 import Adjust from "./components/screens/adjust";
 import Tracking from "./components/screens/tracking";
+import { Button } from "./components/ui/button";
+import PointsList from "./components/screens/points-list";
 
 function App() {
   const [leftOpen, setLeftOpen] = useState(false);
   const [rightOpen, setRightOpen] = useState(false);
+  const [beeping, setBeeping] = useState(true);
   const {
     roadbookMode,
     activeViewPort,
@@ -40,6 +43,8 @@ function App() {
     nextPointName,
     jumpSuggestion,
     jumpPointID,
+    isOncoming,
+    oncomingDistance,
     callView,
     setGpsAccuracy,
     setRaceNumber,
@@ -69,8 +74,10 @@ function App() {
     setCountdown,
     switchWidget,
     setGPSData,
+    setIsOncoming,
+    resetOncomingDistance,
   } = useAppState();
-  const { showBackground, jumpMode } = useSettings();
+  const { showBackground, jumpMode, oncomingDetection } = useSettings();
   const { width, height } = useWindowDimensions();
 
   const geoloc = async () => {
@@ -140,6 +147,12 @@ function App() {
               setJumpSuggestion(data.jump_suggestion);
               setJumpPointID(data.jump_point);
 
+              if (!data.oncoming) {
+                resetOncomingDistance();
+              } else {
+                setIsOncoming(true);
+              }
+
               const getPoints = async () => {
                 try {
                   const result = await invoke<string>("get_location_history");
@@ -203,7 +216,89 @@ function App() {
     };
   }, []);
 
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const continuousOscRef = useRef<OscillatorNode | null>(null);
+  const continuousGainRef = useRef<GainNode | null>(null);
+
+  const getAudioContext = useCallback(() => {
+    if (!audioContextRef.current) {
+      audioContextRef.current = new (
+        window.AudioContext || (window as any).webkitAudioContext
+      )();
+    }
+    const ctx = audioContextRef.current;
+    if (ctx.state === "suspended") {
+      ctx.resume();
+    }
+    return ctx;
+  }, []);
+
+  const startContinuousTone = useCallback(() => {
+    if (continuousOscRef.current) return;
+
+    const ctx = getAudioContext();
+    const oscillator = ctx.createOscillator();
+    const gainNode = ctx.createGain();
+
+    oscillator.connect(gainNode);
+    gainNode.connect(ctx.destination);
+
+    oscillator.type = "square";
+    oscillator.frequency.setValueAtTime(880, ctx.currentTime);
+    gainNode.gain.setValueAtTime(0.1, ctx.currentTime);
+
+    oscillator.start();
+    continuousOscRef.current = oscillator;
+    continuousGainRef.current = gainNode;
+  }, [getAudioContext]);
+
+  const stopContinuousTone = useCallback(() => {
+    if (continuousOscRef.current) {
+      continuousOscRef.current.stop();
+      continuousOscRef.current.disconnect();
+      continuousOscRef.current = null;
+    }
+    if (continuousGainRef.current) {
+      continuousGainRef.current.disconnect();
+      continuousGainRef.current = null;
+    }
+  }, []);
+
+  useEffect(() => {
+    setBeeping(true);
+  }, [isOncoming])
+
   const renderContent = () => {
+    if (isOncoming && oncomingDistance > oncomingDetection) {
+      if (beeping) { startContinuousTone(); }
+      return (
+        <div className="flex flex-col items-center justify-center h-screen bg-red-600 text-white text-center text-4xl font-bold">
+          <p>ONCOMING TRAFFIC AHEAD!</p>
+          <p>Distance: {oncomingDistance.toFixed(1)} m</p>
+          <div className="flex mt-10 gap-5">
+            <Button
+              className="p-6 bg-green-600"
+              onClick={() => {
+                setIsOncoming(false);
+                resetOncomingDistance();
+                stopContinuousTone();
+              }}
+            >
+              Mark as Passed
+            </Button>
+            <Button
+              className="p-6"
+              onClick={() => {
+                setBeeping(false);
+                stopContinuousTone();
+              }}
+            >
+              MUTE
+            </Button>
+          </div>
+        </div>
+      );
+    }
     switch (activeViewPort.name) {
       case "request": {
         let answerFunc = setCodeOfDay;
@@ -248,6 +343,12 @@ function App() {
             <SpeedExceedsScreen />
           </div>
         );
+      case "points-list":
+        return (
+          <div className="relative h-screen">
+            <PointsList />
+          </div>
+        );
       case "jump":
         return (
           <div className="relative h-screen">
@@ -289,7 +390,7 @@ function App() {
               </main>
             ) : (
               <main
-                className={`${mobileView && "flex"} h-full gap-3 items-center justify-center overflow-hidden`}
+                className={`${mobileView && "flex"} h-full gap-3 items-start justify-center overflow-hidden`}
               >
                 {mobileView && (
                   <div className="w-1/6">
@@ -315,7 +416,7 @@ function App() {
           </>
         );
     }
-    return <main className="gap-3 items-center justify-center">{}</main>;
+    return <main className="gap-3 items-center justify-center">{ }</main>;
   };
 
   return (

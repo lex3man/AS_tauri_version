@@ -9,7 +9,11 @@ use std::sync::Mutex;
 use tauri::{AppHandle, State};
 
 #[tauri::command]
-pub async fn location_update(app: AppHandle, state: State<'_, Mutex<AppState>>, data: &str) -> Result<(), ()> {
+pub async fn location_update(
+    app: AppHandle,
+    state: State<'_, Mutex<AppState>>,
+    data: &str,
+) -> Result<(), ()> {
     let gps_data: Position = serde_json::from_str(data).unwrap();
 
     if let Ok(mut state) = state.lock() {
@@ -42,6 +46,8 @@ pub fn get_coords(state: State<'_, Mutex<AppState>>) -> Option<String> {
 pub fn jump_reaction(state: State<'_, Mutex<AppState>>, flag: &str) -> Result<(), ()> {
     if let Ok(mut state) = state.lock() {
         let jump_to = state.jump_suggestion.point.clone();
+        let current_sa = state.race.current_sa.clone();
+        let mut tel = state.telemetry.get(&current_sa).unwrap().clone();
         match flag {
             "yes" => {
                 state
@@ -49,9 +55,32 @@ pub fn jump_reaction(state: State<'_, Mutex<AppState>>, flag: &str) -> Result<()
                     .spec_area_state
                     .point_controller
                     .set_active(&jump_to);
-                state.race.spec_area_state.prev_point =
-                    state.race.spec_area_state.next_point.clone();
-                state.race.spec_area_state.next_point = jump_to;
+                state.race.spec_area_state.prev_point = state
+                    .race
+                    .spec_area_state
+                    .point_controller
+                    .peek_prev()
+                    .unwrap()
+                    .clone();
+                state.race.spec_area_state.next_point = state
+                    .race
+                    .spec_area_state
+                    .point_controller
+                    .active
+                    .as_ref()
+                    .unwrap()
+                    .clone();
+
+                tel.events.push(
+                    json!({
+                        "event": "jump",
+                        "to": jump_to,
+                        "time": state.gps_timestamp,
+                        "odo": state.dashboard.metrics.total
+                    })
+                    .to_string(),
+                );
+                state.telemetry.insert(current_sa, tel);
             }
             _ => {}
         }

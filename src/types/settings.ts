@@ -9,4 +9,6 @@ export type Settings = {
     demoMode: boolean;
     jumpMode: boolean;
     roadbookMode: boolean;
+    oncomingAngle: number;
+    oncomingDetection: number;
 }

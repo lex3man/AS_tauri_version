@@ -57,6 +57,7 @@ pub struct Flags {
     pub speed_exceeded: bool,
     pub capture: bool,
     pub finished: bool,
+    pub oncoming: bool,
     pub _gps_signal_lost: bool,
     pub _low_battery: bool,
     pub _internert_disconnected: bool,
@@ -68,6 +69,7 @@ impl Flags {
             speed_exceeded: false,
             capture: false,
             finished: false,
+            oncoming: false,
             _gps_signal_lost: false,
             _low_battery: false,
             _internert_disconnected: false,
@@ -89,6 +91,9 @@ pub struct AppState {
     pub jump_suggestion: JumpSuggestion,
     pub gps_timestamp: u64,
     pub collected: Vec<String>,
+    pub last_report: String,
+    pub config_updated: String,
+    pub report_sent: String,
 }
 
 impl Default for AppState {
@@ -110,6 +115,9 @@ impl Default for AppState {
             },
             gps_timestamp: 0,
             collected: vec![],
+            last_report: String::from(""),
+            config_updated: String::from(""),
+            report_sent: String::from(""),
         }
     }
 }
@@ -125,8 +133,36 @@ impl AppState {
             storage.set("as_race", json!(self.race));
             storage.set("as_dashboard", json!(self.dashboard));
             storage.set("as_telemetry", json!(self.telemetry));
+            storage.set("as_config_updayed_time", json!(self.config_updated));
+            storage.set("as_report_sent_time", json!(self.report_sent));
+            storage.set("as_last_report", json!(self.last_report));
 
             storage.close_resource();
         }
+    }
+
+    pub fn reset(&mut self) {
+        if let Some(storage) = &self.storage {
+            storage.clear();
+        }
+        self.race = RaceState::new();
+        self.dashboard = DashBoard::new();
+        self.race_number = None;
+        self.is_admin = false;
+        self.settings = Config::new();
+        self.coords = None;
+        self.telemetry = HashMap::new();
+        self.current = Flags::new();
+        self.jump_suggestion = JumpSuggestion {
+            suggested: false,
+            point: "None".to_string(),
+        };
+        self.gps_timestamp = 0;
+        self.snapshot = None;
+        self.collected = vec![];
+        self.last_report = String::from("");
+        self.config_updated = String::from("");
+        self.report_sent = String::from("");
+        self.sync();
     }
 }

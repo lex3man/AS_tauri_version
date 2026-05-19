@@ -1,13 +1,11 @@
-use std::sync::Mutex;
+use std::{sync::Mutex};
 
+use chrono::{Local};
 use serde_json::json;
 use tauri::{AppHandle, State};
 
 use crate::{
-    race::types::{CheckPoint, PointBuilder},
-    state::race_config::RaceState,
-    utils::{parser::FormatedData, rb_store::download_images},
-    AppState,
+    AppState, race::types::{CheckPoint, PointBuilder}, state::{race_config::RaceState}, utils::{parser::FormatedData, rb_store::download_images}
 };
 
 #[tauri::command]
@@ -48,6 +46,7 @@ pub async fn update_config(
             let mut state = state.lock().unwrap();
             state.race = RaceState::new();
             state.race.update(&cfg);
+            state.config_updated = Local::now().format("%d.%m.%Y %H:%M:%S").to_string();
             state.race.race.as_ref().unwrap().areas.clone()
         };
         for area in areas {
@@ -82,15 +81,31 @@ pub fn get_current_cp_list(state: State<'_, Mutex<AppState>>) -> String {
 }
 
 #[tauri::command]
+pub fn get_points_list(state: State<'_, Mutex<AppState>>) -> String {
+    let mut point_list = Vec::new();
+    let state = state.lock().unwrap();
+    if let Some(race) = &state.race.race {
+        if &state.race.active_code == "" {
+            return "[]".to_string();
+        }
+        for p in &race.areas.get(&state.race.active_code).unwrap().points_set {
+            point_list.push(p.clone()); 
+        }
+    };
+    serde_json::to_string(&point_list).unwrap()
+}
+
+#[tauri::command]
 pub fn get_race_info(state: State<'_, Mutex<AppState>>) -> Result<String, String> {
     let state = state.lock().unwrap();
     if let Some(race) = &state.race.race {
         return Ok(format!(
-            "{}-{}-{}-{}",
+            "{}={}={}={}={}",
             &race.name,
             &race.serial,
             &state.race_number.clone().unwrap_or_default(),
-            &state.race.active_code
+            &state.race.active_code,
+            &state.config_updated.clone()
         ));
     }
     Err("Race not found".to_string())
@@ -127,11 +142,12 @@ pub fn sync_data(state: State<'_, Mutex<AppState>>) -> Result<String, ()> {
                 "countdown": state.dashboard.metrics.countdown,
                 "cp_counter": state.dashboard.metrics.cp_counter
             },
-            "next_point": &state.race.spec_area_state.next_point,
+            "next_point": state.race.spec_area_state.next_point.clone(),
             "next_point_type": next_point_type,
             "visiable": state.dashboard.widget_shown.arrow,
             "jump_suggestion": state.jump_suggestion.suggested,
             "jump_point": state.jump_suggestion.point.clone(),
+            "oncoming": state.current.oncoming,
         });
         Ok(response.to_string())
     } else {
@@ -177,4 +193,12 @@ pub fn point_switch(state: State<'_, Mutex<AppState>>, move_to: &str) -> Result<
         return Ok(());
     }
     Err(())
+}
+
+#[tauri::command]
+pub fn state_reset(state: State<'_, Mutex<AppState>>) -> Result<(), ()> {
+    if let Ok(mut state) = state.lock() {
+        state.reset();
+    }
+    Ok(())
 }

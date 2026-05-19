@@ -14,6 +14,12 @@ pub struct Coords {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct RBSlide {
+    pub url: String,
+    pub odo: i32,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Flags {
     pub is_open: bool,
     pub is_ghost: bool,
@@ -181,7 +187,7 @@ pub struct SpecArea {
     pub id: SpecAreaID,
     pub activation_code: ActivationCode,
     pub points_set: Vec<Point>,
-    pub roadbook: Vec<String>,
+    pub roadbook: Vec<RBSlide>,
 }
 
 impl SpecArea {
@@ -194,7 +200,7 @@ pub struct _SpecAreaBuilder {
     pub id: SpecAreaID,
     pub activation_code: ActivationCode,
     pub points_set: Vec<Point>,
-    pub roadbook: Vec<String>,
+    pub roadbook: Vec<RBSlide>,
 }
 
 impl _SpecAreaBuilder {
@@ -212,8 +218,10 @@ impl _SpecAreaBuilder {
         self
     }
 
-    pub fn _add_roadbook_slide_url(mut self, url: &str) -> Self {
-        self.roadbook.push(url.to_string());
+    pub fn _add_roadbook_slide_url(mut self, url: &str, odo: i32) -> Self {
+        self.roadbook.push(
+            RBSlide { url: url.to_string(), odo }
+        );
         self
     }
 

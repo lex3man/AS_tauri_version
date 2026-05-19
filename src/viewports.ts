@@ -16,6 +16,7 @@ class Viewports {
     map.set("jump", ViewPort.new("jump"));
     map.set("adjust", ViewPort.new("adjust"));
     map.set("tracking", ViewPort.new("tracking"));
+    map.set("points-list", ViewPort.new("points-list"));
   }
 
   activate(name: string, type?: TypeOfRequest) {

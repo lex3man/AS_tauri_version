@@ -8,7 +8,7 @@ use std::{
 use serde_json::json;
 
 use crate::race::types::{
-    _PointTypes, _RaceBuilder, Coords, Defaults, Flags, PointBuilder, SpecArea,
+    _PointTypes, _RaceBuilder, Coords, Defaults, Flags, PointBuilder, RBSlide, SpecArea
 };
 
 #[test]
@@ -270,24 +270,78 @@ fn test_structs() {
                 .build(),
         ],
         roadbook: vec![
-            "https://map.rostexcabinet.ru/upload/roadbooks/18/rb001.png".to_string(),
-            "https://map.rostexcabinet.ru/upload/roadbooks/18/rb002.png".to_string(),
-            "https://map.rostexcabinet.ru/upload/roadbooks/18/rb003.png".to_string(),
-            "https://map.rostexcabinet.ru/upload/roadbooks/18/rb004.png".to_string(),
-            "https://map.rostexcabinet.ru/upload/roadbooks/18/rb005.png".to_string(),
-            "https://map.rostexcabinet.ru/upload/roadbooks/18/rb006.png".to_string(),
-            "https://map.rostexcabinet.ru/upload/roadbooks/18/rb007.png".to_string(),
-            "https://map.rostexcabinet.ru/upload/roadbooks/18/rb008.png".to_string(),
-            "https://map.rostexcabinet.ru/upload/roadbooks/18/rb009.png".to_string(),
-            "https://map.rostexcabinet.ru/upload/roadbooks/18/rb010.png".to_string(),
-            "https://map.rostexcabinet.ru/upload/roadbooks/18/rb011.png".to_string(),
-            "https://map.rostexcabinet.ru/upload/roadbooks/18/rb012.png".to_string(),
-            "https://map.rostexcabinet.ru/upload/roadbooks/18/rb013.png".to_string(),
-            "https://map.rostexcabinet.ru/upload/roadbooks/18/rb014.png".to_string(),
-            "https://map.rostexcabinet.ru/upload/roadbooks/18/rb015.png".to_string(),
-            "https://map.rostexcabinet.ru/upload/roadbooks/18/rb016.png".to_string(),
-            "https://map.rostexcabinet.ru/upload/roadbooks/18/rb017.png".to_string(),
-            "https://map.rostexcabinet.ru/upload/roadbooks/18/rb018.png".to_string(),
+            RBSlide {
+                url: "https://map.rostexcabinet.ru/upload/roadbooks/18/rb001.png".to_string(),
+                odo: 0,
+            },
+            RBSlide {
+                url: "https://map.rostexcabinet.ru/upload/roadbooks/18/rb002.png".to_string(),
+                odo: 0,
+            },
+            RBSlide {
+                url: "https://map.rostexcabinet.ru/upload/roadbooks/18/rb003.png".to_string(),
+                odo: 1350,
+            },
+            RBSlide {
+                url: "https://map.rostexcabinet.ru/upload/roadbooks/18/rb004.png".to_string(),
+                odo:2980,
+            },
+            RBSlide {
+                url: "https://map.rostexcabinet.ru/upload/roadbooks/18/rb005.png".to_string(),
+                odo: 4590,
+            },
+            RBSlide {
+                url: "https://map.rostexcabinet.ru/upload/roadbooks/18/rb006.png".to_string(),
+                odo: 5170,
+            },
+            RBSlide {
+                url: "https://map.rostexcabinet.ru/upload/roadbooks/18/rb007.png".to_string(),
+                odo: 5990,
+            },
+            RBSlide {
+                url: "https://map.rostexcabinet.ru/upload/roadbooks/18/rb008.png".to_string(),
+                odo: 6835,
+            },
+            RBSlide {
+                url: "https://map.rostexcabinet.ru/upload/roadbooks/18/rb009.png".to_string(),
+                odo: 7620,
+            },
+            RBSlide {
+                url: "https://map.rostexcabinet.ru/upload/roadbooks/18/rb010.png".to_string(),
+                odo: 8175,
+            },
+            RBSlide {
+                url: "https://map.rostexcabinet.ru/upload/roadbooks/18/rb011.png".to_string(),
+                odo: 8840,
+            },
+            RBSlide {
+                url: "https://map.rostexcabinet.ru/upload/roadbooks/18/rb012.png".to_string(),
+                odo: 9780,
+            },
+            RBSlide {
+                url: "https://map.rostexcabinet.ru/upload/roadbooks/18/rb013.png".to_string(),
+                odo: 10450,
+            },
+            RBSlide {
+                url: "https://map.rostexcabinet.ru/upload/roadbooks/18/rb014.png".to_string(),
+                odo: 11260,
+            },
+            RBSlide {
+                url: "https://map.rostexcabinet.ru/upload/roadbooks/18/rb015.png".to_string(),
+                odo: 12100,
+            },
+            RBSlide {
+                url: "https://map.rostexcabinet.ru/upload/roadbooks/18/rb016.png".to_string(),
+                odo: 12830,
+            },
+            RBSlide {
+                url: "https://map.rostexcabinet.ru/upload/roadbooks/18/rb017.png".to_string(),
+                odo: 13510,
+            },
+            RBSlide {
+                url: "https://map.rostexcabinet.ru/upload/roadbooks/18/rb018.png".to_string(),
+                odo: 14010,
+            }
         ],
     });
 
@@ -394,24 +448,78 @@ fn test_structs() {
                 .build(),
         ],
         roadbook: vec![
-            "https://map.rostexcabinet.ru/upload/roadbooks/19/rb002.png".to_string(),
-            "https://map.rostexcabinet.ru/upload/roadbooks/19/rb003.png".to_string(),
-            "https://map.rostexcabinet.ru/upload/roadbooks/19/rb001.png".to_string(),
-            "https://map.rostexcabinet.ru/upload/roadbooks/19/rb005.png".to_string(),
-            "https://map.rostexcabinet.ru/upload/roadbooks/19/rb006.png".to_string(),
-            "https://map.rostexcabinet.ru/upload/roadbooks/19/rb004.png".to_string(),
-            "https://map.rostexcabinet.ru/upload/roadbooks/19/rb007.png".to_string(),
-            "https://map.rostexcabinet.ru/upload/roadbooks/19/rb008.png".to_string(),
-            "https://map.rostexcabinet.ru/upload/roadbooks/19/rb009.png".to_string(),
-            "https://map.rostexcabinet.ru/upload/roadbooks/19/rb010.png".to_string(),
-            "https://map.rostexcabinet.ru/upload/roadbooks/19/rb011.png".to_string(),
-            "https://map.rostexcabinet.ru/upload/roadbooks/19/rb012.png".to_string(),
-            "https://map.rostexcabinet.ru/upload/roadbooks/19/rb013.png".to_string(),
-            "https://map.rostexcabinet.ru/upload/roadbooks/19/rb014.png".to_string(),
-            "https://map.rostexcabinet.ru/upload/roadbooks/19/rb015.png".to_string(),
-            "https://map.rostexcabinet.ru/upload/roadbooks/19/rb016.png".to_string(),
-            "https://map.rostexcabinet.ru/upload/roadbooks/19/rb017.png".to_string(),
-            "https://map.rostexcabinet.ru/upload/roadbooks/19/rb018.png".to_string(),
+            RBSlide {
+                url: "https://map.rostexcabinet.ru/upload/roadbooks/18/rb001.png".to_string(),
+                odo: 0,
+            },
+            RBSlide {
+                url: "https://map.rostexcabinet.ru/upload/roadbooks/18/rb002.png".to_string(),
+                odo: 0,
+            },
+            RBSlide {
+                url: "https://map.rostexcabinet.ru/upload/roadbooks/18/rb003.png".to_string(),
+                odo: 1350,
+            },
+            RBSlide {
+                url: "https://map.rostexcabinet.ru/upload/roadbooks/18/rb004.png".to_string(),
+                odo:2980,
+            },
+            RBSlide {
+                url: "https://map.rostexcabinet.ru/upload/roadbooks/18/rb005.png".to_string(),
+                odo: 4590,
+            },
+            RBSlide {
+                url: "https://map.rostexcabinet.ru/upload/roadbooks/18/rb006.png".to_string(),
+                odo: 5170,
+            },
+            RBSlide {
+                url: "https://map.rostexcabinet.ru/upload/roadbooks/18/rb007.png".to_string(),
+                odo: 5990,
+            },
+            RBSlide {
+                url: "https://map.rostexcabinet.ru/upload/roadbooks/18/rb008.png".to_string(),
+                odo: 6835,
+            },
+            RBSlide {
+                url: "https://map.rostexcabinet.ru/upload/roadbooks/18/rb009.png".to_string(),
+                odo: 7620,
+            },
+            RBSlide {
+                url: "https://map.rostexcabinet.ru/upload/roadbooks/18/rb010.png".to_string(),
+                odo: 8175,
+            },
+            RBSlide {
+                url: "https://map.rostexcabinet.ru/upload/roadbooks/18/rb011.png".to_string(),
+                odo: 8840,
+            },
+            RBSlide {
+                url: "https://map.rostexcabinet.ru/upload/roadbooks/18/rb012.png".to_string(),
+                odo: 9780,
+            },
+            RBSlide {
+                url: "https://map.rostexcabinet.ru/upload/roadbooks/18/rb013.png".to_string(),
+                odo: 10450,
+            },
+            RBSlide {
+                url: "https://map.rostexcabinet.ru/upload/roadbooks/18/rb014.png".to_string(),
+                odo: 11260,
+            },
+            RBSlide {
+                url: "https://map.rostexcabinet.ru/upload/roadbooks/18/rb015.png".to_string(),
+                odo: 12100,
+            },
+            RBSlide {
+                url: "https://map.rostexcabinet.ru/upload/roadbooks/18/rb016.png".to_string(),
+                odo: 12830,
+            },
+            RBSlide {
+                url: "https://map.rostexcabinet.ru/upload/roadbooks/18/rb017.png".to_string(),
+                odo: 13510,
+            },
+            RBSlide {
+                url: "https://map.rostexcabinet.ru/upload/roadbooks/18/rb018.png".to_string(),
+                odo: 14010,
+            }
         ],
     });
 

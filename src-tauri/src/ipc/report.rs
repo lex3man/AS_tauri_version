@@ -4,14 +4,14 @@ use chrono::{DateTime, Local, TimeZone, Utc};
 use rust_xlsxwriter::workbook::Workbook;
 use tauri::{Manager, State};
 
-use crate::state::AppState;
+use crate::{state::AppState, utils::send_data::send_report};
 
 #[tauri::command]
-pub async fn export_telemetry_report<R: tauri::Runtime>(
-    app: tauri::AppHandle<R>,
+pub async fn export_telemetry_report(
+    app: tauri::AppHandle,
     state: State<'_, Mutex<AppState>>,
 ) -> Result<String, String> {
-    if let Ok(state) = state.lock() {
+    if let Ok(mut state) = state.lock() {
         let ps = app.path().document_dir().map_err(|e| e.to_string())?;
         let file_name = format!(
             "report_{}_{}_{}.xlsx",
@@ -57,6 +57,10 @@ pub async fn export_telemetry_report<R: tauri::Runtime>(
                     sheet
                         .write(7, 1, telemetry.speed_exceeds.len() as u32)
                         .map_err(|e| e.to_string())?;
+                    sheet.write(7, 0, "Absolute total").map_err(|e| e.to_string())?;
+                    sheet
+                        .write(7, 1, (state.dashboard.metrics.abs_total as u32 / 10) as f32 / 100.0)
+                        .map_err(|e| e.to_string())?;
                 }
 
                 {
@@ -87,6 +91,7 @@ pub async fn export_telemetry_report<R: tauri::Runtime>(
                     sheet.write(0, 1, "Type").map_err(|e| e.to_string())?;
                     sheet.write(0, 2, "Time").map_err(|e| e.to_string())?;
                     sheet.write(0, 3, "Speed").map_err(|e| e.to_string())?;
+                    sheet.write(0, 4, "Odo").map_err(|e| e.to_string())?;
 
                     for (row, capture) in telemetry.captures.iter().enumerate() {
                         let r = (row + 1) as u32;
@@ -104,13 +109,25 @@ pub async fn export_telemetry_report<R: tauri::Runtime>(
                         sheet
                             .write(r, 3, capture.speed)
                             .map_err(|e| e.to_string())?;
+                        sheet
+                            .write(r, 4, capture.odo)
+                            .map_err(|e| e.to_string())?;
                     }
                 }
-
                 workbook.save(&output_path).map_err(|e| e.to_string())?;
+                state.report_sent = Local::now().format("%d.%m.%Y %H:%M:%S").to_string();
             }
         }
+        send_report(&app, state.last_report.clone()).map_err(|_| "Can't send report".to_string())?;
         return Ok(output_path.to_str().unwrap().to_string());
     }
-    Err("Faild to get state".to_string())
+    Err("Failed to get state".to_string())
+}
+
+#[tauri::command]
+pub fn get_report_sent_time(state: State<'_, Mutex<AppState>>) -> Result<String, String> {
+    if let Ok(state) = state.lock() {
+        return Ok(state.report_sent.clone().replace("\"", "").replace("\\", ""));
+    }
+    Err("Failed to get state".to_string())
 }

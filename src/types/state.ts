@@ -57,6 +57,26 @@ export type CheckPoint = {
     next: boolean;
 };
 
+type Flags = {
+    isOpen: boolean;
+    isGhost: boolean;
+    inGame: boolean;
+}
+
+export type PointDebugInfo = {
+    num: number;
+    name: string;
+    lat: number;
+    lon: number;
+    odo: number;
+    point_type: string;
+    capture_radius: number;
+    visible_radius: number;
+    countdown: number;
+    speed_limit: number;
+    flags: Flags;
+}
+
 export type TelemetryData = {
     race_number: string;
     device_id: string;

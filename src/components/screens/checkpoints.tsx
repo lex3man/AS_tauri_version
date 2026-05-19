@@ -5,7 +5,7 @@ import { CheckPoint } from "@/types/state";
 import { invoke } from "@tauri-apps/api/core";
 
 const CheckPoints = () => {
-  const { callView, mobileView } = useAppState();
+  const { callView, mobileView, adminMode, speed } = useAppState();
   const [points, setPoints] = useState<CheckPoint[]>([]);
   // const [raw, setRaw] = useState<string>("");
   const [raceInfo, setRaceInfo] = useState({
@@ -13,6 +13,7 @@ const CheckPoints = () => {
     serial: "",
     raceNumber: "",
     raceCode: "",
+    updateTime: "",
   });
 
   useEffect(() => {
@@ -25,24 +26,26 @@ const CheckPoints = () => {
 
       const raceInfoRaw = await invoke<string>("get_race_info");
       setRaceInfo({
-        name: raceInfoRaw.split("-")[0],
-        serial: raceInfoRaw.split("-")[1],
-        raceNumber: raceInfoRaw.split("-")[2],
-        raceCode: raceInfoRaw.split("-")[3],
+        name: raceInfoRaw.split("=")[0],
+        serial: raceInfoRaw.split("=")[1],
+        raceNumber: raceInfoRaw.split("=")[2],
+        raceCode: raceInfoRaw.split("=")[3],
+        updateTime: raceInfoRaw.split("=")[4],
       });
     };
     getPoints();
-  }, []);
+  }, [speed]);
 
   return (
     <div>
       <div className="flex justify-end">
-        <div className="flex justify-start w-1/3 pt-5">
-          <div className="flex flex-col p-8">
+        <div className="flex justify-start w-1/3">
+          <div className="flex flex-col p-5">
             <span>RACE NUMBER: {raceInfo.raceNumber}</span>
             <span>SERIAL: {raceInfo.serial}</span>
             <span>EVENT NAME: {raceInfo.name}</span>
             <span>ROUTE: {raceInfo.raceCode}</span>
+            <span>CONFIG UPDATED: {raceInfo.updateTime}</span>
           </div>
         </div>
         <div className="flex flex-col m-auto justify-center w-1/3 pt-5">
@@ -57,7 +60,7 @@ const CheckPoints = () => {
         </div>
         <div className="flex flex-col pt-5 pr-5 justify-start w-1/3">
           <Button
-            className="p-7 text-2xl"
+            className="p-7 text-xl"
             onClick={() => {
               callView("navigate");
             }}
@@ -65,13 +68,23 @@ const CheckPoints = () => {
             BACK
           </Button>
           <Button
-            className="p-7 text-2xl"
+            className="p-7 text-xl"
             onClick={() => {
               callView("exceeds");
             }}
           >
             EXCEEDS
           </Button>
+          {adminMode && 
+            <Button
+              className="p-7 text-xl"
+              onClick={() => {
+                callView("points-list");
+              }}
+            >
+              POINTS LIST
+            </Button>
+          }
         </div>
       </div>
       <div

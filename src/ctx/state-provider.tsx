@@ -77,6 +77,10 @@ type AppStateProviderState = {
   telemetry: TelemetryData[];
   captured: boolean;
   trackPoints: Coords[];
+  oncomingDistance: number;
+  isOncoming: boolean;
+
+  reportSentTime: string;
 
   setRaceNumber: (rn: string) => void;
   setRoadbookMode: (status: boolean) => void;
@@ -119,6 +123,11 @@ type AppStateProviderState = {
   setCountdown: (val: number) => void;
   setTime: (val: string) => void;
   setGPSData: (data: GPSData) => void;
+  setReportSentTime: (val: string) => void;
+  resetOncomingDistance: () => void;
+  increaseOncomingDistance: (val: number) => void;
+  setIsOncoming: (status: boolean) => void;
+  sync: () => void;
 };
 
 const initialState: AppStateProviderState = {
@@ -178,6 +187,10 @@ const initialState: AppStateProviderState = {
   speedExceeds: "",
   captured: false,
   trackPoints: [],
+
+  reportSentTime: "",
+  oncomingDistance: 0,
+  isOncoming: false,
 
   dashBoard: {
     cog: 0,
@@ -239,6 +252,11 @@ const initialState: AppStateProviderState = {
   setCountdown: () => null,
   setTime: () => null,
   setGPSData: () => null,
+  setReportSentTime: () => null,
+  resetOncomingDistance: () => null,
+  increaseOncomingDistance: () => null,
+  setIsOncoming: () => null,
+  sync: () => null,
 };
 
 const AppStateProviderContext =
@@ -300,6 +318,7 @@ export function StateProvider({
     heading: 0,
     timestamp: 0,
   });
+  const [reportSentTime, setReportSentTime] = useState("");
 
   // roadbook
   const [rbSlides, setRBSlides] = useState<RoadbookSlide[]>([]);
@@ -318,6 +337,12 @@ export function StateProvider({
   const [gpsAccurancy, setGpsAccuracy] = useState(5);
   const [batteryLevel, setBatteryLevel] = useState(100);
   const [charging, setCharging] = useState(false);
+  const [oncomingDistance, setOncomingDistance] = useState(0);
+  const [isOncoming, setIsOncoming] = useState(false);
+
+  const resetOncomingDistance = () => setOncomingDistance(0);
+  const increaseOncomingDistance = (val: number) =>
+    setOncomingDistance((prev) => prev + val);
 
   // sync state
   const [dashBoard, setDB] = useState<DashBoard>({
@@ -346,12 +371,13 @@ export function StateProvider({
 
   let screenState = new Viewports();
 
-  useEffect(() => {
-    const getState = async () => {
-      const rawState = await invoke<string>("get_snapshot");
+  const sync = async () => {
+    const rawState = await invoke<string>("get_snapshot");
       if (rawState) {
         const state: AppState = parseState(rawState);
-        setRN(state.raceNumber);
+        if (state.raceNumber !== null) {
+          setRN(state.raceNumber);
+        }
         setNM(state.navMode);
         setDB(state.dashBoard);
         setAVP(state.activeViewPort);
@@ -364,8 +390,9 @@ export function StateProvider({
         setDtw(state.dashBoard.dtw);
         setCpCounter(state.dashBoard.metrics.cpCounter);
       }
-    };
+  }
 
+  useEffect(() => {
     const fetchRoadbook = async () => {
       const slidesList: RoadbookSlide[] = JSON.parse(
         await invoke("get_roadbook"),
@@ -374,7 +401,7 @@ export function StateProvider({
     };
 
     fetchRoadbook();
-    getState();
+    sync();
   }, []);
 
   useEffect(() => {
@@ -407,6 +434,12 @@ export function StateProvider({
     adminCheck();
     setCurrentRBIndex(0);
   }, [coad]);
+
+  useEffect(() => {
+    if (isOncoming) {
+      increaseOncomingDistance(speed / 3.6);
+    }
+  }, [isOncoming, speed]);
 
   useEffect(() => {
     const loadImages = async () => {
@@ -514,16 +547,16 @@ export function StateProvider({
     request_config(device.uuid as string)
       .then(async (resp) => {
         if (resp) {
-          await invoke<string>("activate_code", { code: code });
-          toast.success(`Config updated`, {
+          const r = await invoke<string>("activate_code", { code: code });
+          toast.success(`${r}`, {
             position: "bottom-center",
             duration: 5000,
           });
         }
       })
       .catch(async (_) => {
-        await invoke<string>("activate_code", { code: code });
-        toast.error(`Loaded config without update`, {
+        const r = await invoke<string>("activate_code", { code: code });
+        toast.error(`There's no update! ${r}`, {
           position: "bottom-center",
           duration: 5000,
         });
@@ -716,6 +749,10 @@ export function StateProvider({
     batteryLevel,
     charging,
 
+    reportSentTime,
+    oncomingDistance,
+    isOncoming,
+
     setRaceNumber,
     setDebugData,
     callView,
@@ -754,6 +791,11 @@ export function StateProvider({
     setCountdown,
     setTime,
     setGPSData,
+    setReportSentTime,
+    resetOncomingDistance,
+    increaseOncomingDistance,
+    setIsOncoming,
+    sync,
   };
 
   return (
