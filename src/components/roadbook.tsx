@@ -4,6 +4,7 @@ import { RoadbookSlide, ImageData } from "@/types/roadbook";
 import { useGamepads } from "react-gamepads";
 import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
+// import { useSettings } from "@/ctx/settings-provider";
 
 export const RoadbookSlides = () => {
   const {
@@ -18,6 +19,7 @@ export const RoadbookSlides = () => {
     setNextPointName,
     setPartial,
   } = useAppState();
+  // const { autoMove } = useSettings();
   const [gamepads, setGamepads] = useState({});
   useGamepads((gamepads) => setGamepads(gamepads));
 

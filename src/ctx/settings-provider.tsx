@@ -21,6 +21,7 @@ function parseSettings(json: string): Settings {
     track_distance: number;
     oncoming_angle: number;
     oncoming_detection: number;
+    autoMove: boolean;
   };
 
   return {
@@ -34,6 +35,7 @@ function parseSettings(json: string): Settings {
     roadbookMode: parsed.road_book,
     oncomingAngle: parsed.oncoming_angle,
     oncomingDetection: parsed.oncoming_detection,
+    autoMove: parsed.autoMove,
   };
 }
 
@@ -48,12 +50,14 @@ type SettingsProviderState = {
   roadbookMode: boolean;
   oncomingAngle: number;
   oncomingDetection: number;
+  autoMove: boolean;
   setShowBackground: (status: boolean) => void;
   setDtwEnable: (status: boolean) => void;
   setDarkMode: (status: boolean) => void;
   setDemoMode: (status: boolean) => void;
   setJumpMode: (status: boolean) => void;
   setRoadbookMode: (status: boolean) => void;
+  setAutoMove: (status: boolean) => void;
   increaseDistStep: () => void;
   decreaseDistStep: () => void;
   increaseTrackDist: () => void;
@@ -76,6 +80,7 @@ const initialState: SettingsProviderState = {
   roadbookMode: false,
   oncomingAngle: 60,
   oncomingDetection: 300,
+  autoMove: true,
 
   setShowBackground: () => null,
   setDtwEnable: () => null,
@@ -83,6 +88,7 @@ const initialState: SettingsProviderState = {
   setDemoMode: () => null,
   setJumpMode: () => null,
   setRoadbookMode: () => null,
+  setAutoMove: () => null,
   increaseDistStep: () => null,
   decreaseDistStep: () => null,
   increaseTrackDist: () => null,
@@ -110,6 +116,7 @@ export function SettingsProvider({
   const [demoMode, setDemoMode] = useState(false);
   const [jumpMode, setJumpMode] = useState(false);
   const [roadbookMode, setRoadbookMode] = useState(false);
+  const [autoMove, setAutoMove] = useState(true);
   const [oncomingAngle, setOncomingAngle] = useState(60);
   const [oncomingDetection, setOncomingDetection] = useState(300);
   const { setTheme } = useTheme();
@@ -224,12 +231,14 @@ export function SettingsProvider({
     roadbookMode,
     oncomingAngle,
     oncomingDetection,
+    autoMove,
     setDarkMode,
     setShowBackground,
     setDtwEnable,
     setDemoMode,
     setJumpMode,
     setRoadbookMode,
+    setAutoMove,
     increaseDistStep,
     decreaseDistStep,
     increaseTrackDist,

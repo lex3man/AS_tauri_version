@@ -4,7 +4,7 @@ use chrono::{DateTime, Local, TimeZone, Utc};
 use rust_xlsxwriter::workbook::Workbook;
 use tauri::{Manager, State};
 
-use crate::{state::AppState, utils::send_data::send_report};
+use crate::{state::AppState, utils::send_data::{send_collected, send_report}};
 
 #[tauri::command]
 pub async fn export_telemetry_report(
@@ -118,7 +118,22 @@ pub async fn export_telemetry_report(
                 state.report_sent = Local::now().format("%d.%m.%Y %H:%M:%S").to_string();
             }
         }
-        send_report(&app, state.last_report.clone()).map_err(|_| "Can't send report".to_string())?;
+        match send_report(&app, state.last_report.clone()).map_err(|_| "Can't send report".to_string()) {
+            Ok(_) => {
+                println!("Report sent!!!");
+            }
+            Err(_) => {
+                println!("Report sending faild!!!");
+            }
+        }
+        match send_collected(&app, state.collected.clone()) {
+            Ok(_) => {
+                println!("Collected data sent!!!");
+            }
+            Err(_) => {
+                println!("Collected data sending faild!!!");
+            }
+        }
         return Ok(output_path.to_str().unwrap().to_string());
     }
     Err("Failed to get state".to_string())

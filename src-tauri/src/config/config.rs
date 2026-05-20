@@ -18,6 +18,7 @@ pub struct Config {
     dtw_enabled: bool,
     oncoming_angle: u16,
     oncoming_detection: u32,
+    auto_move: bool,
 }
 
 impl Config {
@@ -33,6 +34,7 @@ impl Config {
             dtw_enabled: true,
             oncoming_angle: 60,
             oncoming_detection: 300,
+            auto_move: true,
         }
     }
 

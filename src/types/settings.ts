@@ -11,4 +11,5 @@ export type Settings = {
     roadbookMode: boolean;
     oncomingAngle: number;
     oncomingDetection: number;
+    autoMove: boolean;
 }
