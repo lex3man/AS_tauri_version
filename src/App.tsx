@@ -116,7 +116,7 @@ function App() {
           setCoords(coords);
           invoke<string>("sync_data")
             .then((rawData) => {
-              setDebugData(rawData);
+              // setDebugData(rawData);
               const data = JSON.parse(rawData);
               setCaptured(false);
               if (data.capture) {

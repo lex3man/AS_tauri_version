@@ -4,22 +4,24 @@ import { RoadbookSlide, ImageData } from "@/types/roadbook";
 import { useGamepads } from "react-gamepads";
 import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
-// import { useSettings } from "@/ctx/settings-provider";
+import { useSettings } from "@/ctx/settings-provider";
 
 export const RoadbookSlides = () => {
   const {
     mobileView,
     rbSlides,
     rbImages,
+    total,
     setRBSlides,
     currentRBIndex,
+    setCurrentRBIndex,
     goNext,
     goPrev,
     setNextPointNumber,
     setNextPointName,
     setPartial,
   } = useAppState();
-  // const { autoMove } = useSettings();
+  const { autoMove } = useSettings();
   const [gamepads, setGamepads] = useState({});
   useGamepads((gamepads) => setGamepads(gamepads));
 
@@ -34,6 +36,18 @@ export const RoadbookSlides = () => {
       setRBSlides([...rbSlides]);
     }
   };
+
+  useEffect(() => {
+    if (!autoMove) return;
+    if (rbSlides.length === 0) return;
+    let diff = Math.abs(rbSlides[0].odo - total * 1000);
+    rbSlides.forEach((slide, index) => {
+      if (Math.abs(slide.odo - total * 1000) < diff) {
+        diff = Math.abs(slide.odo - total * 1000);
+        setCurrentRBIndex(index);
+      }
+    });
+  }, [total]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -173,8 +187,8 @@ export const RoadbookSlides = () => {
         onDoubleClick={handleMark}
       >
         {rbSlides.length > 0 &&
-        currentRBIndex >= 0 &&
-        currentRBIndex < rbSlides.length ? (
+          currentRBIndex >= 0 &&
+          currentRBIndex < rbSlides.length ? (
           (() => {
             const slide = rbSlides[currentRBIndex];
             const key = `${slide.subdir}/${slide.name}`;

@@ -18,6 +18,7 @@ pub struct Config {
     dtw_enabled: bool,
     oncoming_angle: u16,
     oncoming_detection: u32,
+    oncoming_detection_enabled: bool,
     auto_move: bool,
 }
 
@@ -34,24 +35,38 @@ impl Config {
             dtw_enabled: true,
             oncoming_angle: 60,
             oncoming_detection: 300,
+            oncoming_detection_enabled: true,
             auto_move: true,
         }
     }
 
-    pub fn theme_switch(&mut self) {
-        self.dark_mode = !self.dark_mode
+    pub fn auto_move_switch(&mut self) -> bool {
+        self.auto_move = !self.auto_move;
+        self.auto_move
     }
 
-    pub fn background_switch(&mut self) {
-        self.background = !self.background
+    pub fn oncoming_detection_switch(&mut self) -> bool {
+        self.oncoming_detection_enabled = !self.oncoming_detection_enabled;
+        self.oncoming_detection_enabled
+    }
+    
+    pub fn theme_switch(&mut self) -> bool {
+        self.dark_mode = !self.dark_mode;
+        self.dark_mode
     }
 
-    pub fn jump_mode_switch(&mut self, status: &str) {
+    pub fn background_switch(&mut self) -> bool {
+        self.background = !self.background;
+        self.background
+    }
+
+    pub fn jump_mode_switch(&mut self, status: &str) -> bool {
         match status {
             "on" => self.jump_mode = true,
             "off" => self.jump_mode = false,
             _ => self.jump_mode = false,
         }
+        self.jump_mode
     }
 
     pub fn increase_dist(&mut self) {

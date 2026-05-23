@@ -469,6 +469,13 @@ export function StateProvider({
       setBatteryLevel(battery.level ? battery.level : 0);
       setCharging(battery.isCharging ? battery.isCharging : false);
     };
+
+    const look_for_settings = async () => {
+      const config = await invoke<string>("get_settings");
+      setDebugData(config);
+    }
+
+    look_for_settings();
     batteryCheck();
   }, [speed]);
 

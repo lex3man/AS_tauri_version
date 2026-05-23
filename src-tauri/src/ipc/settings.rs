@@ -32,7 +32,61 @@ pub async fn switch_background(state: State<'_, Mutex<AppState>>) -> Result<(), 
 #[tauri::command]
 pub async fn switch_theme(state: State<'_, Mutex<AppState>>) -> Result<(), ()> {
     if let Ok(mut s) = state.lock() {
-        s.settings.theme_switch();
+        let _ = s.settings.theme_switch();
+        if let Some(storage) = &s.storage {
+            storage.set("settings", json!(s.settings));
+            storage.close_resource();
+        }
+    };
+    Ok(())
+}
+
+#[tauri::command]
+pub fn switch_jump_mode(state: State<'_, Mutex<AppState>>, status: &str) -> Result<(), ()> {
+    if let Ok(mut s) = state.lock() {
+        s.settings.jump_mode_switch(status);
+        if let Some(storage) = &s.storage {
+            storage.set("settings", json!(s.settings));
+            storage.close_resource();
+        }
+    };
+    Ok(())
+}
+
+#[tauri::command]
+pub fn switch_oncoming_mode(state: State<'_, Mutex<AppState>>, status: &str) -> Result<(), ()> {
+    if let Ok(mut s) = state.lock() {
+        let new_state = s.settings.oncoming_detection_switch();
+        match status {
+            "on" => if !new_state {
+                s.settings.oncoming_detection_switch();
+            },
+            "off" => if new_state {
+                s.settings.oncoming_detection_switch();
+            },
+            _ => {}
+        }
+        if let Some(storage) = &s.storage {
+            storage.set("settings", json!(s.settings));
+            storage.close_resource();
+        }
+    };
+    Ok(())
+}
+
+#[tauri::command]
+pub fn switch_auto_move(state: State<'_, Mutex<AppState>>, status: &str) -> Result<(), ()> {
+    if let Ok(mut s) = state.lock() {
+        let new_state = s.settings.auto_move_switch();
+        match status {
+            "on" => if !new_state {
+                s.settings.auto_move_switch();
+            },
+            "off" => if new_state {
+                s.settings.auto_move_switch();
+            },
+            _ => {}
+        }
         if let Some(storage) = &s.storage {
             storage.set("settings", json!(s.settings));
             storage.close_resource();
@@ -53,6 +107,10 @@ pub fn set_dist_step(state: State<'_, Mutex<AppState>>, c: &str) -> Result<(), (
             }
             _ => {}
         }
+        if let Some(storage) = &state.storage {
+            storage.set("settings", json!(state.settings));
+            storage.close_resource();
+        }
         return Ok(());
     }
     Err(())
@@ -70,6 +128,10 @@ pub fn set_track_dist(state: State<'_, Mutex<AppState>>, c: &str) -> Result<(), 
             }
             _ => {}
         }
+        if let Some(storage) = &state.storage {
+            storage.set("settings", json!(state.settings));
+            storage.close_resource();
+        }
         return Ok(());
     }
     Err(())
@@ -79,6 +141,10 @@ pub fn set_track_dist(state: State<'_, Mutex<AppState>>, c: &str) -> Result<(), 
 pub fn increase_angle(state: State<'_, Mutex<AppState>>) -> Result<(), ()> {
     if let Ok(mut state) = state.lock() {
         state.settings.increase_oncoming_angle();
+        if let Some(storage) = &state.storage {
+            storage.set("settings", json!(state.settings));
+            storage.close_resource();
+        }
         return Ok(());
     }
     Err(())
@@ -88,6 +154,10 @@ pub fn increase_angle(state: State<'_, Mutex<AppState>>) -> Result<(), ()> {
 pub fn decrease_angle(state: State<'_, Mutex<AppState>>) -> Result<(), ()> {
     if let Ok(mut state) = state.lock() {
         state.settings.decrease_oncoming_angle();
+        if let Some(storage) = &state.storage {
+            storage.set("settings", json!(state.settings));
+            storage.close_resource();
+        }
         return Ok(());
     }
     Err(())
@@ -97,6 +167,10 @@ pub fn decrease_angle(state: State<'_, Mutex<AppState>>) -> Result<(), ()> {
 pub fn increase_detection(state: State<'_, Mutex<AppState>>) -> Result<(), ()> {
     if let Ok(mut state) = state.lock() {
         state.settings.increase_oncoming_detection();
+        if let Some(storage) = &state.storage {
+            storage.set("settings", json!(state.settings));
+            storage.close_resource();
+        }
         return Ok(());
     }
     Err(())
@@ -106,6 +180,10 @@ pub fn increase_detection(state: State<'_, Mutex<AppState>>) -> Result<(), ()> {
 pub fn decrease_detection(state: State<'_, Mutex<AppState>>) -> Result<(), ()> {
     if let Ok(mut state) = state.lock() {
         state.settings.decrease_oncoming_detection();
+        if let Some(storage) = &state.storage {
+            storage.set("settings", json!(state.settings));
+            storage.close_resource();
+        }
         return Ok(());
     }
     Err(())

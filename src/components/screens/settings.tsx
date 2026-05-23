@@ -40,6 +40,10 @@ const Settings = () => {
     increaseTrackDist,
     decreaseTrackDist,
     oncomingAngle,
+    oncomingDetectionEnabled,
+    setOncomingDetectionEnabled,
+    autoMove,
+    setAutoMove,
     increaseOncomingAngle,
     decreaseOncomingAngle,
     oncomingDetection,
@@ -109,6 +113,18 @@ const Settings = () => {
             }}
           >
             Background ON/OFF
+          </Button>
+          <Button
+            className={`p-6 text-2xl ${autoMove ? "bg-emerald-600" : "bg-red-500"}`}
+            onClick={() => {
+              if (autoMove) {
+                setAutoMove(false);
+              } else {
+                setAutoMove(true);
+              }
+            }}
+          >
+            Auto RB Move ON/OFF
           </Button>
           <Button
             className={`p-6 text-2xl ${jumpMode ? "bg-emerald-600" : "bg-red-500"}`}
@@ -216,6 +232,14 @@ const Settings = () => {
             </div>
             <div className="flex flex-col"></div>
           </div>
+          {adminMode && (
+            <Button
+              className={`p-6 text-2xl ${oncomingDetectionEnabled ? "bg-emerald-600" : "bg-red-500"}`}
+              onClick={() => setOncomingDetectionEnabled(!oncomingDetectionEnabled)}
+            >
+              Oncoming Detection ON/OFF
+            </Button>
+          )}
           {adminMode && (
             <div
               className={`flex ${roadbookMode && mobileView ? "flex-col justify-center gap-5 items-center" : "justify-between pt-5"}`}

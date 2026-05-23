@@ -21,7 +21,8 @@ function parseSettings(json: string): Settings {
     track_distance: number;
     oncoming_angle: number;
     oncoming_detection: number;
-    autoMove: boolean;
+    oncoming_detection_enabled: boolean;
+    auto_move: boolean;
   };
 
   return {
@@ -35,7 +36,8 @@ function parseSettings(json: string): Settings {
     roadbookMode: parsed.road_book,
     oncomingAngle: parsed.oncoming_angle,
     oncomingDetection: parsed.oncoming_detection,
-    autoMove: parsed.autoMove,
+    oncomingDetectionEnabled: parsed.oncoming_detection_enabled,
+    autoMove: parsed.auto_move,
   };
 }
 
@@ -50,6 +52,7 @@ type SettingsProviderState = {
   roadbookMode: boolean;
   oncomingAngle: number;
   oncomingDetection: number;
+  oncomingDetectionEnabled: boolean;
   autoMove: boolean;
   setShowBackground: (status: boolean) => void;
   setDtwEnable: (status: boolean) => void;
@@ -66,6 +69,7 @@ type SettingsProviderState = {
   decreaseOncomingAngle: () => void;
   increaseOncomingDetection: () => void;
   decreaseOncomingDetection: () => void;
+  setOncomingDetectionEnabled: (status: boolean) => void;
   getSettings: () => void;
 };
 
@@ -80,6 +84,7 @@ const initialState: SettingsProviderState = {
   roadbookMode: false,
   oncomingAngle: 60,
   oncomingDetection: 300,
+  oncomingDetectionEnabled: true,
   autoMove: true,
 
   setShowBackground: () => null,
@@ -97,6 +102,7 @@ const initialState: SettingsProviderState = {
   decreaseOncomingAngle: () => null,
   increaseOncomingDetection: () => null,
   decreaseOncomingDetection: () => null,
+  setOncomingDetectionEnabled: () => null,
   getSettings: () => null,
 };
 
@@ -116,9 +122,10 @@ export function SettingsProvider({
   const [demoMode, setDemoMode] = useState(false);
   const [jumpMode, setJumpMode] = useState(false);
   const [roadbookMode, setRoadbookMode] = useState(false);
-  const [autoMove, setAutoMove] = useState(true);
+  const [autoMove, setRBAutoMove] = useState(true);
   const [oncomingAngle, setOncomingAngle] = useState(60);
   const [oncomingDetection, setOncomingDetection] = useState(300);
+  const [oncomingDetectionEnabled, setOncomingDE] = useState(true);
   const { setTheme } = useTheme();
 
   const getSettings = () => {
@@ -135,9 +142,13 @@ export function SettingsProvider({
       setDemoMode(settings.demoMode);
       setJumpMode(settings.jumpMode);
       setRoadbookMode(settings.roadbookMode);
-    }
+      setOncomingDE(settings.oncomingDetectionEnabled);
+      setOncomingAngle(settings.oncomingAngle);
+      setOncomingDetection(settings.oncomingDetection);
+      setRBAutoMove(settings.autoMove);
+    };
     update();
-  }
+  };
 
   useEffect(() => {
     getSettings();
@@ -231,14 +242,27 @@ export function SettingsProvider({
     roadbookMode,
     oncomingAngle,
     oncomingDetection,
+    oncomingDetectionEnabled,
     autoMove,
     setDarkMode,
     setShowBackground,
     setDtwEnable,
     setDemoMode,
-    setJumpMode,
+    setJumpMode: (status: boolean) => {
+      const save = async () => await invoke("switch_jump_mode", { status });
+      if (jumpMode != status) {
+        save();
+      }
+      setJumpMode(status);
+    },
     setRoadbookMode,
-    setAutoMove,
+    setAutoMove: (status: boolean) => {
+      const save = async () => await invoke("switch_auto_move", { status });
+      if (autoMove != status) {
+        save();
+      }
+      setRBAutoMove(status);
+    },
     increaseDistStep,
     decreaseDistStep,
     increaseTrackDist,
@@ -247,6 +271,13 @@ export function SettingsProvider({
     decreaseOncomingAngle,
     increaseOncomingDetection,
     decreaseOncomingDetection,
+    setOncomingDetectionEnabled: (status: boolean) => {
+      const save = async () => await invoke("switch_oncoming_mode", { status });
+      if (oncomingDetectionEnabled != status) {
+        save();
+      }
+      setOncomingDE(status);
+    },
     getSettings,
   };
 
