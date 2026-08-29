@@ -58,6 +58,9 @@ pub struct Flags {
     pub capture: bool,
     pub finished: bool,
     pub oncoming: bool,
+    // Level flag — recomputed every tick from already-checked RBP/DSS
+    // points, not a one-shot capture pulse (see actor.rs).
+    pub roadbook_unlocked: bool,
     pub _gps_signal_lost: bool,
     pub _low_battery: bool,
     pub _internert_disconnected: bool,
@@ -70,6 +73,7 @@ impl Flags {
             capture: false,
             finished: false,
             oncoming: false,
+            roadbook_unlocked: false,
             _gps_signal_lost: false,
             _low_battery: false,
             _internert_disconnected: false,

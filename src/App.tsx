@@ -56,6 +56,7 @@ function App() {
     setCog,
     setCtw,
     setDtw,
+    setArrowColor,
     setCpCounter,
     setTotal,
     setPartial,
@@ -63,6 +64,7 @@ function App() {
     setNextPointName,
     setMaxSpeed,
     setRoadbookMode,
+    setRBSlidesUnlocked,
     setDebugData,
     setVisiable,
     setSpeedExceeds,
@@ -131,9 +133,15 @@ function App() {
                 }
                 playBeep();
               }
+              // Level flag, resynced every tick from already-checked
+              // RBP/DSS points — not a one-shot pulse — so it's correct
+              // again on the very next poll after an app restart/resume,
+              // without needing a fresh RBP/DSS crossing.
+              setRBSlidesUnlocked(data.roadbook_unlocked);
               setCog(data.cog);
               setCtw(data.ctw);
               setDtw(data.dtw);
+              setArrowColor(data.arrow_color);
               // setTime(pos?.timestamp as number);
               setCurrentSpeed(data.sog);
               setCpCounter(data.metrics.cp_counter);

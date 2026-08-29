@@ -5,7 +5,7 @@ use serde_json::json;
 use tauri::{AppHandle, State};
 
 use crate::{
-    AppState, race::types::{CheckPoint, PointBuilder}, state::{race_config::RaceState}, utils::{parser::FormatedData, rb_store::download_images}
+    AppState, race::types::{CheckPoint, PointBuilder}, utils::{parser::FormatedData, rb_store::download_images}
 };
 
 #[tauri::command]
@@ -44,7 +44,12 @@ pub async fn update_config(
     if let Some(cfg) = cfg {
         let areas = {
             let mut state = state.lock().unwrap();
-            state.race = RaceState::new();
+            // Config gets re-fetched on every day-code entry, including
+            // harmless re-entries of an already-active code — don't wipe
+            // active_code/spec_area_state (checked points, position) here.
+            // `activate_code`, called right after this, is what decides
+            // whether the area's point list actually changed and a real
+            // reset is warranted.
             state.race.update(&cfg);
             state.config_updated = Local::now().format("%d.%m.%Y %H:%M:%S").to_string();
             state.race.race.as_ref().unwrap().areas.clone()
@@ -133,7 +138,9 @@ pub fn sync_data(state: State<'_, Mutex<AppState>>) -> Result<String, ()> {
             "ctw": state.dashboard.ctw,
             "dtw": state.dashboard.dtw,
             "max_speed": state.dashboard.max_speed,
+            "arrow_color": state.dashboard.arrow_color,
             "capture": state.current.capture,
+            "roadbook_unlocked": state.current.roadbook_unlocked,
             "activation_code": state.race.active_code,
             "metrics": {
                 "abs_total": state.dashboard.metrics.abs_total,
@@ -158,6 +165,12 @@ pub fn sync_data(state: State<'_, Mutex<AppState>>) -> Result<String, ()> {
 #[tauri::command]
 pub fn point_switch(state: State<'_, Mutex<AppState>>, move_to: &str) -> Result<(), ()> {
     if let Ok(mut state) = state.lock() {
+        // Manual navigation overrides whatever the "keep pointing at WPT"
+        // hold was tracking — without this, make_culc's held_point override
+        // would silently snap navigation right back to the stale held point
+        // on the next GPS tick.
+        state.race.spec_area_state.held_point = None;
+        state.race.spec_area_state.held_min_dtw = None;
         match move_to {
             "prev" => {
                 if state.race.spec_area_state.point_controller.has_prev() {

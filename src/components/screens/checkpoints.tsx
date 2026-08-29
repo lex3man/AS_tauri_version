@@ -100,7 +100,9 @@ const CheckPoints = () => {
               <div className="text-xl">{point.ptype}</div>
             </div>
             <div className="flex justify-center">
-              <div className="text-xl text-center font-extrabold">
+              <div
+                className={`text-xl text-center font-extrabold ${point.checked && "text-green-500"}`}
+              >
                 {point.name}
               </div>
             </div>

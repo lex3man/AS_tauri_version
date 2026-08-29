@@ -56,7 +56,10 @@ export const server_init = async (raceNumber: string, password: string) => {
 };
 
 export const request_config = async (device_id: string) => {
-  const url = `${SCHEME}://${HOST}/api/config-all?device_id=${device_id}`;
+  // format=svg asks the server to prefer vector roadbook slides — it falls
+  // back to PNG per-slide on its own when no SVG exists, so this is a safe
+  // priority-with-fallback rather than an all-or-nothing switch.
+  const url = `${SCHEME}://${HOST}/api/config-all?device_id=${device_id}&format=svg`;
 
   const resp = await fetch(url, {
     method: "GET",

@@ -1,11 +1,14 @@
 import { useAppState } from "@/ctx/state-provider";
+import { useLongPress } from "@/lib/use-long-press";
 
 export const TotalWidget = () => {
-  const { total, mobileView, captured } = useAppState();
+  const { total, mobileView, captured, callView } = useAppState();
+  const longPress = useLongPress(() => callView("adjust"));
 
   return (
     <div
-      className={`flex ${!mobileView && "flex-col"} justify-between border-4 border-primary h-full ${captured ? "bg-green-600" : "bg-primary-foreground"} p-2`}
+      {...longPress}
+      className={`flex ${!mobileView && "flex-col"} justify-between border-4 border-primary h-full ${captured ? "bg-green-600" : "bg-primary-foreground"} p-2 select-none`}
     >
       <div className={`font-extrabold ${mobileView ? "text-xs" : "text-md"}`}>
         TOTAL
@@ -20,11 +23,13 @@ export const TotalWidget = () => {
 };
 
 export const TotalLiteWidget = () => {
-  const { total, mobileView, captured } = useAppState();
+  const { total, mobileView, captured, callView } = useAppState();
+  const longPress = useLongPress(() => callView("adjust"));
 
   return (
     <div
-      className={`flex justify-between border-2 border-primary h-full ${captured ? "bg-green-400" : "bg-primary-foreground"} p-1`}
+      {...longPress}
+      className={`flex justify-between border-2 border-primary h-full ${captured ? "bg-green-400" : "bg-primary-foreground"} p-1 select-none`}
     >
       <div className={`font-extrabold text-xs transform origin-left scale-x-75 w-1/6`}>TOTAL</div>
       <div

@@ -33,6 +33,8 @@ const Settings = () => {
     setDarkMode,
     jumpMode,
     setJumpMode,
+    keepPointingAtWpt,
+    setKeepPointingAtWpt,
     correctionDistance,
     trackDistance,
     increaseDistStep,
@@ -124,7 +126,7 @@ const Settings = () => {
               }
             }}
           >
-            Auto RB Move ON/OFF
+            Auto scroll RoadBook ON/OFF
           </Button>
           <Button
             className={`p-6 text-2xl ${jumpMode ? "bg-emerald-600" : "bg-red-500"}`}
@@ -137,6 +139,18 @@ const Settings = () => {
             }}
           >
             Jump Mode ON/OFF
+          </Button>
+          <Button
+            className={`p-6 text-2xl ${keepPointingAtWpt ? "bg-emerald-600" : "bg-red-500"}`}
+            onClick={() => {
+              if (keepPointingAtWpt) {
+                setKeepPointingAtWpt(false);
+              } else {
+                setKeepPointingAtWpt(true);
+              }
+            }}
+          >
+            Keep pointing at WPT
           </Button>
           <Button
             className="p-6 text-2xl"

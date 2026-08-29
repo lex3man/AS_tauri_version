@@ -50,6 +50,12 @@ pub fn jump_reaction(state: State<'_, Mutex<AppState>>, flag: &str) -> Result<()
         let mut tel = state.telemetry.get(&current_sa).unwrap().clone();
         match flag {
             "yes" => {
+                // A confirmed jump overrides whatever the "keep pointing at
+                // WPT" hold was tracking — without this, make_culc's
+                // held_point override would silently snap navigation right
+                // back to the stale held point on the next GPS tick.
+                state.race.spec_area_state.held_point = None;
+                state.race.spec_area_state.held_min_dtw = None;
                 state
                     .race
                     .spec_area_state

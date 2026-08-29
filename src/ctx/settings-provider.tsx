@@ -23,6 +23,7 @@ function parseSettings(json: string): Settings {
     oncoming_detection: number;
     oncoming_detection_enabled: boolean;
     auto_move: boolean;
+    keep_pointing_at_wpt: boolean;
   };
 
   return {
@@ -38,6 +39,7 @@ function parseSettings(json: string): Settings {
     oncomingDetection: parsed.oncoming_detection,
     oncomingDetectionEnabled: parsed.oncoming_detection_enabled,
     autoMove: parsed.auto_move,
+    keepPointingAtWpt: parsed.keep_pointing_at_wpt,
   };
 }
 
@@ -54,6 +56,7 @@ type SettingsProviderState = {
   oncomingDetection: number;
   oncomingDetectionEnabled: boolean;
   autoMove: boolean;
+  keepPointingAtWpt: boolean;
   setShowBackground: (status: boolean) => void;
   setDtwEnable: (status: boolean) => void;
   setDarkMode: (status: boolean) => void;
@@ -61,6 +64,7 @@ type SettingsProviderState = {
   setJumpMode: (status: boolean) => void;
   setRoadbookMode: (status: boolean) => void;
   setAutoMove: (status: boolean) => void;
+  setKeepPointingAtWpt: (status: boolean) => void;
   increaseDistStep: () => void;
   decreaseDistStep: () => void;
   increaseTrackDist: () => void;
@@ -86,6 +90,7 @@ const initialState: SettingsProviderState = {
   oncomingDetection: 300,
   oncomingDetectionEnabled: true,
   autoMove: true,
+  keepPointingAtWpt: false,
 
   setShowBackground: () => null,
   setDtwEnable: () => null,
@@ -94,6 +99,7 @@ const initialState: SettingsProviderState = {
   setJumpMode: () => null,
   setRoadbookMode: () => null,
   setAutoMove: () => null,
+  setKeepPointingAtWpt: () => null,
   increaseDistStep: () => null,
   decreaseDistStep: () => null,
   increaseTrackDist: () => null,
@@ -123,6 +129,7 @@ export function SettingsProvider({
   const [jumpMode, setJumpMode] = useState(false);
   const [roadbookMode, setRoadbookMode] = useState(false);
   const [autoMove, setRBAutoMove] = useState(true);
+  const [keepPointingAtWpt, setKPAWpt] = useState(false);
   const [oncomingAngle, setOncomingAngle] = useState(60);
   const [oncomingDetection, setOncomingDetection] = useState(300);
   const [oncomingDetectionEnabled, setOncomingDE] = useState(true);
@@ -146,6 +153,7 @@ export function SettingsProvider({
       setOncomingAngle(settings.oncomingAngle);
       setOncomingDetection(settings.oncomingDetection);
       setRBAutoMove(settings.autoMove);
+      setKPAWpt(settings.keepPointingAtWpt);
     };
     update();
   };
@@ -244,6 +252,7 @@ export function SettingsProvider({
     oncomingDetection,
     oncomingDetectionEnabled,
     autoMove,
+    keepPointingAtWpt,
     setDarkMode,
     setShowBackground,
     setDtwEnable,
@@ -262,6 +271,16 @@ export function SettingsProvider({
         save();
       }
       setRBAutoMove(status);
+    },
+    setKeepPointingAtWpt: (status: boolean) => {
+      const save = async () =>
+        await invoke("switch_keep_pointing_at_wpt", {
+          status: status ? "on" : "off",
+        });
+      if (keepPointingAtWpt != status) {
+        save();
+      }
+      setKPAWpt(status);
     },
     increaseDistStep,
     decreaseDistStep,

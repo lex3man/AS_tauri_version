@@ -54,6 +54,7 @@ pub fn run() {
             ipc::settings::switch_oncoming_mode,
             ipc::settings::switch_jump_mode,
             ipc::settings::switch_auto_move,
+            ipc::settings::switch_keep_pointing_at_wpt,
             ipc::settings::close_app,
             ipc::location::location_update,
             ipc::location::get_coords,

@@ -37,23 +37,28 @@ pub fn activate_code(state: State<'_, Mutex<AppState>>, code: &str) -> Result<St
             if let Some(race) = state.race.race.as_ref() {
                 if let Some(area) = race.areas.get(code) {
                     area_id = area.id.clone();
-                    state.race.current_sa = area_id.clone();
-                    state.race.active_code = code.to_string();
-                    state.race.activate(code);
+                    // `activate()` sets active_code/current_sa itself, and
+                    // needs to read their pre-call values first to tell
+                    // whether this is a genuine (re)activation — a new
+                    // code, or a changed point list — versus a no-op
+                    // re-entry of an already-active, unchanged code.
+                    let rebuilt = state.race.activate(code);
                     if let Some(storage) = &state.storage {
                         storage.set("race_state", json!(state.race));
                         storage.close_resource();
                     }
-                    state.dashboard.metrics.total = 0.0;
-                    state.dashboard.metrics.partial = 0.0;
-                    state.dashboard.metrics.countdown = 0;
-                    state.dashboard.metrics.cp_counter = 0;
-                    state.dashboard.metrics.abs_total = 0.0;
-                    state.last_report = String::from("");
-                    state.collected = vec![];
-                    state
-                        .telemetry
-                        .insert(area_id.clone(), crate::state::telemetry::Telemetry::new());
+                    if rebuilt {
+                        state.dashboard.metrics.total = 0.0;
+                        state.dashboard.metrics.partial = 0.0;
+                        state.dashboard.metrics.countdown = 0;
+                        state.dashboard.metrics.cp_counter = 0;
+                        state.dashboard.metrics.abs_total = 0.0;
+                        state.last_report = String::from("");
+                        state.collected = vec![];
+                        state
+                            .telemetry
+                            .insert(area_id.clone(), crate::state::telemetry::Telemetry::new());
+                    }
                     return Ok(format!("Code {} activated", code));
                 }
                 return Ok("There's no such area".to_string());

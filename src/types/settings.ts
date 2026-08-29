@@ -13,4 +13,5 @@ export type Settings = {
     oncomingDetection: number;
     oncomingDetectionEnabled: boolean;
     autoMove: boolean;
+    keepPointingAtWpt: boolean;
 }
