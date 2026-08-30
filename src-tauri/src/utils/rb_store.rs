@@ -7,12 +7,6 @@ use crate::race::types::RBSlide;
 
 const MANIFEST_FILE: &str = "manifest.json";
 
-/// Per-slide change fingerprint cache: maps a roadbook image URL to the
-/// ETag/Last-Modified value it had the last time it was actually downloaded.
-/// Persisted alongside the cached images so it survives app restarts, and
-/// keyed by URL (which already includes the SU's own path segment), so
-/// re-entering an unchanged day code re-checks every image cheaply instead
-/// of re-downloading the whole roadbook.
 fn load_manifest(path: &std::path::Path) -> HashMap<String, String> {
     std::fs::read_to_string(path)
         .ok()
@@ -26,11 +20,6 @@ fn save_manifest(path: &std::path::Path, manifest: &HashMap<String, String>) {
     }
 }
 
-/// Extracts a change fingerprint from response headers — ETag when the
-/// server provides one, else Last-Modified — tagged with which kind it is
-/// so a later request can send it back as the matching conditional header.
-/// None means the server gave us nothing to compare against, so the slide
-/// is always re-downloaded.
 fn fingerprint(headers: &reqwest::header::HeaderMap) -> Option<String> {
     if let Some(v) = headers
         .get(reqwest::header::ETAG)
@@ -44,10 +33,6 @@ fn fingerprint(headers: &reqwest::header::HeaderMap) -> Option<String> {
         .map(|v| format!("lm:{}", v))
 }
 
-/// Turns a stored fingerprint back into the conditional-request header that
-/// produced it. Returns None for a fingerprint saved by an older build of
-/// this cache (no tag prefix) — that slide just does one untagged GET and
-/// gets a freshly-tagged fingerprint going forward.
 fn conditional_header(fp: &str) -> Option<(reqwest::header::HeaderName, &str)> {
     if let Some(v) = fp.strip_prefix("etag:") {
         Some((reqwest::header::IF_NONE_MATCH, v))
@@ -71,14 +56,8 @@ pub async fn download_images(
     let manifest_path = cache_dir_path.join(MANIFEST_FILE);
     let manifest = load_manifest(&manifest_path);
 
-    // One shared, connection-pooling client for every slide in this call.
     let client = reqwest::blocking::Client::new();
 
-    // Per-slide change check, run in parallel: a single conditional GET
-    // (If-None-Match / If-Modified-Since from the cached fingerprint) either
-    // comes back 304 Not Modified — no body, nothing to write — or a fresh
-    // 200 body to save. One round trip per slide either way, instead of a
-    // separate HEAD-then-GET pair.
     let results: Vec<(String, Option<String>)> = links
         .par_iter()
         .map(|slide| {
@@ -104,15 +83,9 @@ pub async fn download_images(
             };
 
             if response.status() == reqwest::StatusCode::NOT_MODIFIED {
-                // Unchanged — keep the cached file, nothing to download.
                 return (slide.url.clone(), cached_fingerprint);
             }
             if !response.status().is_success() {
-                // Fetch failed (404/500/...) — don't overwrite a good cached
-                // file with an error body, and don't cache this failure as
-                // "the current state": keep whatever fingerprint we had (or
-                // none) so the next config pull retries instead of treating
-                // the slide as up to date.
                 return (slide.url.clone(), cached_fingerprint);
             }
 
@@ -124,8 +97,6 @@ pub async fn download_images(
             if saved {
                 (slide.url.clone(), new_fingerprint)
             } else {
-                // Body read or disk write failed — don't cache a fingerprint
-                // for content that never actually made it to disk.
                 (slide.url.clone(), cached_fingerprint)
             }
         })

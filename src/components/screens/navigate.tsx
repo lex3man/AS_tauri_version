@@ -308,10 +308,10 @@ const Ride = () => {
             ) : (
               <div className="h-full">
                 <div className="h-1/2">
-                  {totalWidgetShown && <TotalWidget />}
+                  <TotalWidget />
                 </div>
                 <div className="h-1/2">
-                  {partialWidgetShown && <PartialWidget />}
+                  <PartialWidget />
                 </div>
               </div>
             )}
