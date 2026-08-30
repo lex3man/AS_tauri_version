@@ -184,13 +184,14 @@ pub fn point_switch(state: State<'_, Mutex<AppState>>, move_to: &str) -> Result<
             }
             _ => {}
         }
-        let next_point_id = state
-            .race
-            .spec_area_state
-            .point_controller
-            .get_active()
-            .unwrap()
-            .clone();
+        // No day code activated yet — point_controller has no active point
+        // to switch to/from. Nothing to do rather than a hard error, since
+        // pressing W+/W- before activating a code is a normal (if useless)
+        // thing for a user to do.
+        let next_point_id = match state.race.spec_area_state.point_controller.get_active() {
+            Some(id) => id.clone(),
+            None => return Ok(()),
+        };
         if state.race.spec_area_state.point_controller.has_prev() {
             let prev_point_id = state
                 .race

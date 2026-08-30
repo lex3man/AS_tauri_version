@@ -17,8 +17,6 @@ const Roadbook = () => {
     speed,
     maxSpeed,
     cpCounter,
-    totalWidgetShown,
-    partialWidgetShown,
     countdownWidgetShown,
     nextPointName,
     nextPointNumber,

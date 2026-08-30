@@ -15,8 +15,6 @@ const Ride = () => {
     speed,
     maxSpeed,
     cpCounter,
-    totalWidgetShown,
-    partialWidgetShown,
     countdownWidgetShown,
     mobileView,
     roadbookMode,
