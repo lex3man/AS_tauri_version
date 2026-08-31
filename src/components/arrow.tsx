@@ -3,10 +3,15 @@ import { useAppState } from "@/ctx/state-provider";
 import { useEffect, useState } from "react";
 
 // "Keep pointing at WPT" mode tints the arrow to signal its state relative to
-// the point it's tracking: black while approaching (default/unmodified look),
-// green while held and still closing in, orange while held but drifting away.
+// the point it's tracking: default (approaching) is the app's ordinary
+// foreground color, green while held and still closing in, orange while
+// held but drifting away. The backend sends "black" for the default state
+// (matching the arrow's original, unconditional look) — mapped here to
+// currentColor rather than a literal black so it still follows the
+// theme's foreground color (e.g. turns white in dark mode) instead of
+// staying black regardless of theme.
 const ARROW_COLORS: Record<string, string> = {
-  black: "#000000",
+  black: "currentColor",
   green: "#16a34a",
   orange: "#f97316",
 };
