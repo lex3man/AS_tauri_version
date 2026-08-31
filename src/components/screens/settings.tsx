@@ -7,6 +7,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogClose,
 } from "@/components/ui/dialog";
 import { useSettings } from "@/ctx/settings-provider";
 import { ChevronDown, ChevronUp } from "lucide-react";
@@ -209,14 +210,13 @@ const Settings = () => {
                   >
                     RESET
                   </Button>
-                  <Button
-                    className="p-6 text-2xl bg-green-600"
-                    onClick={() => {
-                      callView("settings");
-                    }}
-                  >
-                    CANCEL
-                  </Button>
+                  <DialogClose asChild>
+                    <Button
+                      className="p-6 text-2xl bg-green-600"
+                    >
+                      CANCEL
+                    </Button>
+                  </DialogClose>
                 </div>
               </DialogContent>
             </Dialog>

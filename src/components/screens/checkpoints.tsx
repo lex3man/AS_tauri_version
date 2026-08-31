@@ -30,7 +30,7 @@ const CheckPoints = () => {
         serial: raceInfoRaw.split("=")[1],
         raceNumber: raceInfoRaw.split("=")[2],
         raceCode: raceInfoRaw.split("=")[3],
-        updateTime: raceInfoRaw.split("=")[4],
+        updateTime: raceInfoRaw.split("=")[4].replace("\\", "").replace('"', ''),
       });
     };
     getPoints();
@@ -45,7 +45,7 @@ const CheckPoints = () => {
             <span>SERIAL: {raceInfo.serial}</span>
             <span>EVENT NAME: {raceInfo.name}</span>
             <span>ROUTE: {raceInfo.raceCode}</span>
-            <span>CONFIG UPDATED: {raceInfo.updateTime}</span>
+            <span>CONFIG UPDATED: {raceInfo.updateTime.replace("\\", "").replace("\"", "")}</span>
           </div>
         </div>
         <div className="flex flex-col m-auto justify-center w-1/3 pt-5">
@@ -92,7 +92,7 @@ const CheckPoints = () => {
       >
         {points.map((point) => (
           <div
-            className={`m-2 p-5 gap-15 border-2 ${(point.next && !point.checked) && "bg-gray-500"} ${point.checked && "bg-green-500"} border-foreground rounded-xl w-1/6`}
+            className={`m-2 p-2 gap-10 border-2 ${(point.next && !point.checked) && "bg-gray-500"} ${point.checked && "bg-green-500"} border-foreground rounded-xl ${mobileView ? "w-1/4" : "w-1/6"}`}
             key={point.num}
           >
             <div className="flex justify-between">

@@ -70,17 +70,22 @@ export const RoadbookSlides = () => {
       changed = true;
     }
 
-    let bestIdx = idx;
-    let bestDiff = Math.abs(rbSlides[idx].odo - total * 1000);
-    rbSlides.forEach((slide, i) => {
-      const diff = Math.abs(slide.odo - total * 1000);
-      if (diff < bestDiff) {
-        bestDiff = diff;
-        bestIdx = i;
-      }
-    });
-    if (bestIdx !== idx) {
-      idx = bestIdx;
+    // Backward: mirror of the forward loop above, using each slide's own
+    // odo threshold — not a nearest-of-all-slides search. A nearest-match
+    // search creates a switching boundary at the MIDPOINT between two
+    // slides' odo values, which made the previous slide "win" for the
+    // entire first half of the gap to the next one every tick until total
+    // passed that midpoint. Retreating while total has dropped back below
+    // the previous slide's own threshold keeps the same boundary the
+    // forward loop used to get here, so there's no dead zone either way.
+    // `marked` is intentionally left untouched on retreat — once a slide is
+    // marked passed, it stays marked; only the current index moves back.
+    while (
+      idx > 0 &&
+      rbSlides[idx - 1] &&
+      total * 1000 <= rbSlides[idx - 1].odo
+    ) {
+      idx--;
       changed = true;
     }
 
@@ -217,7 +222,7 @@ export const RoadbookSlides = () => {
 
   if (!rbSlidesUnlocked) {
     return (
-      <div className="relative flex flex-col w-full h-full items-center justify-center text-gray-400 text-xl">
+      <div className="relative flex flex-col w-full h-full text-center items-center justify-center text-gray-400 text-xl">
         Road Book temporarily locked. Please, move to DSS point to unlock it. <br />
       </div>
     );

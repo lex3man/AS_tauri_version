@@ -2,12 +2,11 @@ import { useSettings } from "@/ctx/settings-provider";
 import { useAppState } from "@/ctx/state-provider";
 import Indicators from "../widgets/indicators";
 import CountdownWidget from "../widgets/countdown";
-import { TotalLiteWidget } from "../widgets/total";
-import { PartialLiteWidget } from "../widgets/partial";
 import { Arrow } from "../arrow";
 import { RoadbookSlides } from "../roadbook";
 import { BtmMenu } from "../menus/bottom-menu";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { MixedTotalPartialWidget } from "../widgets/total-partial";
 
 const Roadbook = () => {
   const {
@@ -17,8 +16,6 @@ const Roadbook = () => {
     speed,
     maxSpeed,
     cpCounter,
-    totalWidgetShown,
-    partialWidgetShown,
     countdownWidgetShown,
     nextPointName,
     nextPointNumber,
@@ -141,10 +138,10 @@ const Roadbook = () => {
             </div>
           </div>
         </div>
-        <div className="flex w-full justify-center">
-          <div className={`flex flex-col w-1/4 h-[30vh] gap-2`}>
+        <div className="flex w-full">
+          <div className={`flex flex-col w-1/4 h-[30.5vh] gap-2`}>
             {visiable ? (
-              <div className="flex flex-col justify-start h-[33%] p-3">
+              <div className="flex flex-col justify-start h-[33%] p-2 border-r-2 border-b-2">
                 <div
                   className={`flex justify-start text-6xl font-extrabold leading-none`}
                 >
@@ -153,25 +150,9 @@ const Roadbook = () => {
                 <div className={`flex justify-start text-xl font-bold`}>COG</div>
               </div>
             ) : (
-              <div className="flex flex-col justify-start h-[33%] p-3"></div>
+              <div className="flex flex-col justify-start h-[33%] p-2 border-r-2 border-b-2"></div>
             )}
-            <div className="h-[33%]">
-              {((preExceeding || nextPointType === "FZ") && !exceeding) && (
-                <div className={`flex items-center justify-center m-auto h-full border-15 border-zinc-600 rounded-full aspect-square`}>
-                  <div className="text-[clamp(2rem,5vw,3.5rem)] font-extrabold">
-                    {maxSpeed}
-                  </div>
-                </div>
-              )}
-              {exceeding && (
-                <div className={`flex items-center justify-center m-auto h-full border-15 border-red-500 rounded-full animate-caret-blink aspect-square`}>
-                  <div className="text-[clamp(2rem,5vw,3.5rem)] font-extrabold">
-                    {maxSpeed}
-                  </div>
-                </div>
-              )}
-            </div>
-            <div className="flex flex-col justify-end h-[33%] p-3">
+            <div className="flex flex-col justify-end h-[33%] p-2 border-r-2">
               <div className={`flex justify-start text-xl font-bold`}>SOG</div>
               <div
                 className={`flex justify-start text-6xl font-extrabold leading-none`}
@@ -181,8 +162,17 @@ const Roadbook = () => {
                 </div>
               </div>
             </div>
+            <div className="h-[33%]">
+              <div className="h-full">
+                {countdownWidgetShown ? (
+                  <CountdownWidget />
+                ) : (
+                  <MixedTotalPartialWidget />
+                )}
+              </div>
+            </div>
           </div>
-          <div className="flex flex-col w-1/2 h-[30vh]">
+          <div className="flex flex-col w-1/2 h-[33vh]">
             <div
               className={`text-[clamp(1.5rem,5vw,3rem)] leading-none mx-auto font-extrabold py-5`}
             >
@@ -200,8 +190,8 @@ const Roadbook = () => {
               </div>
             )}
           </div>
-          <div className="flex flex-col w-1/4 h-[30vh] gap-2">
-            <div className="flex flex-col justify-start h-[33%] p-3">
+          <div className="flex flex-col w-1/4 h-[30.5vh] gap-2">
+            <div className="flex flex-col justify-start h-[33%] p-2 border-b-2 border-l-2">
               <div
                 className={`flex justify-end text-6xl font-extrabold leading-none`}
               >
@@ -209,23 +199,7 @@ const Roadbook = () => {
               </div>
               {visiable && <div className={`flex justify-end text-xl font-bold`}>CTW</div>}
             </div>
-            <div className="h-[33%] p-1">
-              {countdownWidgetShown ? (
-                <div className="h-full">
-                  <CountdownWidget />
-                </div>
-              ) : (
-                <div className="h-full">
-                  <div className="h-1/2">
-                    {totalWidgetShown && <TotalLiteWidget />}
-                  </div>
-                  <div className="h-1/2">
-                    {partialWidgetShown && <PartialLiteWidget />}
-                  </div>
-                </div>
-              )}
-            </div>
-            <div className="flex flex-col justify-end h-[33%] p-3">
+            <div className="flex flex-col justify-end h-[33%] p-2 border-b-2 border-l-2">
               <div className={`flex justify-end text-xl font-bold`}>DTW</div>
               <div
                 className={`flex justify-end text-6xl font-extrabold leading-none`}
@@ -234,6 +208,22 @@ const Roadbook = () => {
                   {dtw.toFixed(2)}
                 </div>
               </div>
+            </div>
+            <div className="h-[30%]">
+              {((preExceeding || nextPointType === "FZ") && !exceeding) && (
+                <div className={`flex items-center justify-center m-auto h-full border-15 border-zinc-600 rounded-full aspect-square`}>
+                  <div className="text-[clamp(2rem,5vw,3.5rem)] font-extrabold">
+                    {maxSpeed}
+                  </div>
+                </div>
+              )}
+              {exceeding && (
+                <div className={`flex items-center justify-center m-auto h-full border-15 border-red-500 rounded-full animate-caret-blink aspect-square`}>
+                  <div className="text-[clamp(2rem,5vw,3.5rem)] font-extrabold">
+                    {maxSpeed}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
