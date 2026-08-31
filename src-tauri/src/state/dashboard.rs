@@ -14,6 +14,16 @@ pub struct DashBoard {
     pub metrics: Metrics,
 
     pub widget_shown: Widgets,
+    // Arrow tint for "Keep pointing at WPT" mode: "black" (default/approaching),
+    // "green" (held, still approaching the captured point) or "orange" (held,
+    // moving away from it again). Meaningless while the mode is off — the
+    // arrow just stays "black", matching its unmodified pre-feature look.
+    #[serde(default = "default_arrow_color")]
+    pub arrow_color: String,
+}
+
+fn default_arrow_color() -> String {
+    String::from("black")
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -58,6 +68,7 @@ impl DashBoard {
                 countdown: false,
                 arrow: false,
             },
+            arrow_color: String::from("black"),
         }
     }
 }

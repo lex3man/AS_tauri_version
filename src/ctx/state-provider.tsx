@@ -55,6 +55,7 @@ type AppStateProviderState = {
   rbSlides: RoadbookSlide[];
   rbImages: Record<string, ImageData>;
   currentRBIndex: number;
+  rbSlidesUnlocked: boolean;
 
   lat: number;
   lon: number;
@@ -62,6 +63,7 @@ type AppStateProviderState = {
   cog: number;
   ctw: number;
   dtw: number;
+  arrowColor: string;
   time: string;
   maxSpeed: number;
   cpCounter: number;
@@ -102,6 +104,7 @@ type AppStateProviderState = {
   setDtw: (val: number) => void;
   setCog: (val: number) => void;
   setCtw: (val: number) => void;
+  setArrowColor: (val: string) => void;
   setCpCounter: (val: number) => void;
   setNextPointNumber: (val: number) => void;
   setNextPointName: (val: string) => void;
@@ -114,6 +117,7 @@ type AppStateProviderState = {
   setRBSlides: (val: RoadbookSlide[]) => void;
   setRBImages: (val: Record<string, ImageData>) => void;
   setCurrentRBIndex: (val: number) => void;
+  setRBSlidesUnlocked: (val: boolean) => void;
   goNext: () => void;
   goPrev: () => void;
   setJumpPointID: (val: string) => void;
@@ -165,6 +169,7 @@ const initialState: AppStateProviderState = {
   rbSlides: [],
   rbImages: {},
   currentRBIndex: 0,
+  rbSlidesUnlocked: false,
 
   lat: 0,
   lon: 0,
@@ -172,6 +177,7 @@ const initialState: AppStateProviderState = {
   cog: 0,
   ctw: 0,
   dtw: 0,
+  arrowColor: "black",
   time: "",
   maxSpeed: 140,
   cpCounter: 0,
@@ -230,6 +236,7 @@ const initialState: AppStateProviderState = {
   setDtw: () => null,
   setCog: () => null,
   setCtw: () => null,
+  setArrowColor: () => null,
   setCpCounter: () => null,
   setNextPointNumber: () => null,
   setNextPointName: () => null,
@@ -243,6 +250,7 @@ const initialState: AppStateProviderState = {
   setRBSlides: () => null,
   setRBImages: () => null,
   setCurrentRBIndex: () => null,
+  setRBSlidesUnlocked: () => null,
   goNext: () => null,
   goPrev: () => null,
   setJumpPointID: () => null,
@@ -291,6 +299,7 @@ export function StateProvider({
   const [lon, setLon] = useState(0);
   const [cog, setCog] = useState(0);
   const [ctw, setCtw] = useState(0);
+  const [arrowColor, setArrowColor] = useState("black");
   const [dtw, setDtw] = useState(0);
   const [time, setTime] = useState("");
   const [speed, setSpeed] = useState(0);
@@ -324,6 +333,10 @@ export function StateProvider({
   const [rbSlides, setRBSlides] = useState<RoadbookSlide[]>([]);
   const [rbImages, setRBImages] = useState<Record<string, ImageData>>({});
   const [currentRBIndex, setCurrentRBIndex] = useState(0);
+  // Slides stay hidden until an RBP (or, failing that, DSS) point is
+  // captured — separate from `roadbookMode`, which is purely the
+  // portrait/landscape screen-layout switch.
+  const [rbSlidesUnlocked, setRBSlidesUnlocked] = useState(false);
 
   const goNext = useCallback(() => {
     setCurrentRBIndex((prev) => Math.min(prev + 1, rbSlides.length - 1));
@@ -731,6 +744,7 @@ export function StateProvider({
     cog,
     ctw,
     dtw,
+    arrowColor,
     time,
 
     maxSpeed,
@@ -751,6 +765,7 @@ export function StateProvider({
     rbSlides,
     rbImages,
     currentRBIndex,
+    rbSlidesUnlocked,
 
     gpsAccurancy,
     batteryLevel,
@@ -776,6 +791,7 @@ export function StateProvider({
     setDtw,
     setCog,
     setCtw,
+    setArrowColor,
     setCpCounter,
     setNextPointNumber,
     setNextPointName,
@@ -789,6 +805,7 @@ export function StateProvider({
     setRBSlides,
     setRBImages,
     setCurrentRBIndex,
+    setRBSlidesUnlocked,
     goNext,
     goPrev,
     setJumpPointID,

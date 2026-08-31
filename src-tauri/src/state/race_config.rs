@@ -29,6 +29,15 @@ pub struct SpecEreaState {
     pub point_controller: PointLinkedList,
     pub next_point: PointID,
     pub prev_point: PointID,
+    // "Keep pointing at WPT" mode: once Some, the just-captured point is held
+    // as the navigation target (instead of advancing to the real next point)
+    // until the device exits its capture radius. held_min_dtw tracks the
+    // closest distance reached so far while held, to detect approach vs
+    // retreat for the arrow color.
+    #[serde(default)]
+    pub held_point: Option<PointID>,
+    #[serde(default)]
+    pub held_min_dtw: Option<f64>,
 }
 
 impl SpecEreaState {
@@ -38,6 +47,8 @@ impl SpecEreaState {
             point_controller: PointLinkedList::new(),
             next_point: String::from(""),
             prev_point: String::from(""),
+            held_point: None,
+            held_min_dtw: None,
         }
     }
 }
@@ -62,8 +73,32 @@ impl RaceState {
         }
     }
 
-    pub fn activate(&mut self, code: &str) {
+    /// Activates `code` as the current day/area. Returns `true` if this
+    /// rebuilt `spec_area_state` from scratch (a genuinely new activation —
+    /// different code, or the area's point list changed or was reordered),
+    /// or `false` if it preserved already-tracked progress (re-entering the
+    /// same code with an identical, identically-ordered point list). Config
+    /// gets re-fetched on every day-code entry — including harmless
+    /// re-entries of an already-active code — so without this distinction,
+    /// simply re-entering your current code would wipe checked points and
+    /// position back to the start.
+    pub fn activate(&mut self, code: &str) -> bool {
+        let already_active_unchanged = self
+            .race
+            .as_ref()
+            .and_then(|race| race.areas.get(code))
+            .map(|area| {
+                self.active_code == code
+                    && self.spec_area_state.point_controller._to_vec()
+                        == area.points_set.iter().map(|p| p.get_id()).collect::<Vec<_>>()
+            })
+            .unwrap_or(false);
+
         self.active_code = code.to_string();
+        if already_active_unchanged {
+            return false;
+        }
+
         if let Some(race) = &self.race {
             let mut ses = SpecEreaState::new();
             if let Some(area) = race.areas.get(code) {
@@ -79,6 +114,7 @@ impl RaceState {
                 self.spec_area_state = ses;
             }
         }
+        true
     }
 
     pub fn update(&mut self, race: &Race) {

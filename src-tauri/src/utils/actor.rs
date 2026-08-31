@@ -50,6 +50,8 @@ pub async fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position)
         let mut counter = 0;
         let mut finished = state.current.finished;
         let mut oncoming = false;
+        let mut roadbook_unlocked = false;
+        let mut arrow_color = "black".to_string();
 
         // ============================================================================
         // loading current state
@@ -58,6 +60,13 @@ pub async fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position)
         if let Some(area) = state.race.race.as_ref().unwrap().areas.get(code) {
             area_id = area.id.clone();
             next_point_id = state.race.spec_area_state.next_point.clone();
+
+            // While a point is held ("keep pointing at WPT"), the proximity
+            // scan below must not touch next_point_id/prev_point_id at all —
+            // otherwise a coincidentally-nearby unchecked point could
+            // clobber prev_point_id with the held point's own id, skewing
+            // oncoming detection and the telemetry point_name for this tick.
+            let holding_now = state.race.spec_area_state.held_point.clone();
 
             let _ = &area.points_set.iter().for_each(|point| {
                 let distance_to_point = distance(
@@ -70,7 +79,8 @@ pub async fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position)
                         lon: point.lon,
                     },
                 ) * 1000.0;
-                if distance_to_point <= point.capture_radius as f64
+                if holding_now.is_none()
+                    && distance_to_point <= point.capture_radius as f64
                     && !state
                         .race
                         .spec_area_state
@@ -97,6 +107,29 @@ pub async fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position)
                     jump_point_id = point.get_id();
                 }
             });
+
+            // Roadbook unlock is a level, not a one-shot pulse: recomputed
+            // fresh every tick from already-checked RBP/DSS points, so it
+            // survives an app restart/resume without waiting for a brand
+            // new RBP/DSS crossing to fire it again.
+            roadbook_unlocked = area.points_set.iter().any(|p| {
+                (p.point_type == "RBP" || p.point_type == "DSS")
+                    && state
+                        .race
+                        .spec_area_state
+                        .points
+                        .get(&p.get_id())
+                        .map(|ps| ps.checked)
+                        .unwrap_or(false)
+            });
+
+            // "Keep pointing at WPT": while a point is held, it overrides
+            // whatever the proximity scan / stored next_point picked — the
+            // arrow must not move off it until the device exits its radius.
+            let keep_pointing_at_wpt = state.settings.keep_pointing_at_wpt();
+            if let Some(held_id) = holding_now {
+                next_point_id = held_id;
+            }
 
             if let Some(next_point) = area.get_point_by_id(&next_point_id) {
                 next_point_type = next_point.point_type.clone();
@@ -184,11 +217,14 @@ pub async fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position)
                         .checked;
 
                     let next_point_odo = next_point.odo;
+                    let is_holding = state.race.spec_area_state.held_point.is_some();
                     if dtw * 1000.0 <= next_point.capture_radius as f64
                         && (!state.current.finished || !next_point_checked)
+                        && !is_holding
                     {
                         capture = true;
                         prev_point_id = next_point_id.clone();
+                        let is_rbp_point = next_point.point_type == "RBP";
                         if next_point.point_type.contains("NZ") {
                             counter = next_point.name.replace("NZ", "").parse().unwrap_or(0);
                             tel.events.push(
@@ -203,12 +239,15 @@ pub async fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position)
                             );
                         }
                         is_open = false;
-                        if next_point.odo <= next_point.capture_radius {
-                            total_correction = Some(0.0);
-                        } else {
-                            total_correction = Some(
-                                (next_point_odo as f64 - next_point.capture_radius as f64) / 1000.0,
-                            );
+                        if !is_rbp_point {
+                            let distance_to_point = dtw * 1000.0;
+                            if (next_point_odo as f64) <= distance_to_point {
+                                total_correction = Some(0.0);
+                            } else {
+                                total_correction = Some(
+                                    (next_point_odo as f64 - distance_to_point) / 1000.0,
+                                );
+                            }
                         }
                         state
                             .race
@@ -222,8 +261,17 @@ pub async fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position)
                             .get_mut(&next_point_id)
                             .unwrap()
                             .checked = true;
-                        state.dashboard.metrics.cp_counter += 1;
-                        if state.race.spec_area_state.point_controller.has_next() {
+                        if !is_rbp_point {
+                            state.dashboard.metrics.cp_counter += 1;
+                        }
+                        if keep_pointing_at_wpt && !is_rbp_point {
+                            // Hold the arrow on this point instead of advancing
+                            // to the next one — keep tracking it until the
+                            // device exits this point's capture radius.
+                            state.race.spec_area_state.held_point = Some(next_point_id.clone());
+                            state.race.spec_area_state.held_min_dtw = Some(dtw);
+                            arrow_color = "green".to_string();
+                        } else if state.race.spec_area_state.point_controller.has_next() {
                             state.race.spec_area_state.point_controller.move_next();
                             prev_point_id = next_point_id.clone();
                             next_point_id = state
@@ -236,16 +284,18 @@ pub async fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position)
                         } else {
                             finished = true;
                         }
-                        tel.captures.push(PointCapture {
-                            point: prev_point_id.clone(),
-                            point_type: next_point_type,
-                            time: pos.timestamp,
-                            speed: coords.speed.unwrap_or(0.0) * 3.6,
-                            accuracy: coords.accuracy,
-                            odo: next_point_odo,
-                        });
+                        // RBP is a pre-start marker only — keep it out of the
+                        // captures report sent to the server.
+                        if !is_rbp_point {
+                            tel.captures.push(PointCapture {
+                                point: prev_point_id.clone(),
+                                point_type: next_point_type,
+                                time: pos.timestamp,
+                                speed: coords.speed.unwrap_or(0.0) * 3.6,
+                                accuracy: coords.accuracy,
+                                odo: next_point_odo,
+                            });
 
-                        {
                             let data = json!({
                                 "race_number": state.race_number.clone(),
                                 "device_id": "",
@@ -260,6 +310,38 @@ pub async fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position)
                             .to_string();
                             send_report(app, data.clone()).unwrap();
                             state.last_report = data;
+                        }
+                    } else if is_holding {
+                        // Still holding: track the approach/retreat trend for
+                        // the arrow color, and release once the device exits
+                        // the held point's capture radius (resume normal nav).
+                        // (Read capture_radius up front — next_point borrows
+                        // from `area`, which must stay free of the mutable
+                        // `state.race.spec_area_state` writes below.)
+                        let capture_radius = next_point.capture_radius as f64;
+                        let min_dtw = state.race.spec_area_state.held_min_dtw.unwrap_or(dtw);
+                        if dtw <= min_dtw {
+                            state.race.spec_area_state.held_min_dtw = Some(dtw);
+                            arrow_color = "green".to_string();
+                        } else {
+                            arrow_color = "orange".to_string();
+                        }
+                        if dtw * 1000.0 > capture_radius {
+                            state.race.spec_area_state.held_point = None;
+                            state.race.spec_area_state.held_min_dtw = None;
+                            if state.race.spec_area_state.point_controller.has_next() {
+                                state.race.spec_area_state.point_controller.move_next();
+                                prev_point_id = next_point_id.clone();
+                                next_point_id = state
+                                    .race
+                                    .spec_area_state
+                                    .point_controller
+                                    .get_active()
+                                    .unwrap()
+                                    .clone();
+                            } else {
+                                finished = true;
+                            }
                         }
                     }
 
@@ -326,7 +408,9 @@ pub async fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position)
             state.dashboard.sog = 0;
         }
         state.dashboard.widget_shown.arrow = is_open || in_visiable_zone;
+        state.dashboard.arrow_color = arrow_color;
         state.current.capture = capture;
+        state.current.roadbook_unlocked = roadbook_unlocked;
         state.current.finished = finished;
         state.dashboard.max_speed = max_speed as u32;
         state.race.spec_area_state.prev_point = prev_point_id;

@@ -54,6 +54,18 @@ pub fn switch_jump_mode(state: State<'_, Mutex<AppState>>, status: &str) -> Resu
 }
 
 #[tauri::command]
+pub fn switch_keep_pointing_at_wpt(state: State<'_, Mutex<AppState>>, status: &str) -> Result<(), ()> {
+    if let Ok(mut s) = state.lock() {
+        s.settings.keep_pointing_at_wpt_switch(status);
+        if let Some(storage) = &s.storage {
+            storage.set("settings", json!(s.settings));
+            storage.close_resource();
+        }
+    };
+    Ok(())
+}
+
+#[tauri::command]
 pub fn switch_oncoming_mode(state: State<'_, Mutex<AppState>>, status: &str) -> Result<(), ()> {
     if let Ok(mut s) = state.lock() {
         let new_state = s.settings.oncoming_detection_switch();

@@ -20,6 +20,8 @@ pub struct Config {
     oncoming_detection: u32,
     oncoming_detection_enabled: bool,
     auto_move: bool,
+    #[serde(default)]
+    keep_pointing_at_wpt: bool,
 }
 
 impl Config {
@@ -37,6 +39,7 @@ impl Config {
             oncoming_detection: 300,
             oncoming_detection_enabled: true,
             auto_move: true,
+            keep_pointing_at_wpt: false,
         }
     }
 
@@ -67,6 +70,19 @@ impl Config {
             _ => self.jump_mode = false,
         }
         self.jump_mode
+    }
+
+    pub fn keep_pointing_at_wpt(&self) -> bool {
+        self.keep_pointing_at_wpt
+    }
+
+    pub fn keep_pointing_at_wpt_switch(&mut self, status: &str) -> bool {
+        match status {
+            "on" => self.keep_pointing_at_wpt = true,
+            "off" => self.keep_pointing_at_wpt = false,
+            _ => self.keep_pointing_at_wpt = false,
+        }
+        self.keep_pointing_at_wpt
     }
 
     pub fn increase_dist(&mut self) {
