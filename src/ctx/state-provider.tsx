@@ -56,6 +56,7 @@ type AppStateProviderState = {
   rbImages: Record<string, ImageData>;
   currentRBIndex: number;
   rbSlidesUnlocked: boolean;
+  dssTaken: boolean;
 
   lat: number;
   lon: number;
@@ -82,9 +83,11 @@ type AppStateProviderState = {
   oncomingDistance: number;
   isOncoming: boolean;
 
-  reportSentTime: string;
+  reportSentAutoTime: string;
+  reportSentManualTime: string;
 
   setRaceNumber: (rn: string) => void;
+  setActiveCode: (code: string) => void;
   setRoadbookMode: (status: boolean) => void;
   setDebugData: (data: string) => void;
   setCodeOfDay: (code: string) => void;
@@ -118,6 +121,7 @@ type AppStateProviderState = {
   setRBImages: (val: Record<string, ImageData>) => void;
   setCurrentRBIndex: (val: number) => void;
   setRBSlidesUnlocked: (val: boolean) => void;
+  setDssTaken: (val: boolean) => void;
   goNext: () => void;
   goPrev: () => void;
   setJumpPointID: (val: string) => void;
@@ -127,7 +131,8 @@ type AppStateProviderState = {
   setCountdown: (val: number) => void;
   setTime: (val: string) => void;
   setGPSData: (data: GPSData) => void;
-  setReportSentTime: (val: string) => void;
+  setReportSentAutoTime: (val: string) => void;
+  setReportSentManualTime: (val: string) => void;
   resetOncomingDistance: () => void;
   increaseOncomingDistance: (val: number) => void;
   setIsOncoming: (status: boolean) => void;
@@ -170,6 +175,7 @@ const initialState: AppStateProviderState = {
   rbImages: {},
   currentRBIndex: 0,
   rbSlidesUnlocked: false,
+  dssTaken: false,
 
   lat: 0,
   lon: 0,
@@ -194,7 +200,8 @@ const initialState: AppStateProviderState = {
   captured: false,
   trackPoints: [],
 
-  reportSentTime: "",
+  reportSentAutoTime: "",
+  reportSentManualTime: "",
   oncomingDistance: 0,
   isOncoming: false,
 
@@ -221,6 +228,7 @@ const initialState: AppStateProviderState = {
   activeViewPort: ViewPort.new("request", "race number"),
 
   setRaceNumber: () => null,
+  setActiveCode: () => null,
   setDebugData: () => null,
   setCodeOfDay: () => null,
   callView: () => null,
@@ -251,6 +259,7 @@ const initialState: AppStateProviderState = {
   setRBImages: () => null,
   setCurrentRBIndex: () => null,
   setRBSlidesUnlocked: () => null,
+  setDssTaken: () => null,
   goNext: () => null,
   goPrev: () => null,
   setJumpPointID: () => null,
@@ -260,7 +269,8 @@ const initialState: AppStateProviderState = {
   setCountdown: () => null,
   setTime: () => null,
   setGPSData: () => null,
-  setReportSentTime: () => null,
+  setReportSentAutoTime: () => null,
+  setReportSentManualTime: () => null,
   resetOncomingDistance: () => null,
   increaseOncomingDistance: () => null,
   setIsOncoming: () => null,
@@ -327,7 +337,8 @@ export function StateProvider({
     heading: 0,
     timestamp: 0,
   });
-  const [reportSentTime, setReportSentTime] = useState("");
+  const [reportSentAutoTime, setReportSentAutoTime] = useState("");
+  const [reportSentManualTime, setReportSentManualTime] = useState("");
 
   // roadbook
   const [rbSlides, setRBSlides] = useState<RoadbookSlide[]>([]);
@@ -337,6 +348,10 @@ export function StateProvider({
   // captured — separate from `roadbookMode`, which is purely the
   // portrait/landscape screen-layout switch.
   const [rbSlidesUnlocked, setRBSlidesUnlocked] = useState(false);
+  // Separate from rbSlidesUnlocked: the roadbook can become visible on RBP
+  // alone, but its slide odo values are relative to the DSS (special stage
+  // start), so auto-scroll specifically must wait for DSS.
+  const [dssTaken, setDssTaken] = useState(false);
 
   const goNext = useCallback(() => {
     setCurrentRBIndex((prev) => Math.min(prev + 1, rbSlides.length - 1));
@@ -493,11 +508,30 @@ export function StateProvider({
   }, [speed]);
 
   useEffect(() => {
+    // The Rust side builds these payloads with `json!({...}).to_string()`
+    // (an already-JSON-encoded string) and emits *that string* as the event
+    // payload. Depending on the Tauri version's emit/listen round-trip,
+    // event.payload can come through still wrapped in one extra layer of
+    // JSON-string-encoding — a single JSON.parse then yields the original
+    // JSON text back as a string, not an object, and assigning a property
+    // onto it throws ("Cannot create property 'device_id' on string ...").
+    // Unwrap repeatedly so this works whether Tauri hands back one layer or
+    // two.
+    const parseEventPayload = (payload: string): any => {
+      let value: unknown = payload;
+      while (typeof value === "string") {
+        value = JSON.parse(value);
+      }
+      return value;
+    };
+
     const unlistenTelemetry = listen<string>(
       "send_telemetry",
       async (event) => {
         try {
-          const telemetryData = JSON.parse(event.payload) as TelemetryData;
+          const telemetryData = parseEventPayload(
+            event.payload,
+          ) as TelemetryData;
           const device = await getDeviceInfo();
 
           telemetryData.device_id = device.uuid as string;
@@ -511,7 +545,7 @@ export function StateProvider({
 
     const unlistenReport = listen<string>("send_report", async (event) => {
       try {
-        const reportData = JSON.parse(event.payload);
+        const reportData = parseEventPayload(event.payload);
         const device = await getDeviceInfo();
 
         reportData.device_id = device.uuid as string;
@@ -524,7 +558,7 @@ export function StateProvider({
 
     const unlistenCollected = listen<string>("send_collected", async (event) => {
       try {
-        const collectedData = JSON.parse(event.payload);
+        const collectedData = parseEventPayload(event.payload);
 
         await send_collected(collectedData);
       } catch (e) {
@@ -766,16 +800,19 @@ export function StateProvider({
     rbImages,
     currentRBIndex,
     rbSlidesUnlocked,
+    dssTaken,
 
     gpsAccurancy,
     batteryLevel,
     charging,
 
-    reportSentTime,
+    reportSentAutoTime,
+    reportSentManualTime,
     oncomingDistance,
     isOncoming,
 
     setRaceNumber,
+    setActiveCode: setCoad,
     setDebugData,
     callView,
     setCodeOfDay,
@@ -806,6 +843,7 @@ export function StateProvider({
     setRBImages,
     setCurrentRBIndex,
     setRBSlidesUnlocked,
+    setDssTaken,
     goNext,
     goPrev,
     setJumpPointID,
@@ -815,7 +853,8 @@ export function StateProvider({
     setCountdown,
     setTime,
     setGPSData,
-    setReportSentTime,
+    setReportSentAutoTime,
+    setReportSentManualTime,
     resetOncomingDistance,
     increaseOncomingDistance,
     setIsOncoming,

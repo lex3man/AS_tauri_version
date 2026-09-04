@@ -10,7 +10,8 @@ import { useAppState } from "@/ctx/state-provider"
 import { useState, useRef, useCallback } from "react"
 
 export const BtmMenu = () => {
-  const { mobileView } = useAppState();
+  const { mobileView, reportSentAutoTime, reportSentManualTime } =
+    useAppState();
   const [open, setOpen] = useState(false);
   const touchStartRef = useRef<number>(0);
   const touchStartYRef = useRef<number>(0);
@@ -34,6 +35,14 @@ export const BtmMenu = () => {
 
   return (
     <div className="m-auto flex justify-center">
+      {/* Persistent report-sent indicator — always visible regardless of
+          whether the drawer below is opened, per design: empty fields when
+          a report has never been sent in that mode. pointer-events-none so
+          it never steals the swipe-up gesture from the zone underneath. */}
+      <div className="fixed bottom-0 left-0 right-0 z-30 flex justify-center gap-4 pb-1 text-[10px] opacity-70 pointer-events-none">
+        <span>Report sent (auto): {reportSentAutoTime}</span>
+        <span>Report sent (manual): {reportSentManualTime}</span>
+      </div>
       <div
         className="fixed bottom-0 left-0 right-0 h-2/3 z-40 touch-pan-y"
         onTouchStart={handleTouchStart}

@@ -35,6 +35,7 @@ pub async fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position)
         let next_point_type;
         let mut jump_suggested = false;
         let mut capture = false;
+        let mut ass_captured = false;
         let mut jump_point_id = String::new();
         let mut total_correction = None;
         let mut next_point_id = "".to_string();
@@ -51,6 +52,7 @@ pub async fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position)
         let mut finished = state.current.finished;
         let mut oncoming = false;
         let mut roadbook_unlocked = false;
+        let mut dss_taken = false;
         let mut arrow_color = "black".to_string();
 
         // ============================================================================
@@ -114,6 +116,19 @@ pub async fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position)
             // new RBP/DSS crossing to fire it again.
             roadbook_unlocked = area.points_set.iter().any(|p| {
                 (p.point_type == "RBP" || p.point_type == "DSS")
+                    && state
+                        .race
+                        .spec_area_state
+                        .points
+                        .get(&p.get_id())
+                        .map(|ps| ps.checked)
+                        .unwrap_or(false)
+            });
+            // Same idea, but DSS specifically — roadbook slide odo values
+            // are relative to the special stage start, so auto-scroll needs
+            // this even when RBP alone already unlocked the roadbook view.
+            dss_taken = area.points_set.iter().any(|p| {
+                p.point_type == "DSS"
                     && state
                         .race
                         .spec_area_state
@@ -225,6 +240,11 @@ pub async fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position)
                         capture = true;
                         prev_point_id = next_point_id.clone();
                         let is_rbp_point = next_point.point_type == "RBP";
+                        // ASS capture auto-triggers a full checkpoint report
+                        // send on the frontend (see App.tsx's sync_data poll).
+                        if next_point.point_type == "ASS" {
+                            ass_captured = true;
+                        }
                         if next_point.point_type.contains("NZ") {
                             counter = next_point.name.replace("NZ", "").parse().unwrap_or(0);
                             tel.events.push(
@@ -411,6 +431,8 @@ pub async fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position)
         state.dashboard.arrow_color = arrow_color;
         state.current.capture = capture;
         state.current.roadbook_unlocked = roadbook_unlocked;
+        state.current.dss_taken = dss_taken;
+        state.current.ass_captured = ass_captured;
         state.current.finished = finished;
         state.dashboard.max_speed = max_speed as u32;
         state.race.spec_area_state.prev_point = prev_point_id;

@@ -22,8 +22,9 @@ const Settings = () => {
     roadbookMode,
     mobileView,
     activeCode,
-    reportSentTime,
-    setReportSentTime,
+    reportSentManualTime,
+    setReportSentAutoTime,
+    setReportSentManualTime,
     adminMode,
     sync,
   } = useAppState();
@@ -47,6 +48,8 @@ const Settings = () => {
     setOncomingDetectionEnabled,
     autoMove,
     setAutoMove,
+    autoMoveAfterDss,
+    setAutoMoveAfterDss,
     increaseOncomingAngle,
     decreaseOncomingAngle,
     oncomingDetection,
@@ -58,8 +61,12 @@ const Settings = () => {
   useEffect(() => {
     const fetchReportSentTime = async () => {
       try {
-        const time = await invoke<string>("get_report_sent_time");
-        setReportSentTime(time);
+        const [auto, manual] = await Promise.all([
+          invoke<string>("get_report_sent_time", { mode: "auto" }),
+          invoke<string>("get_report_sent_time", { mode: "manual" }),
+        ]);
+        setReportSentAutoTime(auto);
+        setReportSentManualTime(manual);
       } catch (e) {
         toast.error(`Failed to fetch report sent time: ${e}`);
       }
@@ -130,6 +137,18 @@ const Settings = () => {
             Auto scroll RoadBook ON/OFF
           </Button>
           <Button
+            className={`p-6 text-2xl ${autoMoveAfterDss ? "bg-emerald-600" : "bg-red-500"}`}
+            onClick={() => {
+              if (autoMoveAfterDss) {
+                setAutoMoveAfterDss(false);
+              } else {
+                setAutoMoveAfterDss(true);
+              }
+            }}
+          >
+            {autoMoveAfterDss ? "Auto Scroll: After DSS" : "Auto Scroll: Always"}
+          </Button>
+          <Button
             className={`p-6 text-2xl ${jumpMode ? "bg-emerald-600" : "bg-red-500"}`}
             onClick={() => {
               if (jumpMode) {
@@ -156,15 +175,30 @@ const Settings = () => {
           <Button
             className="p-6 text-2xl"
             onClick={async () => {
-              invoke("export_telemetry_report")
+              if (!activeCode) {
+                toast.error(
+                  "Activate a day code before sending the report",
+                );
+                return;
+              }
+              invoke("export_telemetry_report", { mode: "manual" })
                 .then((resp) => {
                   toast.info(`report saved at ${resp}`);
                   send_report_file(resp as string, activeCode)
-                    .then(() => {
-                      toast.success("Report file sent successfully");
+                    .then((sent) => {
+                      if (sent) {
+                        toast.success("Report file sent successfully");
+                      } else {
+                        toast.error("Report file sending failed");
+                      }
                     })
                     .catch((e) => {
                       toast.error(`Report file sending error: ${e}`);
+                    })
+                    .finally(() => {
+                      invoke<string>("get_report_sent_time", { mode: "manual" }).then(
+                        setReportSentManualTime,
+                      );
                     });
                 })
                 .catch((e) =>
@@ -175,7 +209,7 @@ const Settings = () => {
             GET REPORT
           </Button>
           <div className="text-center text-2xl font-extrabold">
-            Last getting report: {reportSentTime}
+            Last manual report: {reportSentManualTime}
           </div>
           <Button
             className="p-6 text-2xl"

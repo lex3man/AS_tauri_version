@@ -8,6 +8,20 @@ use crate::{
     utils::parser::{upload_config, FormatedData},
 };
 
+/// Exposes the currently active day code so the frontend can restore its own
+/// `activeCode` state on app mount. `state.race.active_code` itself already
+/// survives an app restart (activate_code persists it immediately, and
+/// location_update re-persists it on every GPS tick) — but nothing on the
+/// frontend ever pulls it back in, so `activeCode` was silently resetting
+/// to "" every time the app (re)loads, even though the backend still knew it.
+#[tauri::command]
+pub fn get_active_code(state: State<'_, Mutex<AppState>>) -> String {
+    state
+        .lock()
+        .map(|s| s.race.active_code.clone())
+        .unwrap_or_default()
+}
+
 #[tauri::command]
 pub fn activate_code(state: State<'_, Mutex<AppState>>, code: &str) -> Result<String, ()> {
     let area_id;

@@ -22,6 +22,15 @@ pub struct Config {
     auto_move: bool,
     #[serde(default)]
     keep_pointing_at_wpt: bool,
+    // Auto-scroll behavior: "on" (default) waits for DSS to be taken before
+    // scrolling (slide odo values are stage-relative, meaningless before
+    // then); "off" scrolls from total=0 regardless.
+    #[serde(default = "default_auto_move_after_dss")]
+    auto_move_after_dss: bool,
+}
+
+fn default_auto_move_after_dss() -> bool {
+    true
 }
 
 impl Config {
@@ -40,6 +49,7 @@ impl Config {
             oncoming_detection_enabled: true,
             auto_move: true,
             keep_pointing_at_wpt: false,
+            auto_move_after_dss: true,
         }
     }
 
@@ -70,6 +80,15 @@ impl Config {
             _ => self.jump_mode = false,
         }
         self.jump_mode
+    }
+
+    pub fn auto_move_after_dss_switch(&mut self, status: &str) -> bool {
+        match status {
+            "on" => self.auto_move_after_dss = true,
+            "off" => self.auto_move_after_dss = false,
+            _ => self.auto_move_after_dss = false,
+        }
+        self.auto_move_after_dss
     }
 
     pub fn keep_pointing_at_wpt(&self) -> bool {

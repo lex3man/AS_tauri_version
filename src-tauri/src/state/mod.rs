@@ -61,6 +61,14 @@ pub struct Flags {
     // Level flag — recomputed every tick from already-checked RBP/DSS
     // points, not a one-shot capture pulse (see actor.rs).
     pub roadbook_unlocked: bool,
+    // Same kind of level flag, but specifically for DSS — the roadbook's
+    // slide odo values are relative to the special stage start, so
+    // auto-scroll must not run before DSS is actually taken even if RBP
+    // already unlocked the roadbook for viewing.
+    pub dss_taken: bool,
+    // One-shot pulse — true only on the tick an ASS point is captured, like
+    // `capture` itself (see actor.rs). Drives the automatic report send.
+    pub ass_captured: bool,
     pub _gps_signal_lost: bool,
     pub _low_battery: bool,
     pub _internert_disconnected: bool,
@@ -74,6 +82,8 @@ impl Flags {
             finished: false,
             oncoming: false,
             roadbook_unlocked: false,
+            dss_taken: false,
+            ass_captured: false,
             _gps_signal_lost: false,
             _low_battery: false,
             _internert_disconnected: false,
@@ -97,7 +107,8 @@ pub struct AppState {
     pub collected: Vec<String>,
     pub last_report: String,
     pub config_updated: String,
-    pub report_sent: String,
+    pub report_sent_auto: String,
+    pub report_sent_manual: String,
 }
 
 impl Default for AppState {
@@ -121,7 +132,8 @@ impl Default for AppState {
             collected: vec![],
             last_report: String::from(""),
             config_updated: String::from(""),
-            report_sent: String::from(""),
+            report_sent_auto: String::from(""),
+            report_sent_manual: String::from(""),
         }
     }
 }
@@ -138,7 +150,8 @@ impl AppState {
             storage.set("as_dashboard", json!(self.dashboard));
             storage.set("as_telemetry", json!(self.telemetry));
             storage.set("as_config_updayed_time", json!(self.config_updated));
-            storage.set("as_report_sent_time", json!(self.report_sent));
+            storage.set("as_report_sent_auto_time", json!(self.report_sent_auto));
+            storage.set("as_report_sent_manual_time", json!(self.report_sent_manual));
             storage.set("as_last_report", json!(self.last_report));
 
             storage.close_resource();
@@ -166,7 +179,8 @@ impl AppState {
         self.collected = vec![];
         self.last_report = String::from("");
         self.config_updated = String::from("");
-        self.report_sent = String::from("");
+        self.report_sent_auto = String::from("");
+        self.report_sent_manual = String::from("");
         self.sync();
     }
 }

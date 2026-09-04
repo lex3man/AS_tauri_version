@@ -10,18 +10,23 @@ use crate::{state::AppState, utils::send_data::{send_collected, send_report}};
 pub async fn export_telemetry_report(
     app: tauri::AppHandle,
     state: State<'_, Mutex<AppState>>,
+    mode: &str,
 ) -> Result<String, String> {
     if let Ok(mut state) = state.lock() {
         let ps = app.path().document_dir().map_err(|e| e.to_string())?;
+        // Fall back instead of unwrapping: this runs automatically on an ASS
+        // capture now, not just from the manual GET REPORT button, so a race
+        // number that hasn't been set yet must not abort the whole app
+        // (the release profile uses panic = "abort").
+        let rn = state.race_number.clone().unwrap_or("None".to_string());
         let file_name = format!(
             "report_{}_{}_{}.xlsx",
-            &state.race_number.clone().unwrap(),
+            rn,
             Local::now().format("%d%m%Y"),
             state.race.active_code
         );
         let output_path = ps.join(&file_name);
         if let Some(telemetry) = state.telemetry.get(&state.race.current_sa) {
-            let rn = &state.race_number.clone().unwrap_or("None".to_string());
             if let Some(race) = &state.race.race {
                 let mut workbook = Workbook::new();
                 {
@@ -30,7 +35,7 @@ pub async fn export_telemetry_report(
                     sheet
                         .write(0, 0, "Race Number")
                         .map_err(|e| e.to_string())?;
-                    sheet.write(0, 1, rn).map_err(|e| e.to_string())?;
+                    sheet.write(0, 1, &rn).map_err(|e| e.to_string())?;
                     sheet.write(1, 0, "Serial").map_err(|e| e.to_string())?;
                     sheet
                         .write(1, 1, race.serial.clone())
@@ -115,7 +120,12 @@ pub async fn export_telemetry_report(
                     }
                 }
                 workbook.save(&output_path).map_err(|e| e.to_string())?;
-                state.report_sent = Local::now().format("%d.%m.%Y %H:%M:%S").to_string();
+                let sent_at = Local::now().format("%d.%m.%Y %H:%M:%S").to_string();
+                if mode == "auto" {
+                    state.report_sent_auto = sent_at;
+                } else {
+                    state.report_sent_manual = sent_at;
+                }
             }
         }
         match send_report(&app, state.last_report.clone()).map_err(|_| "Can't send report".to_string()) {
@@ -140,9 +150,14 @@ pub async fn export_telemetry_report(
 }
 
 #[tauri::command]
-pub fn get_report_sent_time(state: State<'_, Mutex<AppState>>) -> Result<String, String> {
+pub fn get_report_sent_time(state: State<'_, Mutex<AppState>>, mode: &str) -> Result<String, String> {
     if let Ok(state) = state.lock() {
-        return Ok(state.report_sent.clone().replace("\"", "").replace("\\", ""));
+        let raw = if mode == "auto" {
+            &state.report_sent_auto
+        } else {
+            &state.report_sent_manual
+        };
+        return Ok(raw.clone().replace("\"", "").replace("\\", ""));
     }
     Err("Failed to get state".to_string())
 }

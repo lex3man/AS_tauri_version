@@ -14,4 +14,5 @@ export type Settings = {
     oncomingDetectionEnabled: boolean;
     autoMove: boolean;
     keepPointingAtWpt: boolean;
+    autoMoveAfterDss: boolean;
 }

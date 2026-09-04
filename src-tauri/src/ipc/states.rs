@@ -141,6 +141,8 @@ pub fn sync_data(state: State<'_, Mutex<AppState>>) -> Result<String, ()> {
             "arrow_color": state.dashboard.arrow_color,
             "capture": state.current.capture,
             "roadbook_unlocked": state.current.roadbook_unlocked,
+            "dss_taken": state.current.dss_taken,
+            "ass_captured": state.current.ass_captured,
             "activation_code": state.race.active_code,
             "metrics": {
                 "abs_total": state.dashboard.metrics.abs_total,

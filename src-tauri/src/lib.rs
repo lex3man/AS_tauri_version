@@ -55,6 +55,7 @@ pub fn run() {
             ipc::settings::switch_jump_mode,
             ipc::settings::switch_auto_move,
             ipc::settings::switch_keep_pointing_at_wpt,
+            ipc::settings::switch_auto_move_after_dss,
             ipc::settings::close_app,
             ipc::location::location_update,
             ipc::location::get_coords,
@@ -70,6 +71,7 @@ pub fn run() {
             ipc::states::point_switch,
             ipc::states::state_reset,
             ipc::codes::activate_code,
+            ipc::codes::get_active_code,
             ipc::roadbook::get_roadbook,
             ipc::roadbook::get_roadbook_image,
             ipc::metrics::increase_total,
@@ -107,14 +109,25 @@ pub fn run() {
                 state.telemetry =
                     serde_json::from_value::<HashMap<String, Telemetry>>(val).unwrap();
             }
+            // .to_string() on a serde_json::Value re-serializes it as JSON
+            // text (quotes and all) rather than giving back the raw string
+            // — .as_str() is what race_number/snapshot above correctly use.
+            // Using .to_string() here quoted-and-escaped this value on every
+            // restart, and since AppState::sync() re-persists it on every
+            // GPS tick, each subsequent restart escaped the already-escaped
+            // text again — compounding into a growing run of `\` and `"`
+            // characters in CONFIG UPDATED.
             if let Some(val) = store.get("as_config_updayed_time") {
-                state.config_updated = val.to_string();
+                state.config_updated = val.as_str().unwrap_or_default().to_string();
             }
-            if let Some(val) = store.get("as_report_sent_time") {
-                state.report_sent = val.to_string();
+            if let Some(val) = store.get("as_report_sent_auto_time") {
+                state.report_sent_auto = val.as_str().unwrap_or_default().to_string();
+            }
+            if let Some(val) = store.get("as_report_sent_manual_time") {
+                state.report_sent_manual = val.as_str().unwrap_or_default().to_string();
             }
             if let Some(val) = store.get("as_last_report") {
-                state.last_report = val.to_string();
+                state.last_report = val.as_str().unwrap_or_default().to_string();
             }
             state.storage = Some(store);
             Ok(())

@@ -119,19 +119,6 @@ export const RightContent = () => {
         <Button
           className="p-7 text-3xl w-1/2"
           onClick={async () => {
-            await invoke("point_switch", { moveTo: "next" });
-            await invoke<string>("sync_data").then((rawData) => {
-              const data = JSON.parse(rawData);
-              setNextPointNumber(data.next_point.split("-")[0]);
-              setNextPointName(data.next_point.split("-")[1]);
-            });
-          }}
-        >
-          W+
-        </Button>
-        <Button
-          className="p-7 text-3xl w-1/2"
-          onClick={async () => {
             await invoke("point_switch", { moveTo: "prev" });
             await invoke<string>("sync_data").then((rawData) => {
               const data = JSON.parse(rawData);
@@ -141,6 +128,19 @@ export const RightContent = () => {
           }}
         >
           W-
+        </Button>
+        <Button
+          className="p-7 text-3xl w-1/2"
+          onClick={async () => {
+            await invoke("point_switch", { moveTo: "next" });
+            await invoke<string>("sync_data").then((rawData) => {
+              const data = JSON.parse(rawData);
+              setNextPointNumber(data.next_point.split("-")[0]);
+              setNextPointName(data.next_point.split("-")[1]);
+            });
+          }}
+        >
+          W+
         </Button>
       </div>
       <Button

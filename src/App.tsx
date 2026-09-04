@@ -30,6 +30,7 @@ import Adjust from "./components/screens/adjust";
 import Tracking from "./components/screens/tracking";
 import { Button } from "./components/ui/button";
 import PointsList from "./components/screens/points-list";
+import { send_report_file } from "./lib/api";
 
 function App() {
   const [leftOpen, setLeftOpen] = useState(false);
@@ -48,6 +49,7 @@ function App() {
     callView,
     setGpsAccuracy,
     setRaceNumber,
+    setActiveCode,
     setCodeOfDay,
     setCommand,
     setCoords,
@@ -65,6 +67,9 @@ function App() {
     setMaxSpeed,
     setRoadbookMode,
     setRBSlidesUnlocked,
+    setDssTaken,
+    setReportSentAutoTime,
+    setReportSentManualTime,
     setDebugData,
     setVisiable,
     setSpeedExceeds,
@@ -138,6 +143,31 @@ function App() {
               // again on the very next poll after an app restart/resume,
               // without needing a fresh RBP/DSS crossing.
               setRBSlidesUnlocked(data.roadbook_unlocked);
+              setDssTaken(data.dss_taken);
+              // ASS capture (one-shot pulse, like `capture`) auto-triggers
+              // the same report generation + upload flow the manual GET
+              // REPORT button uses, tagged "auto" so the bottom-menu can
+              // show automatic vs manual send times separately.
+              // The day code is taken from this same payload rather than the
+              // component's `activeCode`: this callback is registered once on
+              // mount, so it closes over the first render's value — still ""
+              // at that point — and the guard would never pass.
+              const etape: string = data.activation_code;
+              if (data.ass_captured && etape) {
+                invoke("export_telemetry_report", { mode: "auto" })
+                  .then((resp) => {
+                    send_report_file(resp as string, etape).finally(
+                      () => {
+                        invoke<string>("get_report_sent_time", {
+                          mode: "auto",
+                        }).then(setReportSentAutoTime);
+                      },
+                    );
+                  })
+                  .catch((e) => {
+                    console.error("Auto report generation failed:", e);
+                  });
+              }
               setCog(data.cog);
               setCtw(data.ctw);
               setDtw(data.dtw);
@@ -210,8 +240,30 @@ function App() {
       setRoadbookMode(orientation.includes("portrait"));
     };
     const check = async () => {
+      // get_race_number/get_active_code return "" (never null) when nothing
+      // was persisted yet — guard anyway since Rust's Option<String> could
+      // still surface as null over IPC, and setRaceNumber(null) would blow
+      // up trying to re-save it. These two survive an app restart on the
+      // backend already (persisted the moment they're set) but were never
+      // pulled back into frontend state on mount — restoring them here is
+      // what fixes "Etape/Race Number reset after restart".
       const rn = await invoke<string>("get_race_number");
-      setRaceNumber(rn);
+      if (rn) {
+        setRaceNumber(rn);
+      }
+      const code = await invoke<string>("get_active_code");
+      if (code) {
+        setActiveCode(code);
+      }
+      // Same idea for the report-sent indicator (bottom-menu) — it's
+      // persistently visible regardless of whether the user ever opens
+      // Settings, so it needs its own restore here, not just settings.tsx's.
+      const [autoSent, manualSent] = await Promise.all([
+        invoke<string>("get_report_sent_time", { mode: "auto" }),
+        invoke<string>("get_report_sent_time", { mode: "manual" }),
+      ]);
+      setReportSentAutoTime(autoSent);
+      setReportSentManualTime(manualSent);
     };
     setMobileView(width / height > 2 || height / width > 2);
     setRoadbookMode(width < height);
