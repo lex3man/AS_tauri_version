@@ -4,6 +4,8 @@ import { useTheme } from "./theme-provider";
 import { Kilometers, Meters } from "@/types/messure-units";
 import { Settings } from "@/types/settings";
 
+const TRACK_DIST_STEP_KM = 0.5;
+
 type SettingsProviderProps = {
   children: React.ReactNode;
   storageKey?: string;
@@ -24,6 +26,7 @@ function parseSettings(json: string): Settings {
     oncoming_detection_enabled: boolean;
     auto_move: boolean;
     keep_pointing_at_wpt: boolean;
+    auto_move_after_dss: boolean;
   };
 
   return {
@@ -40,6 +43,7 @@ function parseSettings(json: string): Settings {
     oncomingDetectionEnabled: parsed.oncoming_detection_enabled,
     autoMove: parsed.auto_move,
     keepPointingAtWpt: parsed.keep_pointing_at_wpt,
+    autoMoveAfterDss: parsed.auto_move_after_dss,
   };
 }
 
@@ -57,6 +61,7 @@ type SettingsProviderState = {
   oncomingDetectionEnabled: boolean;
   autoMove: boolean;
   keepPointingAtWpt: boolean;
+  autoMoveAfterDss: boolean;
   setShowBackground: (status: boolean) => void;
   setDtwEnable: (status: boolean) => void;
   setDarkMode: (status: boolean) => void;
@@ -65,6 +70,7 @@ type SettingsProviderState = {
   setRoadbookMode: (status: boolean) => void;
   setAutoMove: (status: boolean) => void;
   setKeepPointingAtWpt: (status: boolean) => void;
+  setAutoMoveAfterDss: (status: boolean) => void;
   increaseDistStep: () => void;
   decreaseDistStep: () => void;
   increaseTrackDist: () => void;
@@ -88,9 +94,10 @@ const initialState: SettingsProviderState = {
   roadbookMode: false,
   oncomingAngle: 60,
   oncomingDetection: 300,
-  oncomingDetectionEnabled: true,
-  autoMove: true,
+  oncomingDetectionEnabled: false,
+  autoMove: false,
   keepPointingAtWpt: false,
+  autoMoveAfterDss: false,
 
   setShowBackground: () => null,
   setDtwEnable: () => null,
@@ -100,6 +107,7 @@ const initialState: SettingsProviderState = {
   setRoadbookMode: () => null,
   setAutoMove: () => null,
   setKeepPointingAtWpt: () => null,
+  setAutoMoveAfterDss: () => null,
   increaseDistStep: () => null,
   decreaseDistStep: () => null,
   increaseTrackDist: () => null,
@@ -128,11 +136,12 @@ export function SettingsProvider({
   const [demoMode, setDemoMode] = useState(false);
   const [jumpMode, setJumpMode] = useState(false);
   const [roadbookMode, setRoadbookMode] = useState(false);
-  const [autoMove, setRBAutoMove] = useState(true);
+  const [autoMove, setRBAutoMove] = useState(false);
   const [keepPointingAtWpt, setKPAWpt] = useState(false);
+  const [autoMoveAfterDss, setAMAfterDss] = useState(false);
   const [oncomingAngle, setOncomingAngle] = useState(60);
   const [oncomingDetection, setOncomingDetection] = useState(300);
-  const [oncomingDetectionEnabled, setOncomingDE] = useState(true);
+  const [oncomingDetectionEnabled, setOncomingDE] = useState(false);
   const { setTheme } = useTheme();
 
   const getSettings = () => {
@@ -154,6 +163,7 @@ export function SettingsProvider({
       setOncomingDetection(settings.oncomingDetection);
       setRBAutoMove(settings.autoMove);
       setKPAWpt(settings.keepPointingAtWpt);
+      setAMAfterDss(settings.autoMoveAfterDss);
     };
     update();
   };
@@ -193,17 +203,18 @@ export function SettingsProvider({
     });
   };
 
+  // TRACK DIST moves in 500 m steps; the backend clamps at 0 the same way.
   const increaseTrackDist = async () => {
     invoke("set_track_dist", { c: "up" }).then(() => {
-      setTrackDistance(new Kilometers(trackDistance.value + 5));
+      setTrackDistance(new Kilometers(trackDistance.value + TRACK_DIST_STEP_KM));
     });
   };
 
   const decreaseTrackDist = async () => {
     invoke("set_track_dist", { c: "down" }).then(() => {
-      if (trackDistance.value > 0) {
-        setTrackDistance(new Kilometers(trackDistance.value - 5));
-      }
+      setTrackDistance(
+        new Kilometers(Math.max(trackDistance.value - TRACK_DIST_STEP_KM, 0)),
+      );
     });
   };
 
@@ -253,6 +264,7 @@ export function SettingsProvider({
     oncomingDetectionEnabled,
     autoMove,
     keepPointingAtWpt,
+    autoMoveAfterDss,
     setDarkMode,
     setShowBackground,
     setDtwEnable,
@@ -281,6 +293,16 @@ export function SettingsProvider({
         save();
       }
       setKPAWpt(status);
+    },
+    setAutoMoveAfterDss: (status: boolean) => {
+      const save = async () =>
+        await invoke("switch_auto_move_after_dss", {
+          status: status ? "on" : "off",
+        });
+      if (autoMoveAfterDss != status) {
+        save();
+      }
+      setAMAfterDss(status);
     },
     increaseDistStep,
     decreaseDistStep,

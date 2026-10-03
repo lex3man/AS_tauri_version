@@ -108,6 +108,18 @@ pub fn switch_auto_move(state: State<'_, Mutex<AppState>>, status: &str) -> Resu
 }
 
 #[tauri::command]
+pub fn switch_auto_move_after_dss(state: State<'_, Mutex<AppState>>, status: &str) -> Result<(), ()> {
+    if let Ok(mut s) = state.lock() {
+        s.settings.auto_move_after_dss_switch(status);
+        if let Some(storage) = &s.storage {
+            storage.set("settings", json!(s.settings));
+            storage.close_resource();
+        }
+    };
+    Ok(())
+}
+
+#[tauri::command]
 pub fn set_dist_step(state: State<'_, Mutex<AppState>>, c: &str) -> Result<(), ()> {
     if let Ok(mut state) = state.lock() {
         match c {

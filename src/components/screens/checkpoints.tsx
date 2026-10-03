@@ -101,7 +101,7 @@ const CheckPoints = () => {
             </div>
             <div className="flex justify-center">
               <div
-                className={`text-xl text-center font-extrabold ${point.checked && "text-green-500"}`}
+                className={`text-xl text-center font-extrabold`}
               >
                 {point.name}
               </div>

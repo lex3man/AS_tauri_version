@@ -1,6 +1,7 @@
 use std::sync::Mutex;
 
 use chrono::{DateTime, Local, TimeZone, Utc};
+use serde_json::json;
 use rust_xlsxwriter::workbook::Workbook;
 use tauri::{Manager, State};
 
@@ -10,18 +11,23 @@ use crate::{state::AppState, utils::send_data::{send_collected, send_report}};
 pub async fn export_telemetry_report(
     app: tauri::AppHandle,
     state: State<'_, Mutex<AppState>>,
+    mode: &str,
 ) -> Result<String, String> {
     if let Ok(mut state) = state.lock() {
         let ps = app.path().document_dir().map_err(|e| e.to_string())?;
+        // Fall back instead of unwrapping: this runs automatically on an ASS
+        // capture now, not just from the manual GET REPORT button, so a race
+        // number that hasn't been set yet must not abort the whole app
+        // (the release profile uses panic = "abort").
+        let rn = state.race_number.clone().unwrap_or("None".to_string());
         let file_name = format!(
             "report_{}_{}_{}.xlsx",
-            &state.race_number.clone().unwrap(),
+            rn,
             Local::now().format("%d%m%Y"),
             state.race.active_code
         );
         let output_path = ps.join(&file_name);
         if let Some(telemetry) = state.telemetry.get(&state.race.current_sa) {
-            let rn = &state.race_number.clone().unwrap_or("None".to_string());
             if let Some(race) = &state.race.race {
                 let mut workbook = Workbook::new();
                 {
@@ -30,7 +36,7 @@ pub async fn export_telemetry_report(
                     sheet
                         .write(0, 0, "Race Number")
                         .map_err(|e| e.to_string())?;
-                    sheet.write(0, 1, rn).map_err(|e| e.to_string())?;
+                    sheet.write(0, 1, &rn).map_err(|e| e.to_string())?;
                     sheet.write(1, 0, "Serial").map_err(|e| e.to_string())?;
                     sheet
                         .write(1, 1, race.serial.clone())
@@ -115,7 +121,14 @@ pub async fn export_telemetry_report(
                     }
                 }
                 workbook.save(&output_path).map_err(|e| e.to_string())?;
-                state.report_sent = Local::now().format("%d.%m.%Y %H:%M:%S").to_string();
+                // Queue it instead of stamping "sent" right here: the upload
+                // happens afterwards and may well fail (no connectivity on
+                // the stage). The timestamp is set by mark_report_sent()
+                // once the server has actually accepted the file, and the
+                // queue is retried until then.
+                state.pending_report_path = output_path.to_string_lossy().to_string();
+                state.pending_report_mode = mode.to_string();
+                state.pending_report_etape = state.race.active_code.clone();
             }
         }
         match send_report(&app, state.last_report.clone()).map_err(|_| "Can't send report".to_string()) {
@@ -139,10 +152,63 @@ pub async fn export_telemetry_report(
     Err("Failed to get state".to_string())
 }
 
+/// The report file still awaiting delivery, as `{path, mode, etape}` — or
+/// `{}` when the queue is empty. Retried by the frontend on every poll.
 #[tauri::command]
-pub fn get_report_sent_time(state: State<'_, Mutex<AppState>>) -> Result<String, String> {
+pub fn get_pending_report(state: State<'_, Mutex<AppState>>) -> Result<String, String> {
     if let Ok(state) = state.lock() {
-        return Ok(state.report_sent.clone().replace("\"", "").replace("\\", ""));
+        if state.pending_report_path.is_empty() {
+            return Ok("{}".to_string());
+        }
+        return Ok(json!({
+            "path": state.pending_report_path,
+            "mode": state.pending_report_mode,
+            "etape": state.pending_report_etape,
+        })
+        .to_string());
+    }
+    Err("Failed to get state".to_string())
+}
+
+/// Called only after the server accepted the upload: stamps the send time
+/// for the queued report's mode and clears the queue.
+#[tauri::command]
+pub fn mark_report_sent(state: State<'_, Mutex<AppState>>) -> Result<String, String> {
+    if let Ok(mut state) = state.lock() {
+        let sent_at = Local::now().format("%d.%m.%Y %H:%M:%S").to_string();
+        if state.pending_report_mode == "auto" {
+            state.report_sent_auto = sent_at.clone();
+        } else {
+            state.report_sent_manual = sent_at.clone();
+        }
+        state.pending_report_path = String::from("");
+        state.pending_report_mode = String::from("");
+        state.pending_report_etape = String::from("");
+        // Persist straight away rather than waiting for the next GPS tick's
+        // AppState::sync(): being killed in between would clear the queue
+        // while losing the timestamp of a report that did get delivered.
+        if let Some(storage) = &state.storage {
+            storage.set("as_report_sent_auto_time", json!(state.report_sent_auto));
+            storage.set("as_report_sent_manual_time", json!(state.report_sent_manual));
+            storage.set("as_pending_report_path", json!(""));
+            storage.set("as_pending_report_mode", json!(""));
+            storage.set("as_pending_report_etape", json!(""));
+            storage.close_resource();
+        }
+        return Ok(sent_at);
+    }
+    Err("Failed to get state".to_string())
+}
+
+#[tauri::command]
+pub fn get_report_sent_time(state: State<'_, Mutex<AppState>>, mode: &str) -> Result<String, String> {
+    if let Ok(state) = state.lock() {
+        let raw = if mode == "auto" {
+            &state.report_sent_auto
+        } else {
+            &state.report_sent_manual
+        };
+        return Ok(raw.clone().replace("\"", "").replace("\\", ""));
     }
     Err("Failed to get state".to_string())
 }

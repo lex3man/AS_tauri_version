@@ -15,6 +15,8 @@ const Roadbook = () => {
     dtw,
     speed,
     maxSpeed,
+    signLimit,
+    signPenalized,
     cpCounter,
     countdownWidgetShown,
     nextPointName,
@@ -123,9 +125,9 @@ const Roadbook = () => {
   return (
     <div className="flex flex-col">
       <div
-        className={`h-[35vh] w-full border-2 border-foreground ${showBackground ? 'bg-cover bg-center bg-no-repeat bg-[url("./assets/background_rb.png")]' : ""}`}
+        className={`h-[35%] w-full border-2 border-foreground`}
       >
-        <div className={`flex justify-center h-[12%]`}>
+        <div className={`flex justify-center h-[12%] border-b-2 border-foreground ${showBackground ? 'bg-cover bg-no-repeat bg-[url("./assets/background_rb.png")]' : ""}`}>
           <div className="flex pt-2 pl-2 justify-center w-1/4">
             <Indicators />
           </div>
@@ -138,31 +140,31 @@ const Roadbook = () => {
             </div>
           </div>
         </div>
-        <div className="flex w-full">
-          <div className={`flex flex-col w-1/4 h-[30.5vh] gap-2`}>
+        <div className={`flex h-full w-full ${showBackground ? 'bg-orange-100' : 'bg-white'}`}>
+          <div className={`flex flex-col w-1/4`}>
             {visiable ? (
-              <div className="flex flex-col justify-start h-[33%] p-2 border-r-2 border-b-2">
+              <div className="flex flex-col justify-start h-[30%] p-2 border-r-2 border-b-2 border-foreground">
                 <div
-                  className={`flex justify-start text-6xl font-extrabold leading-none`}
+                  className={`flex my-auto justify-start text-5xl font-extrabold leading-none`}
                 >
                   <div className="transform origin-left scale-x-60">{cog}</div>
                 </div>
-                <div className={`flex justify-start text-xl font-bold`}>COG</div>
+                <div className={`flex my-auto justify-start text-l font-bold`}>COG</div>
               </div>
             ) : (
-              <div className="flex flex-col justify-start h-[33%] p-2 border-r-2 border-b-2"></div>
+              <div className="h-[30%] p-2 border-r-2 border-b-2 border-foreground"></div>
             )}
-            <div className="flex flex-col justify-end h-[33%] p-2 border-r-2">
-              <div className={`flex justify-start text-xl font-bold`}>SOG</div>
+            <div className="flex flex-col justify-end h-[30%] p-2 border-r-2 border-foreground">
+              <div className={`flex my-auto justify-start text-l font-bold`}>SOG</div>
               <div
-                className={`flex justify-start text-6xl font-extrabold leading-none`}
+                className={`flex my-auto justify-start text-5xl font-extrabold leading-none`}
               >
                 <div className="transform origin-left scale-x-60">
                   {speed.toFixed(0)}
                 </div>
               </div>
             </div>
-            <div className="h-[33%]">
+            <div className="h-[40%]">
               <div className="h-full">
                 {countdownWidgetShown ? (
                   <CountdownWidget />
@@ -172,9 +174,9 @@ const Roadbook = () => {
               </div>
             </div>
           </div>
-          <div className="flex flex-col w-1/2 h-[33vh]">
+          <div className="flex flex-col w-1/2">
             <div
-              className={`text-[clamp(1.5rem,5vw,3rem)] leading-none mx-auto font-extrabold py-5`}
+              className={`text-[clamp(1.5rem,5vw,3rem)] leading-none mx-auto font-extrabold py-3`}
             >
               <div className="transform scale-x-60 text-center">WTP{nextPointNumber} {nextPointName}</div>
             </div>
@@ -190,40 +192,51 @@ const Roadbook = () => {
               </div>
             )}
           </div>
-          <div className="flex flex-col w-1/4 h-[30.5vh] gap-2">
-            <div className="flex flex-col justify-start h-[33%] p-2 border-b-2 border-l-2">
+          <div className="flex flex-col w-1/4">
+            <div className="flex flex-col justify-start h-[30%] p-2 border-b-2 border-l-2 border-foreground">
               <div
-                className={`flex justify-end text-6xl font-extrabold leading-none`}
+                className={`flex my-auto justify-end text-5xl font-extrabold leading-none`}
               >
                 <div className="transform origin-right scale-x-60">{visiable ? ctw : nextPointType}</div>
               </div>
-              {visiable && <div className={`flex justify-end text-xl font-bold`}>CTW</div>}
+              {visiable && <div className={`flex my-auto justify-end text-l font-bold`}>CTW</div>}
             </div>
-            <div className="flex flex-col justify-end h-[33%] p-2 border-b-2 border-l-2">
-              <div className={`flex justify-end text-xl font-bold`}>DTW</div>
+            <div className="flex flex-col justify-end h-[30%] p-2 border-b-2 border-l-2 border-foreground">
+              <div className={`flex my-auto justify-end text-l font-bold`}>DTW</div>
               <div
-                className={`flex justify-end text-6xl font-extrabold leading-none`}
+                className={`flex my-auto justify-end text-5xl font-extrabold leading-none`}
               >
                 <div className="transform origin-right scale-x-60">
                   {dtw.toFixed(2)}
                 </div>
               </div>
             </div>
-            <div className="h-[30%]">
-              {((preExceeding || nextPointType === "FZ") && !exceeding) && (
-                <div className={`flex items-center justify-center m-auto h-full border-15 border-zinc-600 rounded-full aspect-square`}>
-                  <div className="text-[clamp(2rem,5vw,3.5rem)] font-extrabold">
-                    {maxSpeed}
+            <div className="h-[40%] p-1">
+              {signLimit > 0 ? (
+              // DZ→FZ zone: the sign stays on screen showing the limit in
+              // force. Red means it is being enforced here, grey that it is
+              // a warning (the upcoming limit, or the braking zone).
+              <div
+                className={`flex items-center justify-center m-auto h-full border-15 rounded-full aspect-square ${
+                  signPenalized ? "border-red-500" : "border-zinc-600"
+                } ${exceeding ? "animate-caret-blink" : ""}`}
+              >
+                <div className="text-[clamp(2rem,5vw,3.5rem)] font-extrabold">{signLimit}</div>
+              </div>
+            ) : (
+              <>
+                {((preExceeding || nextPointType === "FZ") && !exceeding) && (
+                  <div className={`flex items-center justify-center m-auto h-full border-15 border-zinc-600 rounded-full aspect-square`}>
+                    <div className="text-[clamp(2rem,5vw,3.5rem)] font-extrabold">{maxSpeed}</div>
                   </div>
-                </div>
-              )}
-              {exceeding && (
-                <div className={`flex items-center justify-center m-auto h-full border-15 border-red-500 rounded-full animate-caret-blink aspect-square`}>
-                  <div className="text-[clamp(2rem,5vw,3.5rem)] font-extrabold">
-                    {maxSpeed}
+                )}
+                {exceeding && (
+                  <div className={`flex items-center justify-center m-auto h-full border-15 border-red-500 rounded-full animate-caret-blink aspect-square`}>
+                    <div className="text-[clamp(2rem,5vw,3.5rem)] font-extrabold">{maxSpeed}</div>
                   </div>
-                </div>
-              )}
+                )}
+              </>
+            )}
             </div>
           </div>
         </div>

@@ -12,6 +12,12 @@ pub type PointID = String;
 pub struct PointState {
     pub checked: bool,
     pub jumpable: bool,
+    // Entered this point's visible radius at least once. `checked` already
+    // records the capture radius; the DZ→FZ speed-zone rules need to tell
+    // "drove through the visibility zone but never took the point" apart
+    // from "never came near it at all".
+    #[serde(default)]
+    pub seen: bool,
 }
 
 impl PointState {
@@ -19,6 +25,7 @@ impl PointState {
         PointState {
             checked: false,
             jumpable: true,
+            seen: false,
         }
     }
 }
@@ -38,6 +45,13 @@ pub struct SpecEreaState {
     pub held_point: Option<PointID>,
     #[serde(default)]
     pub held_min_dtw: Option<f64>,
+    // Latched once the device enters the DSS visible radius (or an RBP/DSS
+    // point gets captured). Proximity itself is transient — without the
+    // latch the roadbook would disappear again as soon as the device drove
+    // past DSS. Lives in the per-area state, so it persists across restarts
+    // and resets together with the area on a new day code.
+    #[serde(default)]
+    pub roadbook_shown: bool,
 }
 
 impl SpecEreaState {
@@ -49,6 +63,7 @@ impl SpecEreaState {
             prev_point: String::from(""),
             held_point: None,
             held_min_dtw: None,
+            roadbook_shown: false,
         }
     }
 }

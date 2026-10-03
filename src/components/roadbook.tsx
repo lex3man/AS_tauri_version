@@ -18,13 +18,14 @@ export const RoadbookSlides = () => {
     currentRBIndex,
     setCurrentRBIndex,
     rbSlidesUnlocked,
+    dssTaken,
     goNext,
     goPrev,
     setNextPointNumber,
     setNextPointName,
     setPartial,
   } = useAppState();
-  const { autoMove } = useSettings();
+  const { autoMove, autoMoveAfterDss } = useSettings();
   const [gamepads, setGamepads] = useState({});
   useGamepads((gamepads) => setGamepads(gamepads));
 
@@ -55,6 +56,12 @@ export const RoadbookSlides = () => {
 
   useEffect(() => {
     if (!autoMove) return;
+    // Roadbook slide odo values are relative to the DSS (special stage
+    // start) — before DSS is taken, `total` doesn't correspond to them at
+    // all (e.g. still on the liaison road to the stage). The "After DSS"
+    // setting (default) keeps auto-scroll off until then even if RBP
+    // already made the roadbook visible; "Always" skips this wait.
+    if (autoMoveAfterDss && !dssTaken) return;
     if (rbSlides.length === 0) return;
     if (Date.now() < suppressAutoMoveUntilRef.current) return;
 
@@ -223,7 +230,7 @@ export const RoadbookSlides = () => {
   if (!rbSlidesUnlocked) {
     return (
       <div className="relative flex flex-col w-full h-full text-center items-center justify-center text-gray-400 text-xl">
-        Road Book temporarily locked. Please, move to DSS point to unlock it. <br />
+        Road Book temporarily locked. Please, keep moving to DSS point to unlock it. <br />
       </div>
     );
   }

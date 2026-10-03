@@ -107,7 +107,9 @@ pub fn get_location_history(state: State<'_, Mutex<AppState>>) -> Result<String,
             if let Some(last_position) = tel.steps.last() {
                 let mut prev_pos = last_position.coords;
                 let mut full_buffer = tel.steps.clone();
-                while (counter as u64) < dist {
+                // Compare in f64: truncating to whole km here would make the
+                // 500 m TRACK DIST step invisible to the track length.
+                while counter < dist {
                     if let Some(pos) = full_buffer.pop() {
                         counter += distance(
                             Coords {

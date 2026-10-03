@@ -22,8 +22,9 @@ const Settings = () => {
     roadbookMode,
     mobileView,
     activeCode,
-    reportSentTime,
-    setReportSentTime,
+    reportSentManualTime,
+    setReportSentAutoTime,
+    setReportSentManualTime,
     adminMode,
     sync,
   } = useAppState();
@@ -47,6 +48,8 @@ const Settings = () => {
     setOncomingDetectionEnabled,
     autoMove,
     setAutoMove,
+    autoMoveAfterDss,
+    setAutoMoveAfterDss,
     increaseOncomingAngle,
     decreaseOncomingAngle,
     oncomingDetection,
@@ -58,8 +61,12 @@ const Settings = () => {
   useEffect(() => {
     const fetchReportSentTime = async () => {
       try {
-        const time = await invoke<string>("get_report_sent_time");
-        setReportSentTime(time);
+        const [auto, manual] = await Promise.all([
+          invoke<string>("get_report_sent_time", { mode: "auto" }),
+          invoke<string>("get_report_sent_time", { mode: "manual" }),
+        ]);
+        setReportSentAutoTime(auto);
+        setReportSentManualTime(manual);
       } catch (e) {
         toast.error(`Failed to fetch report sent time: ${e}`);
       }
@@ -130,6 +137,18 @@ const Settings = () => {
             Auto scroll RoadBook ON/OFF
           </Button>
           <Button
+            className={`p-6 text-2xl ${autoMoveAfterDss ? "bg-emerald-600" : "bg-red-500"}`}
+            onClick={() => {
+              if (autoMoveAfterDss) {
+                setAutoMoveAfterDss(false);
+              } else {
+                setAutoMoveAfterDss(true);
+              }
+            }}
+          >
+            {autoMoveAfterDss ? "Auto Scroll: After DSS" : "Auto Scroll: Always"}
+          </Button>
+          <Button
             className={`p-6 text-2xl ${jumpMode ? "bg-emerald-600" : "bg-red-500"}`}
             onClick={() => {
               if (jumpMode) {
@@ -156,16 +175,37 @@ const Settings = () => {
           <Button
             className="p-6 text-2xl"
             onClick={async () => {
-              invoke("export_telemetry_report")
-                .then((resp) => {
+              if (!activeCode) {
+                toast.error(
+                  "Activate a day code before sending the report",
+                );
+                return;
+              }
+              invoke("export_telemetry_report", { mode: "manual" })
+                .then(async (resp) => {
                   toast.info(`report saved at ${resp}`);
-                  send_report_file(resp as string, activeCode)
-                    .then(() => {
-                      toast.success("Report file sent successfully");
-                    })
-                    .catch((e) => {
-                      toast.error(`Report file sending error: ${e}`);
-                    });
+                  // The report is now queued in the backend. If this send
+                  // fails it stays queued and the app keeps retrying it in
+                  // the background, so the timestamp below only ever shows
+                  // a delivery the server actually accepted.
+                  const sent = await send_report_file(
+                    resp as string,
+                    activeCode,
+                  );
+                  if (sent) {
+                    await invoke<string>("mark_report_sent");
+                    toast.success("Report file sent successfully");
+                  } else {
+                    toast.error(
+                      "No connection — report queued, will be sent automatically",
+                    );
+                  }
+                  const [auto, manual] = await Promise.all([
+                    invoke<string>("get_report_sent_time", { mode: "auto" }),
+                    invoke<string>("get_report_sent_time", { mode: "manual" }),
+                  ]);
+                  setReportSentAutoTime(auto);
+                  setReportSentManualTime(manual);
                 })
                 .catch((e) =>
                   toast.error(`Report file generating error: ${e}`),
@@ -175,7 +215,7 @@ const Settings = () => {
             GET REPORT
           </Button>
           <div className="text-center text-2xl font-extrabold">
-            Last getting report: {reportSentTime}
+            Last manual report: {reportSentManualTime}
           </div>
           <Button
             className="p-6 text-2xl"
@@ -185,42 +225,40 @@ const Settings = () => {
           >
             SET RACE NUMBER
           </Button>
-          {adminMode && (
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button className="p-6 text-2xl">RESET</Button>
-              </DialogTrigger>
-              <DialogContent showCloseButton={false}>
-                <DialogHeader>
-                  <DialogTitle>Are you sure?</DialogTitle>
-                  <DialogDescription>
-                    This action will prune all reports, telemetry and race
-                    state!
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="flex gap-10">
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button className="p-6 text-2xl">RESET</Button>
+            </DialogTrigger>
+            <DialogContent showCloseButton={false}>
+              <DialogHeader>
+                <DialogTitle>Are you sure?</DialogTitle>
+                <DialogDescription>
+                  This action will prune all reports, telemetry and race
+                  state!
+                </DialogDescription>
+              </DialogHeader>
+              <div className="flex gap-10">
+                <Button
+                  className="p-6 text-2xl bg-red-600"
+                  onClick={async () => {
+                    await invoke("state_reset");
+                    getSettings();
+                    sync();
+                    await invoke("close_app");
+                  }}
+                >
+                  RESET
+                </Button>
+                <DialogClose asChild>
                   <Button
-                    className="p-6 text-2xl bg-red-600"
-                    onClick={async () => {
-                      await invoke("state_reset");
-                      getSettings();
-                      sync();
-                      await invoke("close_app");
-                    }}
+                    className="p-6 text-2xl bg-green-600"
                   >
-                    RESET
+                    CANCEL
                   </Button>
-                  <DialogClose asChild>
-                    <Button
-                      className="p-6 text-2xl bg-green-600"
-                    >
-                      CANCEL
-                    </Button>
-                  </DialogClose>
-                </div>
-              </DialogContent>
-            </Dialog>
-          )}
+                </DialogClose>
+              </div>
+            </DialogContent>
+          </Dialog>
           <div
             className={`flex ${roadbookMode && mobileView ? "flex-col justify-center gap-10 items-center" : "justify-between"} pt-5`}
           >
@@ -240,7 +278,7 @@ const Settings = () => {
               </div>
               <ChevronUp onClick={() => increaseTrackDist()} />
               <div className="text-3xl font-extrabold">
-                {trackDistance.value}
+                {trackDistance.value.toFixed(1)}
               </div>
               <ChevronDown onClick={() => decreaseTrackDist()} />
             </div>
