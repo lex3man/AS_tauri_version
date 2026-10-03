@@ -1,10 +1,14 @@
 use serde::{Deserialize, Serialize};
 
+/// TRACK DIST is adjusted in 500 m steps, so it is kept in kilometres as
+/// a float rather than whole kilometres.
+const TRACK_DIST_STEP_KM: f64 = 0.5;
+
 #[derive(Serialize, Deserialize)]
 struct Meters(u64);
 
 #[derive(Serialize, Deserialize)]
-struct Kilometers(u64);
+struct Kilometers(f64);
 
 #[derive(Serialize, Deserialize)]
 pub struct Config {
@@ -30,7 +34,7 @@ pub struct Config {
 }
 
 fn default_auto_move_after_dss() -> bool {
-    true
+    false
 }
 
 impl Config {
@@ -40,16 +44,19 @@ impl Config {
             background: true,
             demo_mode: false,
             correction_distance: Meters(100),
-            track_distance: Kilometers(30),
+            track_distance: Kilometers(30.0),
             jump_mode: false,
             road_book: false,
             dtw_enabled: true,
             oncoming_angle: 60,
             oncoming_detection: 300,
-            oncoming_detection_enabled: true,
-            auto_move: true,
+            // Ship with all of these off: a fresh install (or a state reset)
+            // starts with no auto-scroll, no jump mode, no WPT hold and no
+            // oncoming detection — each is opted into from SETUP.
+            oncoming_detection_enabled: false,
+            auto_move: false,
             keep_pointing_at_wpt: false,
-            auto_move_after_dss: true,
+            auto_move_after_dss: false,
         }
     }
 
@@ -116,21 +123,19 @@ impl Config {
     }
 
     pub fn increase_track(&mut self) {
-        self.track_distance = Kilometers(self.track_distance.0 + 5);
+        self.track_distance = Kilometers(self.track_distance.0 + TRACK_DIST_STEP_KM);
     }
 
     pub fn decrease_track(&mut self) {
-        if self.track_distance.0 == 0 {
-            return;
-        }
-        self.track_distance = Kilometers(self.track_distance.0 - 5);
+        self.track_distance =
+            Kilometers((self.track_distance.0 - TRACK_DIST_STEP_KM).max(0.0));
     }
 
     pub fn get_dist(&self) -> u64 {
         self.correction_distance.0
     }
 
-    pub fn get_track(&self) -> u64 {
+    pub fn get_track(&self) -> f64 {
         self.track_distance.0
     }
 

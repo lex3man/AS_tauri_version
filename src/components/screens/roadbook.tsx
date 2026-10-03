@@ -15,6 +15,8 @@ const Roadbook = () => {
     dtw,
     speed,
     maxSpeed,
+    signLimit,
+    signPenalized,
     cpCounter,
     countdownWidgetShown,
     nextPointName,
@@ -210,20 +212,31 @@ const Roadbook = () => {
               </div>
             </div>
             <div className="h-[40%] p-1">
-              {((preExceeding || nextPointType === "FZ") && !exceeding) && (
-                <div className={`flex items-center justify-center m-auto h-full border-15 border-zinc-600 rounded-full aspect-square`}>
-                  <div className="text-[clamp(2rem,5vw,3.5rem)] font-extrabold">
-                    {maxSpeed}
+              {signLimit > 0 ? (
+              // DZ→FZ zone: the sign stays on screen showing the limit in
+              // force. Red means it is being enforced here, grey that it is
+              // a warning (the upcoming limit, or the braking zone).
+              <div
+                className={`flex items-center justify-center m-auto h-full border-15 rounded-full aspect-square ${
+                  signPenalized ? "border-red-500" : "border-zinc-600"
+                } ${exceeding ? "animate-caret-blink" : ""}`}
+              >
+                <div className="text-[clamp(2rem,5vw,3.5rem)] font-extrabold">{signLimit}</div>
+              </div>
+            ) : (
+              <>
+                {((preExceeding || nextPointType === "FZ") && !exceeding) && (
+                  <div className={`flex items-center justify-center m-auto h-full border-15 border-zinc-600 rounded-full aspect-square`}>
+                    <div className="text-[clamp(2rem,5vw,3.5rem)] font-extrabold">{maxSpeed}</div>
                   </div>
-                </div>
-              )}
-              {exceeding && (
-                <div className={`flex items-center justify-center m-auto h-full border-15 border-red-500 rounded-full animate-caret-blink aspect-square`}>
-                  <div className="text-[clamp(2rem,5vw,3.5rem)] font-extrabold">
-                    {maxSpeed}
+                )}
+                {exceeding && (
+                  <div className={`flex items-center justify-center m-auto h-full border-15 border-red-500 rounded-full animate-caret-blink aspect-square`}>
+                    <div className="text-[clamp(2rem,5vw,3.5rem)] font-extrabold">{maxSpeed}</div>
                   </div>
-                </div>
-              )}
+                )}
+              </>
+            )}
             </div>
           </div>
         </div>

@@ -1,6 +1,6 @@
 import { useRef } from "react";
 
-const LONG_PRESS_MS = 600;
+export const LONG_PRESS_MS = 600;
 
 /**
  * The target of the long press is decided at press-time rather than at

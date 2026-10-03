@@ -65,6 +65,8 @@ function App() {
     setNextPointNumber,
     setNextPointName,
     setMaxSpeed,
+    setSignLimit,
+    setSignPenalized,
     setRoadbookMode,
     setRBSlidesUnlocked,
     setDssTaken,
@@ -86,6 +88,44 @@ function App() {
   } = useAppState();
   const { showBackground, jumpMode, oncomingDetection } = useSettings();
   const { width, height } = useWindowDimensions();
+
+  // Reports are queued in the backend the moment they're generated and
+  // stay queued until the server actually accepts them, so one produced
+  // with no connectivity is re-sent once the device is back online. Only a
+  // new day code, an admin RESET or wiping app data drops the queue.
+  const flushingReportRef = useRef(false);
+  const lastReportAttemptRef = useRef(0);
+  const REPORT_RETRY_INTERVAL_MS = 30000;
+
+  const flushPendingReport = async (force = false) => {
+    if (flushingReportRef.current) return;
+    if (!force && Date.now() - lastReportAttemptRef.current < REPORT_RETRY_INTERVAL_MS) {
+      return;
+    }
+    flushingReportRef.current = true;
+    lastReportAttemptRef.current = Date.now();
+    try {
+      const pending = JSON.parse(
+        await invoke<string>("get_pending_report"),
+      ) as { path?: string; etape?: string };
+      if (!pending.path) return;
+
+      const sent = await send_report_file(pending.path, pending.etape ?? "");
+      if (!sent) return; // stays queued, retried on a later tick
+
+      await invoke<string>("mark_report_sent");
+      const [auto, manual] = await Promise.all([
+        invoke<string>("get_report_sent_time", { mode: "auto" }),
+        invoke<string>("get_report_sent_time", { mode: "manual" }),
+      ]);
+      setReportSentAutoTime(auto);
+      setReportSentManualTime(manual);
+    } catch (e) {
+      console.error("Pending report flush failed:", e);
+    } finally {
+      flushingReportRef.current = false;
+    }
+  };
 
   const geoloc = async () => {
     let permissions = await checkPermissions();
@@ -155,18 +195,15 @@ function App() {
               const etape: string = data.activation_code;
               if (data.ass_captured && etape) {
                 invoke("export_telemetry_report", { mode: "auto" })
-                  .then((resp) => {
-                    send_report_file(resp as string, etape).finally(
-                      () => {
-                        invoke<string>("get_report_sent_time", {
-                          mode: "auto",
-                        }).then(setReportSentAutoTime);
-                      },
-                    );
-                  })
+                  .then(() => flushPendingReport(true))
                   .catch((e) => {
                     console.error("Auto report generation failed:", e);
                   });
+              } else {
+                // Retry whatever is still queued (throttled internally) —
+                // this is what gets an offline report delivered once the
+                // device finds a connection again.
+                flushPendingReport();
               }
               setCog(data.cog);
               setCtw(data.ctw);
@@ -181,6 +218,8 @@ function App() {
               setNextPointName(data.next_point.split("-")[1]);
               setNextPointType(data.next_point_type);
               setMaxSpeed(data.max_speed);
+              setSignLimit(data.sign_limit);
+              setSignPenalized(data.sign_penalized);
               setVisiable(data.visiable);
               setJumpSuggestion(data.jump_suggestion);
               setJumpPointID(data.jump_point);
@@ -341,6 +380,7 @@ function App() {
               onClick={() => {
                 setIsOncoming(false);
                 resetOncomingDistance();
+                setBeeping(false);
                 stopContinuousTone();
               }}
             >

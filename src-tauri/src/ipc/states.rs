@@ -138,6 +138,8 @@ pub fn sync_data(state: State<'_, Mutex<AppState>>) -> Result<String, ()> {
             "ctw": state.dashboard.ctw,
             "dtw": state.dashboard.dtw,
             "max_speed": state.dashboard.max_speed,
+            "sign_limit": state.dashboard.sign_limit,
+            "sign_penalized": state.dashboard.sign_penalized,
             "arrow_color": state.dashboard.arrow_color,
             "capture": state.current.capture,
             "roadbook_unlocked": state.current.roadbook_unlocked,

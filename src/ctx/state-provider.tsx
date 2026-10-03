@@ -67,6 +67,8 @@ type AppStateProviderState = {
   arrowColor: string;
   time: string;
   maxSpeed: number;
+  signLimit: number;
+  signPenalized: boolean;
   cpCounter: number;
   countdown: number;
   nextPointNumber: number;
@@ -112,6 +114,8 @@ type AppStateProviderState = {
   setNextPointNumber: (val: number) => void;
   setNextPointName: (val: string) => void;
   setMaxSpeed: (val: number) => void;
+  setSignLimit: (val: number) => void;
+  setSignPenalized: (val: boolean) => void;
   setTotal: (val: number) => void;
   setPartial: (val: number) => void;
   setTelemetry: (val: TelemetryData[]) => void;
@@ -186,6 +190,8 @@ const initialState: AppStateProviderState = {
   arrowColor: "black",
   time: "",
   maxSpeed: 140,
+  signLimit: 0,
+  signPenalized: true,
   cpCounter: 0,
   countdown: 0,
   nextPointNumber: 0,
@@ -249,6 +255,8 @@ const initialState: AppStateProviderState = {
   setNextPointNumber: () => null,
   setNextPointName: () => null,
   setMaxSpeed: () => null,
+  setSignLimit: () => null,
+  setSignPenalized: () => null,
   setTotal: () => null,
   setPartial: () => null,
   setVisiable: () => null,
@@ -314,6 +322,8 @@ export function StateProvider({
   const [time, setTime] = useState("");
   const [speed, setSpeed] = useState(0);
   const [maxSpeed, setMaxSpeed] = useState(140);
+  const [signLimit, setSignLimit] = useState(0);
+  const [signPenalized, setSignPenalized] = useState(true);
   const [cpCounter, setCpCounter] = useState(0);
   const [nextPointNumber, setNextPointNumber] = useState(0);
   const [nextPointName, setNextPointName] = useState("");
@@ -782,6 +792,8 @@ export function StateProvider({
     time,
 
     maxSpeed,
+    signLimit,
+    signPenalized,
     cpCounter,
     countdown,
     nextPointNumber,
@@ -833,6 +845,8 @@ export function StateProvider({
     setNextPointNumber,
     setNextPointName,
     setMaxSpeed,
+    setSignLimit,
+    setSignPenalized,
     setTotal,
     setPartial,
     setVisiable,

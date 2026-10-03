@@ -109,6 +109,12 @@ pub struct AppState {
     pub config_updated: String,
     pub report_sent_auto: String,
     pub report_sent_manual: String,
+    // A generated report file that still has to reach the server. Survives
+    // restarts, so a report produced with no connectivity keeps being
+    // retried until it is actually delivered. Empty path = nothing queued.
+    pub pending_report_path: String,
+    pub pending_report_mode: String,
+    pub pending_report_etape: String,
 }
 
 impl Default for AppState {
@@ -134,6 +140,9 @@ impl Default for AppState {
             config_updated: String::from(""),
             report_sent_auto: String::from(""),
             report_sent_manual: String::from(""),
+            pending_report_path: String::from(""),
+            pending_report_mode: String::from(""),
+            pending_report_etape: String::from(""),
         }
     }
 }
@@ -152,6 +161,9 @@ impl AppState {
             storage.set("as_config_updayed_time", json!(self.config_updated));
             storage.set("as_report_sent_auto_time", json!(self.report_sent_auto));
             storage.set("as_report_sent_manual_time", json!(self.report_sent_manual));
+            storage.set("as_pending_report_path", json!(self.pending_report_path));
+            storage.set("as_pending_report_mode", json!(self.pending_report_mode));
+            storage.set("as_pending_report_etape", json!(self.pending_report_etape));
             storage.set("as_last_report", json!(self.last_report));
 
             storage.close_resource();
@@ -181,6 +193,9 @@ impl AppState {
         self.config_updated = String::from("");
         self.report_sent_auto = String::from("");
         self.report_sent_manual = String::from("");
+        self.pending_report_path = String::from("");
+        self.pending_report_mode = String::from("");
+        self.pending_report_etape = String::from("");
         self.sync();
     }
 }

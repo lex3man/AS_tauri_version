@@ -1,6 +1,7 @@
 use std::sync::Mutex;
 
 use chrono::{DateTime, Local, TimeZone, Utc};
+use serde_json::json;
 use rust_xlsxwriter::workbook::Workbook;
 use tauri::{Manager, State};
 
@@ -120,12 +121,14 @@ pub async fn export_telemetry_report(
                     }
                 }
                 workbook.save(&output_path).map_err(|e| e.to_string())?;
-                let sent_at = Local::now().format("%d.%m.%Y %H:%M:%S").to_string();
-                if mode == "auto" {
-                    state.report_sent_auto = sent_at;
-                } else {
-                    state.report_sent_manual = sent_at;
-                }
+                // Queue it instead of stamping "sent" right here: the upload
+                // happens afterwards and may well fail (no connectivity on
+                // the stage). The timestamp is set by mark_report_sent()
+                // once the server has actually accepted the file, and the
+                // queue is retried until then.
+                state.pending_report_path = output_path.to_string_lossy().to_string();
+                state.pending_report_mode = mode.to_string();
+                state.pending_report_etape = state.race.active_code.clone();
             }
         }
         match send_report(&app, state.last_report.clone()).map_err(|_| "Can't send report".to_string()) {
@@ -145,6 +148,54 @@ pub async fn export_telemetry_report(
             }
         }
         return Ok(output_path.to_str().unwrap().to_string());
+    }
+    Err("Failed to get state".to_string())
+}
+
+/// The report file still awaiting delivery, as `{path, mode, etape}` — or
+/// `{}` when the queue is empty. Retried by the frontend on every poll.
+#[tauri::command]
+pub fn get_pending_report(state: State<'_, Mutex<AppState>>) -> Result<String, String> {
+    if let Ok(state) = state.lock() {
+        if state.pending_report_path.is_empty() {
+            return Ok("{}".to_string());
+        }
+        return Ok(json!({
+            "path": state.pending_report_path,
+            "mode": state.pending_report_mode,
+            "etape": state.pending_report_etape,
+        })
+        .to_string());
+    }
+    Err("Failed to get state".to_string())
+}
+
+/// Called only after the server accepted the upload: stamps the send time
+/// for the queued report's mode and clears the queue.
+#[tauri::command]
+pub fn mark_report_sent(state: State<'_, Mutex<AppState>>) -> Result<String, String> {
+    if let Ok(mut state) = state.lock() {
+        let sent_at = Local::now().format("%d.%m.%Y %H:%M:%S").to_string();
+        if state.pending_report_mode == "auto" {
+            state.report_sent_auto = sent_at.clone();
+        } else {
+            state.report_sent_manual = sent_at.clone();
+        }
+        state.pending_report_path = String::from("");
+        state.pending_report_mode = String::from("");
+        state.pending_report_etape = String::from("");
+        // Persist straight away rather than waiting for the next GPS tick's
+        // AppState::sync(): being killed in between would clear the queue
+        // while losing the timestamp of a report that did get delivered.
+        if let Some(storage) = &state.storage {
+            storage.set("as_report_sent_auto_time", json!(state.report_sent_auto));
+            storage.set("as_report_sent_manual_time", json!(state.report_sent_manual));
+            storage.set("as_pending_report_path", json!(""));
+            storage.set("as_pending_report_mode", json!(""));
+            storage.set("as_pending_report_etape", json!(""));
+            storage.close_resource();
+        }
+        return Ok(sent_at);
     }
     Err("Failed to get state".to_string())
 }

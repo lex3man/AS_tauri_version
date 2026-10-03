@@ -153,27 +153,35 @@ export const send_report_file = async (filePath: string, etape: string) => {
   const device = await getDeviceInfo();
   const device_id = `${device.uuid}`;
 
+  let fileBytes: Uint8Array;
+  try {
+    fileBytes = await readFile(filePath, { baseDir: BaseDirectory.AppLocalData });
+  } catch (e) {
+    console.error("Report file is not readable:", e);
+    return false;
+  }
+
   const formData = new FormData();
-  formData.append("file", new Blob([await readFile(filePath, { baseDir: BaseDirectory.AppLocalData })], { type: "application/octet-stream" }), "report.xlsx");
+  formData.append("file", new Blob([fileBytes], { type: "application/octet-stream" }), "report.xlsx");
   formData.append("device_id", device_id);
   formData.append("etape", etape);
   formData.append("time", Date.now().toString());
 
-  const resp = await fetch(url, {
-    method: "POST",
-    headers: {
-      authentication: TOKEN,
-    },
-    body: formData,
-  });
+  // Resolve false instead of rejecting on a transport error: with no
+  // connectivity on the stage this is the normal case, and callers decide
+  // whether to keep the report queued for a later retry.
+  try {
+    const resp = await fetch(url, {
+      method: "POST",
+      headers: {
+        authentication: TOKEN,
+      },
+      body: formData,
+    });
 
-  if (resp.status === 200) {
-    // toast.success(`Report file sent successfully`, { 
-    //   position: "bottom-center",
-    //   duration: 3000,
-    // });
-    return true;
-  } else {
+    return resp.status === 200;
+  } catch (e) {
+    console.error("Report file upload failed:", e);
     return false;
   }
 }

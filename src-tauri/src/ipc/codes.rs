@@ -62,6 +62,11 @@ pub fn activate_code(state: State<'_, Mutex<AppState>>, code: &str) -> Result<St
                         storage.close_resource();
                     }
                     if rebuilt {
+                        // A genuinely new day code also drops any report
+                        // still queued for delivery from the previous one.
+                        state.pending_report_path = String::from("");
+                        state.pending_report_mode = String::from("");
+                        state.pending_report_etape = String::from("");
                         state.dashboard.metrics.total = 0.0;
                         state.dashboard.metrics.partial = 0.0;
                         state.dashboard.metrics.countdown = 0;

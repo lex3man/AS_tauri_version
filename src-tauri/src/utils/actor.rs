@@ -12,6 +12,7 @@ use crate::{
     },
     utils::{
         converters::{course_in_degrees, distance},
+        speed_zone,
         send_data::{send_collected, send_report, send_telemetry},
     },
 };
@@ -44,6 +45,9 @@ pub async fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position)
         let mut cog = 0;
         let mut ctw = 0;
         let mut max_speed = 0u8;
+        let mut sign_limit = 0u8;
+        let mut sign_penalized = true;
+        let mut seen_now: Vec<String> = vec![];
         let mut area_id = String::new();
         let mut tel = Telemetry::new();
         let mut is_open = false;
@@ -69,6 +73,7 @@ pub async fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position)
             // clobber prev_point_id with the held point's own id, skewing
             // oncoming detection and the telemetry point_name for this tick.
             let holding_now = state.race.spec_area_state.held_point.clone();
+            let mut dss_in_sight = false;
 
             let _ = &area.points_set.iter().for_each(|point| {
                 let distance_to_point = distance(
@@ -108,13 +113,29 @@ pub async fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position)
                     jump_suggested = true;
                     jump_point_id = point.get_id();
                 }
+
+                // The roadbook opens as soon as DSS comes into sight — note
+                // this is the visible radius, not the capture one, and it
+                // deliberately ignores `checked` so it also fires on a DSS
+                // that was already captured.
+                if point.point_type == "DSS"
+                    && distance_to_point <= point.visible_radius as f64
+                {
+                    dss_in_sight = true;
+                }
+
+                if distance_to_point <= point.visible_radius as f64 {
+                    seen_now.push(point.get_id());
+                }
             });
 
-            // Roadbook unlock is a level, not a one-shot pulse: recomputed
-            // fresh every tick from already-checked RBP/DSS points, so it
-            // survives an app restart/resume without waiting for a brand
-            // new RBP/DSS crossing to fire it again.
-            roadbook_unlocked = area.points_set.iter().any(|p| {
+            // Roadbook unlock latches on: entering the DSS visible radius,
+            // or capturing an RBP (the pre-start marker whose whole job is
+            // to open the roadbook) / DSS. Once set it stays set for this
+            // area — it's persisted with the area state, so it survives an
+            // app restart and only clears when a new day code rebuilds the
+            // area.
+            let captured_opener = area.points_set.iter().any(|p| {
                 (p.point_type == "RBP" || p.point_type == "DSS")
                     && state
                         .race
@@ -124,6 +145,9 @@ pub async fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position)
                         .map(|ps| ps.checked)
                         .unwrap_or(false)
             });
+            roadbook_unlocked = state.race.spec_area_state.roadbook_shown
+                || dss_in_sight
+                || captured_opener;
             // Same idea, but DSS specifically — roadbook slide odo values
             // are relative to the special stage start, so auto-scroll needs
             // this even when RBP alone already unlocked the roadbook view.
@@ -146,10 +170,57 @@ pub async fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position)
                 next_point_id = held_id;
             }
 
+            // Default: the limit of the point being navigated to. A DZ→FZ
+            // speed zone overrides it, because there the limit in force
+            // depends on whether DZ was actually taken, not just on where
+            // the device is (see utils::speed_zone).
+            let point_distance_m = |p: &crate::race::types::Point| {
+                distance(
+                    Coords {
+                        lat: coords.latitude,
+                        lon: coords.longitude,
+                    },
+                    Coords {
+                        lat: p.lat,
+                        lon: p.lon,
+                    },
+                ) * 1000.0
+            };
+            let point_taken = |p: &crate::race::types::Point| {
+                state
+                    .race
+                    .spec_area_state
+                    .points
+                    .get(&p.get_id())
+                    .map(|ps| ps.checked)
+                    .unwrap_or(false)
+            };
+            let point_seen = |p: &crate::race::types::Point| {
+                state
+                    .race
+                    .spec_area_state
+                    .points
+                    .get(&p.get_id())
+                    .map(|ps| ps.seen)
+                    .unwrap_or(false)
+            };
+            let speed_zone =
+                speed_zone::resolve(area, &point_distance_m, &point_taken, &point_seen);
+
             if let Some(next_point) = area.get_point_by_id(&next_point_id) {
                 next_point_type = next_point.point_type.clone();
                 is_open = next_point.flags.is_open;
                 max_speed = next_point.speed_limit;
+                // 0 tells the UI "no DZ→FZ zone here" — it then keeps its
+                // previous behaviour of showing the sign only near the limit
+                // or when approaching an FZ, rather than permanently.
+                sign_limit = 0;
+                sign_penalized = true;
+                if let Some(zone) = &speed_zone {
+                    max_speed = zone.enforced_limit;
+                    sign_limit = zone.sign_limit;
+                    sign_penalized = zone.sign_penalized;
+                }
                 if prev_point_id.is_empty() {
                     if let Some(point_id) = state.race.spec_area_state.point_controller.peek_prev() {
                         prev_point_id = point_id.clone()
@@ -430,11 +501,27 @@ pub async fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position)
         state.dashboard.widget_shown.arrow = is_open || in_visiable_zone;
         state.dashboard.arrow_color = arrow_color;
         state.current.capture = capture;
+        // Write the latch back only when set: this runs even when no area
+        // resolved this tick, and assigning the local unconditionally would
+        // clear an already-open roadbook.
+        if roadbook_unlocked {
+            state.race.spec_area_state.roadbook_shown = true;
+        }
         state.current.roadbook_unlocked = roadbook_unlocked;
         state.current.dss_taken = dss_taken;
         state.current.ass_captured = ass_captured;
         state.current.finished = finished;
+        // Applied here rather than inside the scan: `area` borrows from
+        // state for the whole block above. A tick of lag is harmless — the
+        // zone resolver also looks at current proximity, not just history.
+        for id in seen_now {
+            if let Some(ps) = state.race.spec_area_state.points.get_mut(&id) {
+                ps.seen = true;
+            }
+        }
         state.dashboard.max_speed = max_speed as u32;
+        state.dashboard.sign_limit = sign_limit as u32;
+        state.dashboard.sign_penalized = sign_penalized;
         state.race.spec_area_state.prev_point = prev_point_id;
         state.race.spec_area_state.next_point = next_point_id;
         state.current.oncoming = oncoming;

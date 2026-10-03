@@ -83,6 +83,8 @@ pub fn run() {
             ipc::admin::activate_cmd,
             ipc::report::export_telemetry_report,
             ipc::report::get_report_sent_time,
+            ipc::report::get_pending_report,
+            ipc::report::mark_report_sent,
         ])
         .setup(|app| {
             app.manage(Mutex::new(AppState::default()));
@@ -125,6 +127,15 @@ pub fn run() {
             }
             if let Some(val) = store.get("as_report_sent_manual_time") {
                 state.report_sent_manual = val.as_str().unwrap_or_default().to_string();
+            }
+            if let Some(val) = store.get("as_pending_report_path") {
+                state.pending_report_path = val.as_str().unwrap_or_default().to_string();
+            }
+            if let Some(val) = store.get("as_pending_report_mode") {
+                state.pending_report_mode = val.as_str().unwrap_or_default().to_string();
+            }
+            if let Some(val) = store.get("as_pending_report_etape") {
+                state.pending_report_etape = val.as_str().unwrap_or_default().to_string();
             }
             if let Some(val) = store.get("as_last_report") {
                 state.last_report = val.as_str().unwrap_or_default().to_string();

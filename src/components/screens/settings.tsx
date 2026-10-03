@@ -182,24 +182,30 @@ const Settings = () => {
                 return;
               }
               invoke("export_telemetry_report", { mode: "manual" })
-                .then((resp) => {
+                .then(async (resp) => {
                   toast.info(`report saved at ${resp}`);
-                  send_report_file(resp as string, activeCode)
-                    .then((sent) => {
-                      if (sent) {
-                        toast.success("Report file sent successfully");
-                      } else {
-                        toast.error("Report file sending failed");
-                      }
-                    })
-                    .catch((e) => {
-                      toast.error(`Report file sending error: ${e}`);
-                    })
-                    .finally(() => {
-                      invoke<string>("get_report_sent_time", { mode: "manual" }).then(
-                        setReportSentManualTime,
-                      );
-                    });
+                  // The report is now queued in the backend. If this send
+                  // fails it stays queued and the app keeps retrying it in
+                  // the background, so the timestamp below only ever shows
+                  // a delivery the server actually accepted.
+                  const sent = await send_report_file(
+                    resp as string,
+                    activeCode,
+                  );
+                  if (sent) {
+                    await invoke<string>("mark_report_sent");
+                    toast.success("Report file sent successfully");
+                  } else {
+                    toast.error(
+                      "No connection — report queued, will be sent automatically",
+                    );
+                  }
+                  const [auto, manual] = await Promise.all([
+                    invoke<string>("get_report_sent_time", { mode: "auto" }),
+                    invoke<string>("get_report_sent_time", { mode: "manual" }),
+                  ]);
+                  setReportSentAutoTime(auto);
+                  setReportSentManualTime(manual);
                 })
                 .catch((e) =>
                   toast.error(`Report file generating error: ${e}`),
@@ -219,42 +225,40 @@ const Settings = () => {
           >
             SET RACE NUMBER
           </Button>
-          {adminMode && (
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button className="p-6 text-2xl">RESET</Button>
-              </DialogTrigger>
-              <DialogContent showCloseButton={false}>
-                <DialogHeader>
-                  <DialogTitle>Are you sure?</DialogTitle>
-                  <DialogDescription>
-                    This action will prune all reports, telemetry and race
-                    state!
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="flex gap-10">
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button className="p-6 text-2xl">RESET</Button>
+            </DialogTrigger>
+            <DialogContent showCloseButton={false}>
+              <DialogHeader>
+                <DialogTitle>Are you sure?</DialogTitle>
+                <DialogDescription>
+                  This action will prune all reports, telemetry and race
+                  state!
+                </DialogDescription>
+              </DialogHeader>
+              <div className="flex gap-10">
+                <Button
+                  className="p-6 text-2xl bg-red-600"
+                  onClick={async () => {
+                    await invoke("state_reset");
+                    getSettings();
+                    sync();
+                    await invoke("close_app");
+                  }}
+                >
+                  RESET
+                </Button>
+                <DialogClose asChild>
                   <Button
-                    className="p-6 text-2xl bg-red-600"
-                    onClick={async () => {
-                      await invoke("state_reset");
-                      getSettings();
-                      sync();
-                      await invoke("close_app");
-                    }}
+                    className="p-6 text-2xl bg-green-600"
                   >
-                    RESET
+                    CANCEL
                   </Button>
-                  <DialogClose asChild>
-                    <Button
-                      className="p-6 text-2xl bg-green-600"
-                    >
-                      CANCEL
-                    </Button>
-                  </DialogClose>
-                </div>
-              </DialogContent>
-            </Dialog>
-          )}
+                </DialogClose>
+              </div>
+            </DialogContent>
+          </Dialog>
           <div
             className={`flex ${roadbookMode && mobileView ? "flex-col justify-center gap-10 items-center" : "justify-between"} pt-5`}
           >
@@ -274,7 +278,7 @@ const Settings = () => {
               </div>
               <ChevronUp onClick={() => increaseTrackDist()} />
               <div className="text-3xl font-extrabold">
-                {trackDistance.value}
+                {trackDistance.value.toFixed(1)}
               </div>
               <ChevronDown onClick={() => decreaseTrackDist()} />
             </div>

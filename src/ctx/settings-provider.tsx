@@ -4,6 +4,8 @@ import { useTheme } from "./theme-provider";
 import { Kilometers, Meters } from "@/types/messure-units";
 import { Settings } from "@/types/settings";
 
+const TRACK_DIST_STEP_KM = 0.5;
+
 type SettingsProviderProps = {
   children: React.ReactNode;
   storageKey?: string;
@@ -92,10 +94,10 @@ const initialState: SettingsProviderState = {
   roadbookMode: false,
   oncomingAngle: 60,
   oncomingDetection: 300,
-  oncomingDetectionEnabled: true,
-  autoMove: true,
+  oncomingDetectionEnabled: false,
+  autoMove: false,
   keepPointingAtWpt: false,
-  autoMoveAfterDss: true,
+  autoMoveAfterDss: false,
 
   setShowBackground: () => null,
   setDtwEnable: () => null,
@@ -134,12 +136,12 @@ export function SettingsProvider({
   const [demoMode, setDemoMode] = useState(false);
   const [jumpMode, setJumpMode] = useState(false);
   const [roadbookMode, setRoadbookMode] = useState(false);
-  const [autoMove, setRBAutoMove] = useState(true);
+  const [autoMove, setRBAutoMove] = useState(false);
   const [keepPointingAtWpt, setKPAWpt] = useState(false);
-  const [autoMoveAfterDss, setAMAfterDss] = useState(true);
+  const [autoMoveAfterDss, setAMAfterDss] = useState(false);
   const [oncomingAngle, setOncomingAngle] = useState(60);
   const [oncomingDetection, setOncomingDetection] = useState(300);
-  const [oncomingDetectionEnabled, setOncomingDE] = useState(true);
+  const [oncomingDetectionEnabled, setOncomingDE] = useState(false);
   const { setTheme } = useTheme();
 
   const getSettings = () => {
@@ -201,17 +203,18 @@ export function SettingsProvider({
     });
   };
 
+  // TRACK DIST moves in 500 m steps; the backend clamps at 0 the same way.
   const increaseTrackDist = async () => {
     invoke("set_track_dist", { c: "up" }).then(() => {
-      setTrackDistance(new Kilometers(trackDistance.value + 5));
+      setTrackDistance(new Kilometers(trackDistance.value + TRACK_DIST_STEP_KM));
     });
   };
 
   const decreaseTrackDist = async () => {
     invoke("set_track_dist", { c: "down" }).then(() => {
-      if (trackDistance.value > 0) {
-        setTrackDistance(new Kilometers(trackDistance.value - 5));
-      }
+      setTrackDistance(
+        new Kilometers(Math.max(trackDistance.value - TRACK_DIST_STEP_KM, 0)),
+      );
     });
   };
 
