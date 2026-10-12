@@ -16,7 +16,7 @@ const Roadbook = () => {
     speed,
     maxSpeed,
     signLimit,
-    signPenalized,
+    signAlert,
     cpCounter,
     countdownWidgetShown,
     nextPointName,
@@ -212,31 +212,24 @@ const Roadbook = () => {
               </div>
             </div>
             <div className="h-[40%] p-1">
-              {signLimit > 0 ? (
-              // DZ→FZ zone: the sign stays on screen showing the limit in
-              // force. Red means it is being enforced here, grey that it is
-              // a warning (the upcoming limit, or the braking zone).
-              <div
-                className={`flex items-center justify-center m-auto h-full border-15 rounded-full aspect-square ${
-                  signPenalized ? "border-red-500" : "border-zinc-600"
-                } ${exceeding ? "animate-caret-blink" : ""}`}
-              >
-                <div className="text-[clamp(2rem,5vw,3.5rem)] font-extrabold">{signLimit}</div>
-              </div>
-            ) : (
-              <>
-                {((preExceeding || nextPointType === "FZ") && !exceeding) && (
-                  <div className={`flex items-center justify-center m-auto h-full border-15 border-zinc-600 rounded-full aspect-square`}>
-                    <div className="text-[clamp(2rem,5vw,3.5rem)] font-extrabold">{maxSpeed}</div>
+              {/* Inside a DZ capture radius (signLimit > 0) the zone rules take over:
+                  red and blinking with DZ's own limit while speeding, otherwise grey
+                  with the limit of the FZ that closes the zone. Elsewhere the sign
+                  keeps its ordinary max_speed behaviour. */}
+              {(signLimit > 0 ? !signAlert : (preExceeding || nextPointType === "FZ") && !exceeding) && (
+                <div className={`flex items-center justify-center m-auto h-full border-15 border-zinc-600 rounded-full aspect-square`}>
+                  <div className="text-[clamp(2rem,5vw,3.5rem)] font-extrabold">
+                    {signLimit > 0 ? signLimit : maxSpeed}
                   </div>
-                )}
-                {exceeding && (
-                  <div className={`flex items-center justify-center m-auto h-full border-15 border-red-500 rounded-full animate-caret-blink aspect-square`}>
-                    <div className="text-[clamp(2rem,5vw,3.5rem)] font-extrabold">{maxSpeed}</div>
+                </div>
+              )}
+              {(signLimit > 0 ? signAlert : exceeding) && (
+                <div className={`flex items-center justify-center m-auto h-full border-15 border-red-500 rounded-full animate-caret-blink aspect-square`}>
+                  <div className="text-[clamp(2rem,5vw,3.5rem)] font-extrabold">
+                    {signLimit > 0 ? signLimit : maxSpeed}
                   </div>
-                )}
-              </>
-            )}
+                </div>
+              )}
             </div>
           </div>
         </div>

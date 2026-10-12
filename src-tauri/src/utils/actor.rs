@@ -12,7 +12,6 @@ use crate::{
     },
     utils::{
         converters::{course_in_degrees, distance},
-        speed_zone,
         send_data::{send_collected, send_report, send_telemetry},
     },
 };
@@ -46,8 +45,7 @@ pub async fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position)
         let mut ctw = 0;
         let mut max_speed = 0u8;
         let mut sign_limit = 0u8;
-        let mut sign_penalized = true;
-        let mut seen_now: Vec<String> = vec![];
+        let mut sign_alert = false;
         let mut area_id = String::new();
         let mut tel = Telemetry::new();
         let mut is_open = false;
@@ -123,11 +121,43 @@ pub async fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position)
                 {
                     dss_in_sight = true;
                 }
-
-                if distance_to_point <= point.visible_radius as f64 {
-                    seen_now.push(point.get_id());
-                }
             });
+
+            // Inside a DZ capture radius the sign follows the zone rules:
+            // red and blinking while over DZ's own limit, otherwise grey
+            // showing the limit of the FZ that closes the zone. DZ is
+            // normally already captured by then, so next_point (and with it
+            // max_speed) has moved on — DZ's own limit has to be read from
+            // the point itself.
+            let distance_to = |p: &crate::race::types::Point| {
+                distance(
+                    Coords {
+                        lat: coords.latitude,
+                        lon: coords.longitude,
+                    },
+                    Coords {
+                        lat: p.lat,
+                        lon: p.lon,
+                    },
+                ) * 1000.0
+            };
+            if let Some(dz_idx) = area.points_set.iter().position(|p| {
+                p.point_type == "DZ" && distance_to(p) <= p.capture_radius as f64
+            }) {
+                let dz = &area.points_set[dz_idx];
+                let fz_limit = area.points_set[dz_idx + 1..]
+                    .iter()
+                    .find(|p| p.point_type == "FZ")
+                    .map(|p| p.speed_limit)
+                    .unwrap_or(dz.speed_limit);
+                if dz.speed_limit > 0 && sog > dz.speed_limit as u32 {
+                    sign_limit = dz.speed_limit;
+                    sign_alert = true;
+                } else {
+                    sign_limit = fz_limit;
+                    sign_alert = false;
+                }
+            }
 
             // Roadbook unlock latches on: entering the DSS visible radius,
             // or capturing an RBP (the pre-start marker whose whole job is
@@ -170,57 +200,10 @@ pub async fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position)
                 next_point_id = held_id;
             }
 
-            // Default: the limit of the point being navigated to. A DZ→FZ
-            // speed zone overrides it, because there the limit in force
-            // depends on whether DZ was actually taken, not just on where
-            // the device is (see utils::speed_zone).
-            let point_distance_m = |p: &crate::race::types::Point| {
-                distance(
-                    Coords {
-                        lat: coords.latitude,
-                        lon: coords.longitude,
-                    },
-                    Coords {
-                        lat: p.lat,
-                        lon: p.lon,
-                    },
-                ) * 1000.0
-            };
-            let point_taken = |p: &crate::race::types::Point| {
-                state
-                    .race
-                    .spec_area_state
-                    .points
-                    .get(&p.get_id())
-                    .map(|ps| ps.checked)
-                    .unwrap_or(false)
-            };
-            let point_seen = |p: &crate::race::types::Point| {
-                state
-                    .race
-                    .spec_area_state
-                    .points
-                    .get(&p.get_id())
-                    .map(|ps| ps.seen)
-                    .unwrap_or(false)
-            };
-            let speed_zone =
-                speed_zone::resolve(area, &point_distance_m, &point_taken, &point_seen);
-
             if let Some(next_point) = area.get_point_by_id(&next_point_id) {
                 next_point_type = next_point.point_type.clone();
                 is_open = next_point.flags.is_open;
                 max_speed = next_point.speed_limit;
-                // 0 tells the UI "no DZ→FZ zone here" — it then keeps its
-                // previous behaviour of showing the sign only near the limit
-                // or when approaching an FZ, rather than permanently.
-                sign_limit = 0;
-                sign_penalized = true;
-                if let Some(zone) = &speed_zone {
-                    max_speed = zone.enforced_limit;
-                    sign_limit = zone.sign_limit;
-                    sign_penalized = zone.sign_penalized;
-                }
                 if prev_point_id.is_empty() {
                     if let Some(point_id) = state.race.spec_area_state.point_controller.peek_prev() {
                         prev_point_id = point_id.clone()
@@ -274,21 +257,25 @@ pub async fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position)
                     // ============================================================================
                     // oncoming detection
                     // ============================================================================
-                    if let Some(prev_point) = area.get_point_by_id(&prev_point_id) {
-                        let pathway = course_in_degrees(
-                            Coords {
-                                lat: prev_point.lat,
-                                lon: prev_point.lon,
-                            },
-                            Coords {
-                                lat: next_point.lat,
-                                lon: next_point.lon,
-                            },
-                        );
-                        let angle_diff = (pathway as i64 - cog as i64).abs() as u32;
-                        let oncoming_angle = state.settings.get_oncoming_angle() as u32;
-                        oncoming = angle_diff > 180 - (oncoming_angle / 2)
-                            && angle_diff < 180 + (oncoming_angle / 2);
+                    // Opt-in from SETUP: with the mode off, oncoming stays
+                    // false so the warning screen never arms.
+                    if state.settings.is_oncoming_detection_enabled() {
+                        if let Some(prev_point) = area.get_point_by_id(&prev_point_id) {
+                            let pathway = course_in_degrees(
+                                Coords {
+                                    lat: prev_point.lat,
+                                    lon: prev_point.lon,
+                                },
+                                Coords {
+                                    lat: next_point.lat,
+                                    lon: next_point.lon,
+                                },
+                            );
+                            let angle_diff = (pathway as i64 - cog as i64).abs() as u32;
+                            let oncoming_angle = state.settings.get_oncoming_angle() as u32;
+                            oncoming = angle_diff > 180 - (oncoming_angle / 2)
+                                && angle_diff < 180 + (oncoming_angle / 2);
+                        }
                     }
                     //
                     // ============================================================================
@@ -511,17 +498,9 @@ pub async fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position)
         state.current.dss_taken = dss_taken;
         state.current.ass_captured = ass_captured;
         state.current.finished = finished;
-        // Applied here rather than inside the scan: `area` borrows from
-        // state for the whole block above. A tick of lag is harmless — the
-        // zone resolver also looks at current proximity, not just history.
-        for id in seen_now {
-            if let Some(ps) = state.race.spec_area_state.points.get_mut(&id) {
-                ps.seen = true;
-            }
-        }
         state.dashboard.max_speed = max_speed as u32;
         state.dashboard.sign_limit = sign_limit as u32;
-        state.dashboard.sign_penalized = sign_penalized;
+        state.dashboard.sign_alert = sign_alert;
         state.race.spec_area_state.prev_point = prev_point_id;
         state.race.spec_area_state.next_point = next_point_id;
         state.current.oncoming = oncoming;

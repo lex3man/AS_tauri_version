@@ -15,7 +15,7 @@ const Ride = () => {
     speed,
     maxSpeed,
     signLimit,
-    signPenalized,
+    signAlert,
     cpCounter,
     countdownWidgetShown,
     mobileView,
@@ -233,30 +233,23 @@ const Ride = () => {
             </div>
           )}
           <div className="h-[30%]">
-            {signLimit > 0 ? (
-              // DZ→FZ zone: the sign stays on screen showing the limit in
-              // force. Red means it is being enforced here, grey that it is
-              // a warning (the upcoming limit, or the braking zone).
-              <div
-                className={`flex items-center justify-center ${!mobileView && "m-auto"} h-full ${mobileView ? "border-15" : "border-25"} rounded-full aspect-square ${
-                  signPenalized ? "border-red-500" : "border-zinc-600"
-                } ${exceeding ? "animate-caret-blink" : ""}`}
-              >
-                <div className="text-[clamp(1rem,5vw,3.5rem)] font-extrabold">{signLimit}</div>
+            {/* Inside a DZ capture radius (signLimit > 0) the zone rules take over:
+                red and blinking with DZ's own limit while speeding, otherwise grey
+                with the limit of the FZ that closes the zone. Elsewhere the sign
+                keeps its ordinary max_speed behaviour. */}
+            {(signLimit > 0 ? !signAlert : (preExceeding || nextPointType === "FZ") && !exceeding) && (
+              <div className={`flex items-center justify-center ${!mobileView && "m-auto"} h-full ${mobileView ? "border-15" : "border-25"} border-zinc-600 rounded-full aspect-square`}>
+                <div className="text-[clamp(1rem,5vw,3.5rem)] font-extrabold">
+                  {signLimit > 0 ? signLimit : maxSpeed}
+                </div>
               </div>
-            ) : (
-              <>
-                {((preExceeding || nextPointType === "FZ") && !exceeding) && (
-                  <div className={`flex items-center justify-center ${!mobileView && "m-auto"} h-full ${mobileView ? "border-15" : "border-25"} border-zinc-600 rounded-full aspect-square`}>
-                    <div className="text-[clamp(1rem,5vw,3.5rem)] font-extrabold">{maxSpeed}</div>
-                  </div>
-                )}
-                {exceeding && (
-                  <div className={`flex items-center justify-center ${!mobileView && "m-auto"} h-full ${mobileView ? "border-15" : "border-25"} border-red-500 rounded-full animate-caret-blink aspect-square`}>
-                    <div className="text-[clamp(1rem,5vw,3.5rem)] font-extrabold">{maxSpeed}</div>
-                  </div>
-                )}
-              </>
+            )}
+            {(signLimit > 0 ? signAlert : exceeding) && (
+              <div className={`flex items-center justify-center ${!mobileView && "m-auto"} h-full ${mobileView ? "border-15" : "border-25"} border-red-500 rounded-full animate-caret-blink aspect-square`}>
+                <div className="text-[clamp(1rem,5vw,3.5rem)] font-extrabold">
+                  {signLimit > 0 ? signLimit : maxSpeed}
+                </div>
+              </div>
             )}
           </div>
           <div className="flex flex-col justify-end h-[30%] px-3">

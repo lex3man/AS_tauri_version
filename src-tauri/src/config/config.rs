@@ -139,6 +139,10 @@ impl Config {
         self.track_distance.0
     }
 
+    pub fn is_oncoming_detection_enabled(&self) -> bool {
+        self.oncoming_detection_enabled
+    }
+
     pub fn get_oncoming_angle(&self) -> u16 {
         self.oncoming_angle
     }
