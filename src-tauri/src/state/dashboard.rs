@@ -20,13 +20,14 @@ pub struct DashBoard {
     // arrow just stays "black", matching its unmodified pre-feature look.
     #[serde(default = "default_arrow_color")]
     pub arrow_color: String,
-    // Speed-limit sign: the number to show and whether it is actively
-    // enforced here (red) or only a warning / preview of the next limit
-    // (grey). Differs from max_speed inside a DZ capture radius.
+    // Speed sign while inside a DZ capture radius: the number to show, and
+    // whether it is an alert (over DZ's own limit — red and blinking) or a
+    // heads-up for the FZ limit that closes the zone (grey). sign_limit 0
+    // means no DZ zone is active and the sign keeps its ordinary behaviour.
     #[serde(default)]
     pub sign_limit: u32,
     #[serde(default)]
-    pub sign_penalized: bool,
+    pub sign_alert: bool,
 }
 
 fn default_arrow_color() -> String {
@@ -77,7 +78,7 @@ impl DashBoard {
             },
             arrow_color: String::from("black"),
             sign_limit: 0,
-            sign_penalized: true,
+            sign_alert: false,
         }
     }
 }

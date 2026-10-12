@@ -35,6 +35,7 @@ export const useLongPressFor = <T,>(onLongPress: (arg: T) => void) => {
       if (firedRef.current) e.preventDefault();
     },
   });
+  bind.didFire = () => firedRef.current;
 
   return bind;
 };
@@ -48,5 +49,9 @@ export const useLongPressFor = <T,>(onLongPress: (arg: T) => void) => {
  */
 export const useLongPress = (onLongPress: () => void) => {
   const bind = useLongPressFor<undefined>(onLongPress);
-  return bind(undefined);
+  // `didFire` reports whether the last press was long enough to have
+  // triggered `onLongPress`. An element nested inside the pressable area can
+  // use it to tell a tap from the tail of a long press, instead of timing
+  // the press a second time with its own pointer handlers.
+  return [bind(undefined), bind.didFire] as const;
 };

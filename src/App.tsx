@@ -66,7 +66,7 @@ function App() {
     setNextPointName,
     setMaxSpeed,
     setSignLimit,
-    setSignPenalized,
+    setSignAlert,
     setRoadbookMode,
     setRBSlidesUnlocked,
     setDssTaken,
@@ -86,7 +86,8 @@ function App() {
     setIsOncoming,
     resetOncomingDistance,
   } = useAppState();
-  const { showBackground, jumpMode, oncomingDetection } = useSettings();
+  const { showBackground, jumpMode, oncomingDetection, oncomingDetectionEnabled } =
+    useSettings();
   const { width, height } = useWindowDimensions();
 
   // Reports are queued in the backend the moment they're generated and
@@ -219,7 +220,7 @@ function App() {
               setNextPointType(data.next_point_type);
               setMaxSpeed(data.max_speed);
               setSignLimit(data.sign_limit);
-              setSignPenalized(data.sign_penalized);
+              setSignAlert(data.sign_alert);
               setVisiable(data.visiable);
               setJumpSuggestion(data.jump_suggestion);
               setJumpPointID(data.jump_point);
@@ -368,7 +369,14 @@ function App() {
   }, [isOncoming])
 
   const renderContent = () => {
-    if (isOncoming && oncomingDistance > oncomingDetection) {
+    // Also gated here, not just in the backend: isOncoming latches until
+    // "Mark as Passed", so without this the screen would stay up after the
+    // mode is switched off mid-warning.
+    if (
+      oncomingDetectionEnabled &&
+      isOncoming &&
+      oncomingDistance > oncomingDetection
+    ) {
       if (beeping) { startContinuousTone(); }
       return (
         <div className="flex flex-col items-center justify-center h-screen bg-red-600 text-white text-center text-4xl font-bold">
@@ -378,9 +386,9 @@ function App() {
             <Button
               className="p-6 bg-green-600"
               onClick={() => {
+                setBeeping(false);
                 setIsOncoming(false);
                 resetOncomingDistance();
-                setBeeping(false);
                 stopContinuousTone();
               }}
             >

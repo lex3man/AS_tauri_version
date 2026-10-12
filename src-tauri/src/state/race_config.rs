@@ -12,12 +12,6 @@ pub type PointID = String;
 pub struct PointState {
     pub checked: bool,
     pub jumpable: bool,
-    // Entered this point's visible radius at least once. `checked` already
-    // records the capture radius; the DZ→FZ speed-zone rules need to tell
-    // "drove through the visibility zone but never took the point" apart
-    // from "never came near it at all".
-    #[serde(default)]
-    pub seen: bool,
 }
 
 impl PointState {
@@ -25,7 +19,6 @@ impl PointState {
         PointState {
             checked: false,
             jumpable: true,
-            seen: false,
         }
     }
 }

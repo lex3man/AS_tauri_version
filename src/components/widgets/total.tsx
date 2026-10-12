@@ -3,7 +3,7 @@ import { useLongPress } from "@/lib/use-long-press";
 
 export const TotalWidget = () => {
   const { total, mobileView, captured, callView } = useAppState();
-  const longPress = useLongPress(() => callView("adjust"));
+  const [longPress] = useLongPress(() => callView("adjust"));
 
   return (
     <div
@@ -24,7 +24,7 @@ export const TotalWidget = () => {
 
 export const TotalLiteWidget = () => {
   const { total, mobileView, captured, callView } = useAppState();
-  const longPress = useLongPress(() => callView("adjust"));
+  const [longPress] = useLongPress(() => callView("adjust"));
 
   return (
     <div
