@@ -66,7 +66,7 @@ function App() {
     setNextPointName,
     setMaxSpeed,
     setSignLimit,
-    setSignAlert,
+    setSignState,
     setRoadbookMode,
     setRBSlidesUnlocked,
     setDssTaken,
@@ -127,6 +127,29 @@ function App() {
       flushingReportRef.current = false;
     }
   };
+
+  // The retry used to ride on GPS ticks alone, which is exactly when it
+  // cannot work: the rider finishes the stage, parks, and only then reaches
+  // a network — stationary, so watchPosition stops delivering updates and
+  // nothing ever retried the queue. Drive it from its own timer instead,
+  // and attempt immediately when the webview sees connectivity return.
+  const flushPendingReportRef = useRef(flushPendingReport);
+  flushPendingReportRef.current = flushPendingReport;
+
+  useEffect(() => {
+    const retry = (force = false) => {
+      void flushPendingReportRef.current(force);
+    };
+    const timer = setInterval(() => retry(), REPORT_RETRY_INTERVAL_MS);
+    const onOnline = () => retry(true);
+    window.addEventListener("online", onOnline);
+    // A report queued before the app was last killed is still on disk.
+    retry(true);
+    return () => {
+      clearInterval(timer);
+      window.removeEventListener("online", onOnline);
+    };
+  }, []);
 
   const geoloc = async () => {
     let permissions = await checkPermissions();
@@ -220,7 +243,7 @@ function App() {
               setNextPointType(data.next_point_type);
               setMaxSpeed(data.max_speed);
               setSignLimit(data.sign_limit);
-              setSignAlert(data.sign_alert);
+              setSignState(data.sign_state);
               setVisiable(data.visiable);
               setJumpSuggestion(data.jump_suggestion);
               setJumpPointID(data.jump_point);

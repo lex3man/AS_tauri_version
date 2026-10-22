@@ -20,18 +20,23 @@ pub struct DashBoard {
     // arrow just stays "black", matching its unmodified pre-feature look.
     #[serde(default = "default_arrow_color")]
     pub arrow_color: String,
-    // Speed sign while inside a DZ capture radius: the number to show, and
-    // whether it is an alert (over DZ's own limit — red and blinking) or a
-    // heads-up for the FZ limit that closes the zone (grey). sign_limit 0
-    // means no DZ zone is active and the sign keeps its ordinary behaviour.
+    // Speed sign for the DZ -> FZ stretch: the number to show (always the
+    // FZ limit that closes the zone) and how to draw it — "grey" on the
+    // approach inside DZ's capture radius, "red" once the penalised stretch
+    // starts, "blink" while over the limit in force. "none" / sign_limit 0
+    // means no zone is active and the sign keeps its ordinary behaviour.
     #[serde(default)]
     pub sign_limit: u32,
-    #[serde(default)]
-    pub sign_alert: bool,
+    #[serde(default = "default_sign_state")]
+    pub sign_state: String,
 }
 
 fn default_arrow_color() -> String {
     String::from("black")
+}
+
+fn default_sign_state() -> String {
+    String::from("none")
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -78,7 +83,7 @@ impl DashBoard {
             },
             arrow_color: String::from("black"),
             sign_limit: 0,
-            sign_alert: false,
+            sign_state: String::from("none"),
         }
     }
 }

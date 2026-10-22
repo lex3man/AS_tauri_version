@@ -45,7 +45,8 @@ pub async fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position)
         let mut ctw = 0;
         let mut max_speed = 0u8;
         let mut sign_limit = 0u8;
-        let mut sign_alert = false;
+        let mut sign_state = "none";
+        let mut zone_speed_limit: Option<u8> = None;
         let mut area_id = String::new();
         let mut tel = Telemetry::new();
         let mut is_open = false;
@@ -123,12 +124,11 @@ pub async fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position)
                 }
             });
 
-            // Inside a DZ capture radius the sign follows the zone rules:
-            // red and blinking while over DZ's own limit, otherwise grey
-            // showing the limit of the FZ that closes the zone. DZ is
-            // normally already captured by then, so next_point (and with it
-            // max_speed) has moved on — DZ's own limit has to be read from
-            // the point itself.
+            // Speed rules for the DZ -> FZ stretch. Inside DZ's capture radius
+            // the approach limit (DZ's own) still counts, and the sign shows
+            // the stricter FZ limit in grey as a heads-up. Past the radius the
+            // FZ limit is what's enforced and the sign turns red to mark the
+            // penalised stretch. The zone clears once FZ is captured.
             let distance_to = |p: &crate::race::types::Point| {
                 distance(
                     Coords {
@@ -141,22 +141,68 @@ pub async fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position)
                     },
                 ) * 1000.0
             };
-            if let Some(dz_idx) = area.points_set.iter().position(|p| {
+            let is_checked = |p: &crate::race::types::Point| {
+                state
+                    .race
+                    .spec_area_state
+                    .points
+                    .get(&p.get_id())
+                    .map(|s| s.checked)
+                    .unwrap_or(false)
+            };
+            let in_dz_radius = area.points_set.iter().position(|p| {
                 p.point_type == "DZ" && distance_to(p) <= p.capture_radius as f64
-            }) {
+            });
+            // Past the radius the zone stays open while a captured DZ still has
+            // an uncaptured FZ ahead of it. Stepping navigation past that FZ by
+            // hand (W+) closes it too, so a skipped FZ can't pin the sign red
+            // for the rest of the leg.
+            let next_idx = area
+                .points_set
+                .iter()
+                .position(|p| p.get_id() == next_point_id);
+            let active_zone = in_dz_radius.or_else(|| {
+                area.points_set
+                    .iter()
+                    .enumerate()
+                    .rev()
+                    .find_map(|(i, p)| {
+                        if p.point_type != "DZ" || !is_checked(p) {
+                            return None;
+                        }
+                        let fz_idx = area.points_set[i + 1..]
+                            .iter()
+                            .position(|q| q.point_type == "FZ")
+                            .map(|off| i + 1 + off)?;
+                        let still_open = !is_checked(&area.points_set[fz_idx])
+                            && next_idx.map(|n| fz_idx >= n).unwrap_or(false);
+                        if still_open { Some(i) } else { None }
+                    })
+            });
+            if let Some(dz_idx) = active_zone {
                 let dz = &area.points_set[dz_idx];
                 let fz_limit = area.points_set[dz_idx + 1..]
                     .iter()
                     .find(|p| p.point_type == "FZ")
                     .map(|p| p.speed_limit)
                     .unwrap_or(dz.speed_limit);
-                if dz.speed_limit > 0 && sog > dz.speed_limit as u32 {
-                    sign_limit = dz.speed_limit;
-                    sign_alert = true;
+                let inside_radius = in_dz_radius == Some(dz_idx);
+                let effective = if inside_radius {
+                    dz.speed_limit
                 } else {
-                    sign_limit = fz_limit;
-                    sign_alert = false;
+                    fz_limit
+                };
+                if effective > 0 {
+                    zone_speed_limit = Some(effective);
                 }
+                sign_limit = fz_limit;
+                sign_state = if effective > 0 && sog > effective as u32 {
+                    "blink"
+                } else if inside_radius {
+                    "grey"
+                } else {
+                    "red"
+                };
             }
 
             // Roadbook unlock latches on: entering the DSS visible radius,
@@ -196,6 +242,22 @@ pub async fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position)
             // whatever the proximity scan / stored next_point picked — the
             // arrow must not move off it until the device exits its radius.
             let keep_pointing_at_wpt = state.settings.keep_pointing_at_wpt();
+            // The hold is a navigation override only. The speed limit has to
+            // keep following the real next point: while holding, the point
+            // controller is deliberately left sitting on the captured point,
+            // so that is peek_next(), not next_point_id — which the override
+            // below is about to set to the held point itself.
+            let limit_point_id = if holding_now.is_some() {
+                state
+                    .race
+                    .spec_area_state
+                    .point_controller
+                    .peek_next()
+                    .cloned()
+                    .unwrap_or_else(|| next_point_id.clone())
+            } else {
+                next_point_id.clone()
+            };
             if let Some(held_id) = holding_now {
                 next_point_id = held_id;
             }
@@ -203,7 +265,10 @@ pub async fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position)
             if let Some(next_point) = area.get_point_by_id(&next_point_id) {
                 next_point_type = next_point.point_type.clone();
                 is_open = next_point.flags.is_open;
-                max_speed = next_point.speed_limit;
+                max_speed = area
+                    .get_point_by_id(&limit_point_id)
+                    .map(|p| p.speed_limit)
+                    .unwrap_or(next_point.speed_limit);
                 if prev_point_id.is_empty() {
                     if let Some(point_id) = state.race.spec_area_state.point_controller.peek_prev() {
                         prev_point_id = point_id.clone()
@@ -447,6 +512,13 @@ pub async fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position)
         // updating current state
         // ============================================================================
 
+        // Inside a DZ -> FZ zone the zone's own limit replaces next_point's,
+        // so the sign, the beep, the telemetry record and the report all judge
+        // against the same number.
+        if let Some(limit) = zone_speed_limit {
+            max_speed = limit;
+        }
+
         state.current.speed_exceeded = sog > max_speed as u32;
         state.dashboard.metrics.countdown = counter;
         if sog > 3 {
@@ -500,7 +572,7 @@ pub async fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position)
         state.current.finished = finished;
         state.dashboard.max_speed = max_speed as u32;
         state.dashboard.sign_limit = sign_limit as u32;
-        state.dashboard.sign_alert = sign_alert;
+        state.dashboard.sign_state = sign_state.to_string();
         state.race.spec_area_state.prev_point = prev_point_id;
         state.race.spec_area_state.next_point = next_point_id;
         state.current.oncoming = oncoming;

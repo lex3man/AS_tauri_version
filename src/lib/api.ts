@@ -177,6 +177,10 @@ export const send_report_file = async (filePath: string, etape: string) => {
         authentication: TOKEN,
       },
       body: formData,
+      // Bound the attempt: an unreachable host can otherwise hang for
+      // minutes, and the caller's in-flight guard would block every retry
+      // for that whole time.
+      connectTimeout: 15000,
     });
 
     return resp.status === 200;

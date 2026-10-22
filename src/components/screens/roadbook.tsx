@@ -16,7 +16,7 @@ const Roadbook = () => {
     speed,
     maxSpeed,
     signLimit,
-    signAlert,
+    signState,
     cpCounter,
     countdownWidgetShown,
     nextPointName,
@@ -102,6 +102,15 @@ const Roadbook = () => {
       setExceeding(speed > maxSpeed && maxSpeed > 0);
       setPreExceeding(speed > maxSpeed - 2 && maxSpeed > 0);
     }, [speed, maxSpeed]);
+
+    // A zone is active while signLimit > 0; signState then decides the look.
+    const inZone = signLimit > 0;
+    const signValue = inZone ? signLimit : maxSpeed;
+    const signVisible = inZone
+      ? signState !== "none"
+      : exceeding || preExceeding || nextPointType === "FZ";
+    const signBlinking = inZone ? signState === "blink" : exceeding;
+    const signRed = inZone ? signState !== "grey" : exceeding;
   
     useEffect(() => {
       if (exceeding) {
@@ -212,21 +221,14 @@ const Roadbook = () => {
               </div>
             </div>
             <div className="h-[40%] p-1">
-              {/* Inside a DZ capture radius (signLimit > 0) the zone rules take over:
-                  red and blinking with DZ's own limit while speeding, otherwise grey
-                  with the limit of the FZ that closes the zone. Elsewhere the sign
-                  keeps its ordinary max_speed behaviour. */}
-              {(signLimit > 0 ? !signAlert : (preExceeding || nextPointType === "FZ") && !exceeding) && (
-                <div className={`flex items-center justify-center m-auto h-full border-15 border-zinc-600 rounded-full aspect-square`}>
+              {/* The DZ -> FZ zone overrides the ordinary sign: grey on the approach
+                  inside DZ's radius, red once the penalised stretch starts, blinking
+                  while over the limit in force. Outside a zone the sign falls back to
+                  its plain max_speed behaviour. */}
+              {signVisible && (
+                <div className={`flex items-center justify-center m-auto h-full border-15 ${signRed ? "border-red-500" : "border-zinc-600"} rounded-full aspect-square ${signBlinking ? "animate-caret-blink" : ""}`}>
                   <div className="text-[clamp(2rem,5vw,3.5rem)] font-extrabold">
-                    {signLimit > 0 ? signLimit : maxSpeed}
-                  </div>
-                </div>
-              )}
-              {(signLimit > 0 ? signAlert : exceeding) && (
-                <div className={`flex items-center justify-center m-auto h-full border-15 border-red-500 rounded-full animate-caret-blink aspect-square`}>
-                  <div className="text-[clamp(2rem,5vw,3.5rem)] font-extrabold">
-                    {signLimit > 0 ? signLimit : maxSpeed}
+                    {signValue}
                   </div>
                 </div>
               )}

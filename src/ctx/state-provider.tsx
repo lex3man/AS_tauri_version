@@ -67,11 +67,11 @@ type AppStateProviderState = {
   arrowColor: string;
   time: string;
   maxSpeed: number;
-  // Speed sign override while inside a DZ capture radius. signLimit > 0
-  // means the DZ zone rules are active: signAlert -> red blinking sign with
-  // DZ's own limit, otherwise a grey sign with the closing FZ's limit.
+  // Speed sign override for the DZ -> FZ stretch. signLimit > 0 means the
+  // zone rules are active and signState says how to draw the sign:
+  // "grey" (approach), "red" (penalised stretch), "blink" (over the limit).
   signLimit: number;
-  signAlert: boolean;
+  signState: string;
   cpCounter: number;
   countdown: number;
   nextPointNumber: number;
@@ -118,7 +118,7 @@ type AppStateProviderState = {
   setNextPointName: (val: string) => void;
   setMaxSpeed: (val: number) => void;
   setSignLimit: (val: number) => void;
-  setSignAlert: (val: boolean) => void;
+  setSignState: (val: string) => void;
   setTotal: (val: number) => void;
   setPartial: (val: number) => void;
   setTelemetry: (val: TelemetryData[]) => void;
@@ -194,7 +194,7 @@ const initialState: AppStateProviderState = {
   time: "",
   maxSpeed: 140,
   signLimit: 0,
-  signAlert: false,
+  signState: "none",
   cpCounter: 0,
   countdown: 0,
   nextPointNumber: 0,
@@ -259,7 +259,7 @@ const initialState: AppStateProviderState = {
   setNextPointName: () => null,
   setMaxSpeed: () => null,
   setSignLimit: () => null,
-  setSignAlert: () => null,
+  setSignState: () => null,
   setTotal: () => null,
   setPartial: () => null,
   setVisiable: () => null,
@@ -326,7 +326,7 @@ export function StateProvider({
   const [speed, setSpeed] = useState(0);
   const [maxSpeed, setMaxSpeed] = useState(140);
   const [signLimit, setSignLimit] = useState(0);
-  const [signAlert, setSignAlert] = useState(false);
+  const [signState, setSignState] = useState("none");
   const [cpCounter, setCpCounter] = useState(0);
   const [nextPointNumber, setNextPointNumber] = useState(0);
   const [nextPointName, setNextPointName] = useState("");
@@ -796,7 +796,7 @@ export function StateProvider({
 
     maxSpeed,
     signLimit,
-    signAlert,
+    signState,
     cpCounter,
     countdown,
     nextPointNumber,
@@ -849,7 +849,7 @@ export function StateProvider({
     setNextPointName,
     setMaxSpeed,
     setSignLimit,
-    setSignAlert,
+    setSignState,
     setTotal,
     setPartial,
     setVisiable,
