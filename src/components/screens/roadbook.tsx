@@ -103,14 +103,16 @@ const Roadbook = () => {
       setPreExceeding(speed > maxSpeed - 2 && maxSpeed > 0);
     }, [speed, maxSpeed]);
 
-    // A zone is active while signLimit > 0; signState then decides the look.
-    const inZone = signLimit > 0;
-    const signValue = inZone ? signLimit : maxSpeed;
-    const signVisible = inZone
+    // The backend owns the sign whenever it has something to show (a DZ -> FZ
+    // zone, or the heads-up on the approach to an FZ); signState then decides
+    // the look. Otherwise the sign only appears to flag speeding.
+    const backendSign = signLimit > 0;
+    const signValue = backendSign ? signLimit : maxSpeed;
+    const signVisible = backendSign
       ? signState !== "none"
-      : exceeding || preExceeding || nextPointType === "FZ";
-    const signBlinking = inZone ? signState === "blink" : exceeding;
-    const signRed = inZone ? signState !== "grey" : exceeding;
+      : exceeding || preExceeding;
+    const signBlinking = backendSign ? signState === "blink" : exceeding;
+    const signRed = backendSign ? signState !== "grey" : exceeding;
   
     useEffect(() => {
       if (exceeding) {
@@ -221,7 +223,7 @@ const Roadbook = () => {
               </div>
             </div>
             <div className="h-[40%] p-1">
-              {/* The DZ -> FZ zone overrides the ordinary sign: grey on the approach
+              {/* The backend-driven sign: grey on the approach
                   inside DZ's radius, red once the penalised stretch starts, blinking
                   while over the limit in force. Outside a zone the sign falls back to
                   its plain max_speed behaviour. */}

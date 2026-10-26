@@ -269,6 +269,21 @@ pub async fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position)
                     .get_point_by_id(&limit_point_id)
                     .map(|p| p.speed_limit)
                     .unwrap_or(next_point.speed_limit);
+                // Outside a DZ zone, approaching an FZ still shows the plain
+                // grey heads-up with that FZ's limit. This rule used to live
+                // in the screens as `next_point_type === "FZ"`, which couldn't
+                // tell "approaching an FZ" from "that FZ was the last point of
+                // the stage and is now captured": next_point_id stops
+                // advancing there, so the sign never cleared. Checking the
+                // point itself settles it.
+                if sign_limit == 0 {
+                    if let Some(p) = area.get_point_by_id(&limit_point_id) {
+                        if p.point_type == "FZ" && !is_checked(p) {
+                            sign_limit = p.speed_limit;
+                            sign_state = "grey";
+                        }
+                    }
+                }
                 if prev_point_id.is_empty() {
                     if let Some(point_id) = state.race.spec_area_state.point_controller.peek_prev() {
                         prev_point_id = point_id.clone()
