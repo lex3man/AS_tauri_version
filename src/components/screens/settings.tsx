@@ -14,6 +14,7 @@ import { ChevronDown, ChevronUp } from "lucide-react";
 import { invoke } from "@tauri-apps/api/core";
 import { toast } from "sonner";
 import { send_report_file } from "@/lib/api";
+import { flushCollected } from "@/lib/collected";
 import { useEffect } from "react";
 
 const Settings = () => {
@@ -188,13 +189,24 @@ const Settings = () => {
                   // fails it stays queued and the app keeps retrying it in
                   // the background, so the timestamp below only ever shows
                   // a delivery the server actually accepted.
+                  // The collected buffer goes out alongside it, the same as
+                  // on the automatic paths. Not awaited, so a dead network
+                  // doesn't stall the toast behind the upload timeout.
+                  void flushCollected();
                   const sent = await send_report_file(
                     resp as string,
                     activeCode,
                   );
-                  if (sent) {
+                  if (sent.ok) {
                     await invoke<string>("mark_report_sent");
                     toast.success("Report file sent successfully");
+                  } else if (sent.reason) {
+                    // The server answered and refused. Waiting will not
+                    // help, and the rider is standing right here having
+                    // pressed the button — show them what it said.
+                    toast.error(`Report refused: ${sent.reason}`, {
+                      duration: 10000,
+                    });
                   } else {
                     toast.error(
                       "No connection — report queued, will be sent automatically",
@@ -212,7 +224,7 @@ const Settings = () => {
                 );
             }}
           >
-            GET REPORT
+            SEND REPORT
           </Button>
           <div className="text-center text-2xl font-extrabold">
             Last manual report: {reportSentManualTime}

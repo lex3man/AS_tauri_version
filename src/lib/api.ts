@@ -5,12 +5,61 @@ import { platform, version } from "@tauri-apps/plugin-os";
 import { invoke } from "@tauri-apps/api/core";
 import { stop_polling } from "./utils";
 import { TelemetryData } from "@/types/state";
-import { BaseDirectory, readFile } from '@tauri-apps/plugin-fs';
+import { readFile } from '@tauri-apps/plugin-fs';
 
 const TOKEN =
   "f7c8fe93f15af81dab45215fceb36401baf6b5753e67e1f295391aaf1fe3ec6d";
-const HOST = "map.rostexcabinet.ru";
+const HOST = "advsmart.net";
 const SCHEME = "https";
+
+/// Whether the server actually accepted a request, and why not when it
+/// didn't.
+///
+/// A bare `status === 200` is not enough against this backend: the report
+/// endpoint answers a rejected payload with **HTTP 200** and an `error`
+/// field in the body ({"error":"Поле race_number обязательно."}), so a
+/// report that the server threw away looked to the app exactly like one it
+/// had stored. Silent loss — nothing queued, nothing retried, nothing
+/// logged. The file endpoint, by contrast, does use real status codes, so
+/// both have to be checked.
+///
+/// Anything that is not JSON falls back to the status code: an nginx error
+/// page or an SPA fallback must not count as an acceptance either.
+const accepted = async (
+  resp: Response,
+  what: string,
+): Promise<{ ok: boolean; reason: string }> => {
+  let text = "";
+  try {
+    text = await resp.text();
+  } catch {
+    // Body already consumed or unreadable — judge on the status alone.
+    const ok = resp.status === 200;
+    return { ok, reason: ok ? "" : `HTTP ${resp.status}` };
+  }
+
+  let payload: any = null;
+  try {
+    payload = JSON.parse(text);
+  } catch {
+    payload = null;
+  }
+
+  const serverError =
+    payload && typeof payload === "object"
+      ? payload.error || (payload.status === "error" ? payload.message : "")
+      : "";
+
+  if (resp.status === 200 && !serverError) {
+    return { ok: true, reason: "" };
+  }
+
+  const reason = serverError
+    ? String(serverError)
+    : `HTTP ${resp.status} ${text.slice(0, 200)}`.trim();
+  console.error(`${what} rejected by the server: ${reason}`);
+  return { ok: false, reason };
+};
 
 export const server_init = async (raceNumber: string, password: string) => {
   const url = `${SCHEME}://${HOST}/api/init`;
@@ -91,15 +140,7 @@ export const send_telemetry = async (data: TelemetryData) => {
     body: JSON.stringify(data),
   });
 
-  if (resp.status === 200) {
-    // toast.success(`Telemetry data with lat: ${data.lat}, lon: ${data.lon} sent successfully`, { 
-    //   position: "bottom-center",
-    //   duration: 3000,
-    // });
-    return true;
-  } else {
-    return false;
-  }
+  return (await accepted(resp, "Telemetry")).ok;
 }
 
 export const send_collected = async (data: any) => {
@@ -112,53 +153,60 @@ export const send_collected = async (data: any) => {
       "Content-Type": "application/json",
     },
     body: JSON.stringify(data),
+    // Without this a connection that never answers — the usual shape of a
+    // dead cell on a stage, as opposed to a clean refusal — leaves the call
+    // hanging indefinitely, and the batch is neither delivered nor retried.
+    connectTimeout: 15000,
   });
 
-  if (resp.status === 200) {
-    // toast.success(`Collected data with sent successfully`, { 
-    //   position: "bottom-center",
-    //   duration: 3000,
-    // });
-    return true;
-  } else {
-    return false;
-  }
+  return (await accepted(resp, "Collected batch")).ok;
 }
 
 export const send_report = async (data: any) => {
   const url = `${SCHEME}://${HOST}/api/report/checkpoint`;
 
-  const resp = await fetch(url, {
-    method: "POST",
-    headers: {
-      authentication: TOKEN,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(data),
-  });
+  try {
+    const resp = await fetch(url, {
+      method: "POST",
+      headers: {
+        authentication: TOKEN,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+      // Same reason as the other senders: a socket that never answers is
+      // the usual shape of a dead cell, and without a bound this call
+      // never comes back at all.
+      connectTimeout: 15000,
+    });
 
-  if (resp.status === 200) {
-    // toast.success(`Report data with sent successfully`, { 
-    //   position: "bottom-center",
-    //   duration: 3000,
-    // });
-    return true;
-  } else {
+    return (await accepted(resp, "Checkpoint report")).ok;
+  } catch (e) {
+    console.error("Checkpoint report could not be sent:", e);
     return false;
   }
 }
 
-export const send_report_file = async (filePath: string, etape: string) => {
+/// Upload the stage report workbook. Returns whether the server stored it,
+/// and, when it refused, what it said — the caller decides whether a human
+/// needs to see that (the manual button does; the background retry does not).
+export const send_report_file = async (
+  filePath: string,
+  etape: string,
+): Promise<{ ok: boolean; reason: string }> => {
   const url = `${SCHEME}://${HOST}/api/report/checkpoint-file`;
   const device = await getDeviceInfo();
   const device_id = `${device.uuid}`;
 
   let fileBytes: Uint8Array;
   try {
-    fileBytes = await readFile(filePath, { baseDir: BaseDirectory.AppLocalData });
+    // No baseDir: the backend builds this path from document_dir(), so it is
+    // already absolute. Passing AppLocalData alongside it only worked because
+    // joining a base onto an absolute path discards the base — a coincidence,
+    // and one that pointed the reader at the wrong directory.
+    fileBytes = await readFile(filePath);
   } catch (e) {
     console.error("Report file is not readable:", e);
-    return false;
+    return { ok: false, reason: `Report file is not readable: ${e}` };
   }
 
   const formData = new FormData();
@@ -167,9 +215,9 @@ export const send_report_file = async (filePath: string, etape: string) => {
   formData.append("etape", etape);
   formData.append("time", Date.now().toString());
 
-  // Resolve false instead of rejecting on a transport error: with no
-  // connectivity on the stage this is the normal case, and callers decide
-  // whether to keep the report queued for a later retry.
+  // Resolve instead of rejecting on a transport error: with no connectivity
+  // on the stage this is the normal case, and callers decide whether to keep
+  // the report queued for a later retry.
   try {
     const resp = await fetch(url, {
       method: "POST",
@@ -183,9 +231,12 @@ export const send_report_file = async (filePath: string, etape: string) => {
       connectTimeout: 15000,
     });
 
-    return resp.status === 200;
+    return await accepted(resp, "Report file");
   } catch (e) {
     console.error("Report file upload failed:", e);
-    return false;
+    // No answer at all — the offline case. Left without a reason on
+    // purpose: the callers treat that as "retry later, say nothing", and
+    // a rider out of coverage does not need a toast every thirty seconds.
+    return { ok: false, reason: "" };
   }
 }

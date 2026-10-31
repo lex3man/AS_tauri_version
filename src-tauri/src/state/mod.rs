@@ -104,7 +104,16 @@ pub struct AppState {
     pub current: Flags,
     pub jump_suggestion: JumpSuggestion,
     pub gps_timestamp: u64,
+    // Telemetry records waiting to be accepted by the server, oldest first.
+    // Survives restarts, and is trimmed only by ack_collected() once the
+    // upload has actually gone through.
     pub collected: Vec<String>,
+    // Sequence number that `collected[0]` carries — equivalently, how many
+    // records have ever been dropped from the front. The i-th record's
+    // sequence is `collected_base + i`, which is what lets an ack name
+    // exactly how far the server got. It only ever grows, so an ack left
+    // over from a previous day code can never bite into a newer buffer.
+    pub collected_base: u64,
     pub last_report: String,
     pub config_updated: String,
     pub report_sent_auto: String,
@@ -136,6 +145,7 @@ impl Default for AppState {
             },
             gps_timestamp: 0,
             collected: vec![],
+            collected_base: 0,
             last_report: String::from(""),
             config_updated: String::from(""),
             report_sent_auto: String::from(""),
@@ -165,9 +175,57 @@ impl AppState {
             storage.set("as_pending_report_mode", json!(self.pending_report_mode));
             storage.set("as_pending_report_etape", json!(self.pending_report_etape));
             storage.set("as_last_report", json!(self.last_report));
+            storage.set("as_collected", json!(self.collected));
+            storage.set("as_collected_base", json!(self.collected_base));
 
             storage.close_resource();
         }
+    }
+
+    /// The pending batch in the shape the frontend uploads: the records plus
+    /// the sequence number of the last one, which is what it acks back.
+    /// `None` when there is nothing waiting.
+    pub fn collected_batch(&self) -> Option<String> {
+        if self.collected.is_empty() {
+            return None;
+        }
+        Some(
+            json!({
+                "last_seq": self.collected_base + self.collected.len() as u64 - 1,
+                "records": self.collected,
+            })
+            .to_string(),
+        )
+    }
+
+    /// Drop every collected record up to and including `last_seq`, returning
+    /// how many were actually removed.
+    ///
+    /// The buffer keeps growing while an upload is in flight, so an ack names
+    /// a sequence number rather than a count. Trimming by count would be
+    /// wrong the moment two batches overlap: a slow first upload acking after
+    /// a larger second one would eat records gathered in between. Comparing
+    /// against the base instead makes any ack that has already been
+    /// superseded a no-op.
+    pub fn ack_collected(&mut self, last_seq: u64) -> usize {
+        if last_seq < self.collected_base {
+            return 0;
+        }
+        let acked = (last_seq - self.collected_base + 1) as usize;
+        let drop = acked.min(self.collected.len());
+        self.collected.drain(..drop);
+        self.collected_base += drop as u64;
+        drop
+    }
+
+    /// Abandon every pending collected record without sending it. The
+    /// sequence counter moves past them instead of restarting, so an upload
+    /// still in flight for the records just dropped acks a range that is now
+    /// behind the base and is ignored, rather than trimming whatever the new
+    /// day code has started gathering.
+    pub fn drop_collected(&mut self) {
+        self.collected_base += self.collected.len() as u64;
+        self.collected.clear();
     }
 
     pub fn reset(&mut self) {
@@ -188,7 +246,7 @@ impl AppState {
         };
         self.gps_timestamp = 0;
         self.snapshot = None;
-        self.collected = vec![];
+        self.drop_collected();
         self.last_report = String::from("");
         self.config_updated = String::from("");
         self.report_sent_auto = String::from("");

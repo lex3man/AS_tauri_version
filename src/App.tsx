@@ -26,6 +26,7 @@ import Roadbook from "./components/screens/roadbook";
 import SpeedExceedsScreen from "./components/screens/speed-exceeds";
 import JumpSuggestion from "./components/screens/jump";
 import { playBeep } from "./lib/sound";
+import { flushCollected } from "./lib/collected";
 import Adjust from "./components/screens/adjust";
 import Tracking from "./components/screens/tracking";
 import { Button } from "./components/ui/button";
@@ -99,7 +100,15 @@ function App() {
   const REPORT_RETRY_INTERVAL_MS = 30000;
 
   const flushPendingReport = async (force = false) => {
-    if (flushingReportRef.current) return;
+    if (flushingReportRef.current) {
+      // A forced flush is the ASS capture asking for its report to go now.
+      // Landing mid-attempt must not drop it: clear the throttle so the very
+      // next tick picks it up instead of waiting out the full interval.
+      // Not bypassing the guard outright — that would put the same file on
+      // the wire twice.
+      if (force) lastReportAttemptRef.current = 0;
+      return;
+    }
     if (!force && Date.now() - lastReportAttemptRef.current < REPORT_RETRY_INTERVAL_MS) {
       return;
     }
@@ -111,8 +120,24 @@ function App() {
       ) as { path?: string; etape?: string };
       if (!pending.path) return;
 
+      // Every report that goes on the wire takes the collected buffer with
+      // it. This is the path that needed it most: a queued report re-sent
+      // later never regenerates, so the backend's own send_collected emit
+      // at generation time doesn't fire again. Not awaited — the report
+      // must not wait out the upload timeout on a dead network.
+      void flushCollected();
+
       const sent = await send_report_file(pending.path, pending.etape ?? "");
-      if (!sent) return; // stays queued, retried on a later tick
+      // Stays queued and is retried on a later tick. A reason means the
+      // server answered and refused — that will not fix itself by waiting,
+      // so it goes to the log where the next field report can find it,
+      // rather than to a toast the rider would see every thirty seconds.
+      if (!sent.ok) {
+        if (sent.reason) {
+          console.error(`Queued report refused by the server: ${sent.reason}`);
+        }
+        return;
+      }
 
       await invoke<string>("mark_report_sent");
       const [auto, manual] = await Promise.all([
@@ -128,6 +153,26 @@ function App() {
     }
   };
 
+  // Collected telemetry is queued the same way, but until now it only ever
+  // went out on a captured point. That leaves two gaps the timer closes: the
+  // long stretches between points, and a stage that ended with no coverage —
+  // there is no next point left to carry the buffer to the server.
+  const lastCollectedAttemptRef = useRef(0);
+
+  const flushPendingCollected = async (force = false) => {
+    if (
+      !force &&
+      Date.now() - lastCollectedAttemptRef.current < REPORT_RETRY_INTERVAL_MS
+    ) {
+      return;
+    }
+    lastCollectedAttemptRef.current = Date.now();
+    // flushCollected holds its own in-flight guard, shared with the capture
+    // and report paths, so none of them can put the same batch on the wire
+    // twice.
+    await flushCollected();
+  };
+
   // The retry used to ride on GPS ticks alone, which is exactly when it
   // cannot work: the rider finishes the stage, parks, and only then reaches
   // a network — stationary, so watchPosition stops delivering updates and
@@ -135,15 +180,19 @@ function App() {
   // and attempt immediately when the webview sees connectivity return.
   const flushPendingReportRef = useRef(flushPendingReport);
   flushPendingReportRef.current = flushPendingReport;
+  const flushPendingCollectedRef = useRef(flushPendingCollected);
+  flushPendingCollectedRef.current = flushPendingCollected;
 
   useEffect(() => {
     const retry = (force = false) => {
       void flushPendingReportRef.current(force);
+      void flushPendingCollectedRef.current(force);
     };
     const timer = setInterval(() => retry(), REPORT_RETRY_INTERVAL_MS);
     const onOnline = () => retry(true);
     window.addEventListener("online", onOnline);
-    // A report queued before the app was last killed is still on disk.
+    // A report queued before the app was last killed is still on disk, and
+    // so is any telemetry it hadn't managed to deliver.
     retry(true);
     return () => {
       clearInterval(timer);
@@ -208,27 +257,17 @@ function App() {
               // without needing a fresh RBP/DSS crossing.
               setRBSlidesUnlocked(data.roadbook_unlocked);
               setDssTaken(data.dss_taken);
-              // ASS capture (one-shot pulse, like `capture`) auto-triggers
-              // the same report generation + upload flow the manual GET
-              // REPORT button uses, tagged "auto" so the bottom-menu can
-              // show automatic vs manual send times separately.
-              // The day code is taken from this same payload rather than the
-              // component's `activeCode`: this callback is registered once on
-              // mount, so it closes over the first render's value — still ""
-              // at that point — and the guard would never pass.
-              const etape: string = data.activation_code;
-              if (data.ass_captured && etape) {
-                invoke("export_telemetry_report", { mode: "auto" })
-                  .then(() => flushPendingReport(true))
-                  .catch((e) => {
-                    console.error("Auto report generation failed:", e);
-                  });
-              } else {
-                // Retry whatever is still queued (throttled internally) —
-                // this is what gets an offline report delivered once the
-                // device finds a connection again.
-                flushPendingReport();
-              }
+              // Generating the end-of-stage report is the backend's job now:
+              // it queues one in the same pass that captures the ASS point,
+              // tagged "auto" so the bottom menu can show automatic and
+              // manual send times separately. All that is left here is to
+              // ask the queue to go out at once rather than on the next
+              // tick, so `ass_captured` being a one-shot pulse this poll may
+              // miss now costs an interval instead of the whole report.
+              // Every other tick retries whatever is still queued (throttled
+              // internally) — that is what delivers an offline report once
+              // the device finds a connection again.
+              flushPendingReport(data.ass_captured === true);
               setCog(data.cog);
               setCtw(data.ctw);
               setDtw(data.dtw);

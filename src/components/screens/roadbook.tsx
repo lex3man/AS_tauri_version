@@ -104,7 +104,7 @@ const Roadbook = () => {
     }, [speed, maxSpeed]);
 
     // The backend owns the sign whenever it has something to show (a DZ -> FZ
-    // zone, or the heads-up on the approach to an FZ); signState then decides
+    // zone, or any later FZ step of a chained one); signState then decides
     // the look. Otherwise the sign only appears to flag speeding.
     const backendSign = signLimit > 0;
     const signValue = backendSign ? signLimit : maxSpeed;

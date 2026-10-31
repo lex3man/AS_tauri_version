@@ -8,34 +8,41 @@ export const MixedTotalPartialWidget = () => {
   const { total, partial, setPartial, callView, captured } = useAppState();
   const [longPress] = useLongPress(() => callView("adjust"));
 
-  // min-h-36 is what makes the two flex-1 halves real: this screen's height
-  // chain is all percentages of an auto-height parent, so h-full resolves to
-  // auto and each half would otherwise collapse to its own text, leaving the
-  // Partial tap zone no taller than the number itself.
+  const resetPartial = async () => {
+    await invoke("reset_partial");
+    setPartial(0);
+  };
+
+  // z-50 is what makes this widget pressable at all. BtmMenu lays an invisible
+  // swipe-up catcher over the bottom two thirds of the viewport at z-40, and
+  // measured against the real layout it covers this widget whole — every press
+  // was landing on the catcher, never here. The roadbook slide controls get out
+  // from under it the same way. Raising it costs nothing: the drawer portal
+  // mounts after #root, so it still paints over this once it is open.
   return (
     <div
-      className={`flex flex-col border-2 border-primary h-full min-h-36 ${captured ? "bg-green-600" : theme === "dark" ? "bg-gray-700" : "bg-cyan-300"} select-none`}
+      className={`relative z-50 flex flex-col h-full border-2 border-primary select-none touch-manipulation ${captured ? "bg-green-600" : theme === "dark" ? "bg-gray-700" : "bg-cyan-300"}`}
     >
-      <div {...longPress} className="flex flex-1 items-center">
-        <div
-          className={`w-full text-5xl py-2 font-extrabold leading-none transform scale-x-60`}
-        >
+      <button
+        {...longPress}
+        type="button"
+        className="flex flex-1 w-full items-center text-left active:brightness-90"
+      >
+        <div className="w-full text-5xl py-2 font-extrabold leading-none transform scale-x-60">
           {total.toFixed(2)}
         </div>
-      </div>
-      <div
-        className="flex flex-1"
-        onClick={async () => {
-          await invoke("reset_partial");
-          setPartial(0);
-        }}
+      </button>
+      <button
+        type="button"
+        onClick={resetPartial}
+        className="flex flex-1 w-full text-left active:brightness-90"
       >
         <div className="flex w-4/5 items-center border-t border-r border-foreground">
           <div className="text-4xl py-1 font-extrabold leading-none transform origin-left scale-x-75">
             {partial.toFixed(2)}
           </div>
         </div>
-      </div>
+      </button>
     </div>
   );
 };

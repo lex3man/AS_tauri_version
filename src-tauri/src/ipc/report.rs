@@ -3,7 +3,7 @@ use std::sync::Mutex;
 use chrono::{DateTime, Local, TimeZone, Utc};
 use serde_json::json;
 use rust_xlsxwriter::workbook::Workbook;
-use tauri::{Manager, State};
+use tauri::{AppHandle, Manager, State};
 
 use crate::{state::AppState, utils::send_data::{send_collected, send_report}};
 
@@ -14,124 +14,8 @@ pub async fn export_telemetry_report(
     mode: &str,
 ) -> Result<String, String> {
     if let Ok(mut state) = state.lock() {
-        let ps = app.path().document_dir().map_err(|e| e.to_string())?;
-        // Fall back instead of unwrapping: this runs automatically on an ASS
-        // capture now, not just from the manual GET REPORT button, so a race
-        // number that hasn't been set yet must not abort the whole app
-        // (the release profile uses panic = "abort").
-        let rn = state.race_number.clone().unwrap_or("None".to_string());
-        let file_name = format!(
-            "report_{}_{}_{}.xlsx",
-            rn,
-            Local::now().format("%d%m%Y"),
-            state.race.active_code
-        );
-        let output_path = ps.join(&file_name);
-        if let Some(telemetry) = state.telemetry.get(&state.race.current_sa) {
-            if let Some(race) = &state.race.race {
-                let mut workbook = Workbook::new();
-                {
-                    let sheet = workbook.add_worksheet();
-                    sheet.set_name("Summary").map_err(|e| e.to_string())?;
-                    sheet
-                        .write(0, 0, "Race Number")
-                        .map_err(|e| e.to_string())?;
-                    sheet.write(0, 1, &rn).map_err(|e| e.to_string())?;
-                    sheet.write(1, 0, "Serial").map_err(|e| e.to_string())?;
-                    sheet
-                        .write(1, 1, race.serial.clone())
-                        .map_err(|e| e.to_string())?;
-                    sheet.write(2, 0, "Race Name").map_err(|e| e.to_string())?;
-                    sheet
-                        .write(2, 1, race.name.clone())
-                        .map_err(|e| e.to_string())?;
-                    sheet
-                        .write(3, 0, "Activation Code")
-                        .map_err(|e| e.to_string())?;
-                    sheet
-                        .write(3, 1, state.race.active_code.clone())
-                        .map_err(|e| e.to_string())?;
-                    sheet.write(5, 0, "Events").map_err(|e| e.to_string())?;
-                    sheet
-                        .write(5, 1, telemetry.events.len() as u32)
-                        .map_err(|e| e.to_string())?;
-                    sheet.write(6, 0, "Captures").map_err(|e| e.to_string())?;
-                    sheet
-                        .write(6, 1, telemetry.captures.len() as u32)
-                        .map_err(|e| e.to_string())?;
-                    sheet.write(7, 0, "Exceeds").map_err(|e| e.to_string())?;
-                    sheet
-                        .write(7, 1, telemetry.speed_exceeds.len() as u32)
-                        .map_err(|e| e.to_string())?;
-                    sheet.write(7, 0, "Absolute total").map_err(|e| e.to_string())?;
-                    sheet
-                        .write(7, 1, (state.dashboard.metrics.abs_total as u32 / 10) as f32 / 100.0)
-                        .map_err(|e| e.to_string())?;
-                }
-
-                {
-                    let sheet = workbook.add_worksheet();
-                    sheet.set_name("Exceeds").map_err(|e| e.to_string())?;
-                    sheet.write(0, 1, "Speed").map_err(|e| e.to_string())?;
-                    sheet.write(0, 2, "Limit").map_err(|e| e.to_string())?;
-                    sheet.write(0, 3, "Time").map_err(|e| e.to_string())?;
-                    sheet.write(0, 4, "Km").map_err(|e| e.to_string())?;
-
-                    for (row, (_key, exceed)) in telemetry.speed_exceeds.iter().enumerate() {
-                        let r = (row + 1) as u32;
-                        let datetime: DateTime<Utc> =
-                            Utc.timestamp_millis_opt(exceed.time as i64).unwrap();
-                        sheet.write(r, 1, exceed.speed).map_err(|e| e.to_string())?;
-                        sheet.write(r, 2, exceed.limit).map_err(|e| e.to_string())?;
-                        sheet
-                            .write(r, 3, &datetime.to_string())
-                            .map_err(|e| e.to_string())?;
-                        sheet.write(r, 4, exceed.km).map_err(|e| e.to_string())?;
-                    }
-                }
-
-                {
-                    let sheet = workbook.add_worksheet();
-                    sheet.set_name("Captures").map_err(|e| e.to_string())?;
-                    sheet.write(0, 0, "Point").map_err(|e| e.to_string())?;
-                    sheet.write(0, 1, "Type").map_err(|e| e.to_string())?;
-                    sheet.write(0, 2, "Time").map_err(|e| e.to_string())?;
-                    sheet.write(0, 3, "Speed").map_err(|e| e.to_string())?;
-                    sheet.write(0, 4, "Odo").map_err(|e| e.to_string())?;
-
-                    for (row, capture) in telemetry.captures.iter().enumerate() {
-                        let r = (row + 1) as u32;
-                        let datetime: DateTime<Utc> =
-                            Utc.timestamp_millis_opt(capture.time as i64).unwrap();
-                        sheet
-                            .write(r, 0, format!("{:?}", capture.point))
-                            .map_err(|e| e.to_string())?;
-                        sheet
-                            .write(r, 1, capture.point_type.as_str())
-                            .map_err(|e| e.to_string())?;
-                        sheet
-                            .write(r, 2, &datetime.to_string())
-                            .map_err(|e| e.to_string())?;
-                        sheet
-                            .write(r, 3, capture.speed)
-                            .map_err(|e| e.to_string())?;
-                        sheet
-                            .write(r, 4, capture.odo)
-                            .map_err(|e| e.to_string())?;
-                    }
-                }
-                workbook.save(&output_path).map_err(|e| e.to_string())?;
-                // Queue it instead of stamping "sent" right here: the upload
-                // happens afterwards and may well fail (no connectivity on
-                // the stage). The timestamp is set by mark_report_sent()
-                // once the server has actually accepted the file, and the
-                // queue is retried until then.
-                state.pending_report_path = output_path.to_string_lossy().to_string();
-                state.pending_report_mode = mode.to_string();
-                state.pending_report_etape = state.race.active_code.clone();
-            }
-        }
-        match send_report(&app, state.last_report.clone()).map_err(|_| "Can't send report".to_string()) {
+        let output_path = build_and_queue_report(&app, &mut state, mode)?;
+        match send_report(&app, state.last_report.clone()) {
             Ok(_) => {
                 println!("Report sent!!!");
             }
@@ -139,17 +23,171 @@ pub async fn export_telemetry_report(
                 println!("Report sending faild!!!");
             }
         }
-        match send_collected(&app, state.collected.clone()) {
+        match send_collected(&app, state.collected_batch()) {
             Ok(_) => {
-                println!("Collected data sent!!!");
+                println!("Collected batch handed to the frontend");
             }
             Err(_) => {
-                println!("Collected data sending faild!!!");
+                println!("Collected batch could not be handed over");
             }
         }
-        return Ok(output_path.to_str().unwrap().to_string());
+        return Ok(output_path);
     }
     Err("Failed to get state".to_string())
+}
+
+/// Build the stage report workbook and queue it for upload, returning its
+/// path.
+///
+/// Shared by the manual FINISH RACE command and by the ASS capture inside
+/// the actor, so both produce the same file and the same queue entry. The
+/// upload itself never happens here: that is the frontend's retry loop,
+/// which is what finally gets a report out once connectivity returns.
+pub fn build_and_queue_report(
+    app: &AppHandle,
+    state: &mut AppState,
+    mode: &str,
+) -> Result<String, String> {
+    let ps = app.path().document_dir().map_err(|e| e.to_string())?;
+    // Whether the workbook actually got written. Without it this returned
+    // Ok with the path of a file that was never created, so a caller would
+    // report success and then fail to read it — and nothing would be
+    // queued, which is indistinguishable from a report that simply hasn't
+    // been uploaded yet.
+    let mut generated = false;
+    // Fall back instead of unwrapping: this runs automatically on an ASS
+    // capture now, not just from the manual FINISH RACE button, so a race
+    // number that hasn't been set yet must not abort the whole app
+    // (the release profile uses panic = "abort").
+    let rn = state.race_number.clone().unwrap_or("None".to_string());
+    let file_name = format!(
+        "report_{}_{}_{}.xlsx",
+        rn,
+        Local::now().format("%d%m%Y"),
+        state.race.active_code
+    );
+    let output_path = ps.join(&file_name);
+    if let Some(telemetry) = state.telemetry.get(&state.race.current_sa) {
+        if let Some(race) = &state.race.race {
+            let mut workbook = Workbook::new();
+            {
+                let sheet = workbook.add_worksheet();
+                sheet.set_name("Summary").map_err(|e| e.to_string())?;
+                sheet
+                    .write(0, 0, "Race Number")
+                    .map_err(|e| e.to_string())?;
+                sheet.write(0, 1, &rn).map_err(|e| e.to_string())?;
+                sheet.write(1, 0, "Serial").map_err(|e| e.to_string())?;
+                sheet
+                    .write(1, 1, race.serial.clone())
+                    .map_err(|e| e.to_string())?;
+                sheet.write(2, 0, "Race Name").map_err(|e| e.to_string())?;
+                sheet
+                    .write(2, 1, race.name.clone())
+                    .map_err(|e| e.to_string())?;
+                sheet
+                    .write(3, 0, "Activation Code")
+                    .map_err(|e| e.to_string())?;
+                sheet
+                    .write(3, 1, state.race.active_code.clone())
+                    .map_err(|e| e.to_string())?;
+                sheet.write(5, 0, "Events").map_err(|e| e.to_string())?;
+                sheet
+                    .write(5, 1, telemetry.events.len() as u32)
+                    .map_err(|e| e.to_string())?;
+                sheet.write(6, 0, "Captures").map_err(|e| e.to_string())?;
+                sheet
+                    .write(6, 1, telemetry.captures.len() as u32)
+                    .map_err(|e| e.to_string())?;
+                sheet.write(7, 0, "Exceeds").map_err(|e| e.to_string())?;
+                sheet
+                    .write(7, 1, telemetry.speed_exceeds.len() as u32)
+                    .map_err(|e| e.to_string())?;
+                sheet.write(7, 0, "Absolute total").map_err(|e| e.to_string())?;
+                sheet
+                    .write(7, 1, (state.dashboard.metrics.abs_total as u32 / 10) as f32 / 100.0)
+                    .map_err(|e| e.to_string())?;
+            }
+
+            {
+                let sheet = workbook.add_worksheet();
+                sheet.set_name("Exceeds").map_err(|e| e.to_string())?;
+                sheet.write(0, 1, "Speed").map_err(|e| e.to_string())?;
+                sheet.write(0, 2, "Limit").map_err(|e| e.to_string())?;
+                sheet.write(0, 3, "Time").map_err(|e| e.to_string())?;
+                sheet.write(0, 4, "Km").map_err(|e| e.to_string())?;
+
+                for (row, (_key, exceed)) in telemetry.speed_exceeds.iter().enumerate() {
+                    let r = (row + 1) as u32;
+                    let datetime: DateTime<Utc> =
+                        Utc.timestamp_millis_opt(exceed.time as i64).unwrap();
+                    sheet.write(r, 1, exceed.speed).map_err(|e| e.to_string())?;
+                    sheet.write(r, 2, exceed.limit).map_err(|e| e.to_string())?;
+                    sheet
+                        .write(r, 3, &datetime.to_string())
+                        .map_err(|e| e.to_string())?;
+                    sheet.write(r, 4, exceed.km).map_err(|e| e.to_string())?;
+                }
+            }
+
+            {
+                let sheet = workbook.add_worksheet();
+                sheet.set_name("Captures").map_err(|e| e.to_string())?;
+                sheet.write(0, 0, "Point").map_err(|e| e.to_string())?;
+                sheet.write(0, 1, "Type").map_err(|e| e.to_string())?;
+                sheet.write(0, 2, "Time").map_err(|e| e.to_string())?;
+                sheet.write(0, 3, "Speed").map_err(|e| e.to_string())?;
+                sheet.write(0, 4, "Odo").map_err(|e| e.to_string())?;
+
+                for (row, capture) in telemetry.captures.iter().enumerate() {
+                    let r = (row + 1) as u32;
+                    let datetime: DateTime<Utc> =
+                        Utc.timestamp_millis_opt(capture.time as i64).unwrap();
+                    sheet
+                        .write(r, 0, format!("{:?}", capture.point))
+                        .map_err(|e| e.to_string())?;
+                    sheet
+                        .write(r, 1, capture.point_type.as_str())
+                        .map_err(|e| e.to_string())?;
+                    sheet
+                        .write(r, 2, &datetime.to_string())
+                        .map_err(|e| e.to_string())?;
+                    sheet
+                        .write(r, 3, capture.speed)
+                        .map_err(|e| e.to_string())?;
+                    sheet
+                        .write(r, 4, capture.odo)
+                        .map_err(|e| e.to_string())?;
+                }
+            }
+            workbook.save(&output_path).map_err(|e| e.to_string())?;
+            // Queue it instead of stamping "sent" right here: the upload
+            // happens afterwards and may well fail (no connectivity on
+            // the stage). The timestamp is set by mark_report_sent()
+            // once the server has actually accepted the file, and the
+            // queue is retried until then.
+            state.pending_report_path = output_path.to_string_lossy().to_string();
+            state.pending_report_mode = mode.to_string();
+            state.pending_report_etape = state.race.active_code.clone();
+            generated = true;
+        }
+    }
+    if !generated {
+        return Err(
+            "Report not generated: no telemetry or race config for the current stage".to_string(),
+        );
+    }
+    // Persist the queue entry now instead of leaving it to the next GPS
+    // tick's AppState::sync(). A rider who stops at the finish produces no
+    // further ticks, so a report queued here could otherwise sit unsaved
+    // until the app is killed and then be gone.
+    if let Some(storage) = &state.storage {
+        storage.set("as_pending_report_path", json!(state.pending_report_path));
+        storage.set("as_pending_report_mode", json!(state.pending_report_mode));
+        storage.set("as_pending_report_etape", json!(state.pending_report_etape));
+        storage.close_resource();
+    }
+    Ok(output_path.to_string_lossy().to_string())
 }
 
 /// The report file still awaiting delivery, as `{path, mode, etape}` — or
@@ -209,6 +247,39 @@ pub fn get_report_sent_time(state: State<'_, Mutex<AppState>>, mode: &str) -> Re
             &state.report_sent_manual
         };
         return Ok(raw.clone().replace("\"", "").replace("\\", ""));
+    }
+    Err("Failed to get state".to_string())
+}
+
+/// The telemetry batch still awaiting delivery, as `{last_seq, records}` —
+/// or `{}` when the buffer is empty. Polled by the frontend's retry timer,
+/// which is the only path to the server while no point is being captured.
+#[tauri::command]
+pub fn get_pending_collected(state: State<'_, Mutex<AppState>>) -> Result<String, String> {
+    if let Ok(state) = state.lock() {
+        return Ok(state.collected_batch().unwrap_or_else(|| "{}".to_string()));
+    }
+    Err("Failed to get state".to_string())
+}
+
+/// Called only after the server accepted a collected batch: drops every
+/// record up to and including `last_seq` and persists what is left.
+/// Returns the number of records still pending.
+#[tauri::command]
+pub fn ack_collected(state: State<'_, Mutex<AppState>>, last_seq: u64) -> Result<String, String> {
+    if let Ok(mut state) = state.lock() {
+        if state.ack_collected(last_seq) > 0 {
+            // Persist straight away rather than waiting for the next GPS
+            // tick: leaving it to a tick that may never come (a stationary
+            // device produces none) keeps a buffer on disk that the server
+            // already has.
+            if let Some(storage) = &state.storage {
+                storage.set("as_collected", json!(state.collected));
+                storage.set("as_collected_base", json!(state.collected_base));
+                storage.close_resource();
+            }
+        }
+        return Ok(format!("{}", state.collected.len()));
     }
     Err("Failed to get state".to_string())
 }

@@ -45,6 +45,12 @@ pub struct SpecEreaState {
     // and resets together with the area on a new day code.
     #[serde(default)]
     pub roadbook_shown: bool,
+    // Odometer reading (abs_total, km) at the moment DSS was captured —
+    // the anchor for the minimum run the finish point requires before it
+    // may be taken. None means no DSS has been captured on this area yet,
+    // or the capture predates this field.
+    #[serde(default)]
+    pub dss_odo: Option<f64>,
 }
 
 impl SpecEreaState {
@@ -57,6 +63,7 @@ impl SpecEreaState {
             held_point: None,
             held_min_dtw: None,
             roadbook_shown: false,
+            dss_odo: None,
         }
     }
 }

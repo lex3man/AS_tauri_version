@@ -31,10 +31,11 @@ export function RouteMap({
   width = 800,
   height = 500,
 }: Props) {
-  const { polylinePoints, scaleBarWidth, scaleBarLabel } = useMemo(() => {
+  const { polylinePoints, currentPoint, scaleBarWidth, scaleBarLabel } = useMemo(() => {
     if (trackPoints.length < 2) {
       return {
         polylinePoints: "",
+        currentPoint: null as PointM | null,
         scaleBarWidth: 0,
         scaleBarLabel: "500 m",
         view: null as null | {
@@ -79,13 +80,22 @@ export function RouteMap({
     const offsetX = padding + (usableWidth - contentWidthPx) / 2;
     const offsetY = padding + (usableHeight - contentHeightPx) / 2;
 
+    const project = (p: PointM): PointM => ({
+      x: offsetX + (p.x - minX) * pixelsPerMeter,
+      y: offsetY + contentHeightPx - (p.y - minY) * pixelsPerMeter,
+    });
+
     const polylinePoints = pointsM
       .map((p) => {
-        const x = offsetX + (p.x - minX) * pixelsPerMeter;
-        const y = offsetY + contentHeightPx - (p.y - minY) * pixelsPerMeter;
+        const { x, y } = project(p);
         return `${x.toFixed(1)},${y.toFixed(1)}`;
       })
       .join(" ");
+
+    // get_location_history walks the step buffer back from the newest fix,
+    // so index 0 is where the rider is right now and the tail of the array
+    // is the far end of the track window.
+    const currentPoint = project(pointsM[0]);
 
     let barWidth = 100
     if (pixelsPerMeter < 1) {
@@ -102,6 +112,7 @@ export function RouteMap({
 
     return {
       polylinePoints,
+      currentPoint,
       scaleBarWidth,
       scaleBarLabel: `${barWidth} m`,
       // scaleBarLabel: `${barWidth} m ${pixelsPerMeter.toFixed(2)}`,
@@ -127,12 +138,23 @@ export function RouteMap({
         strokeLinecap="round"
       />
 
-      <circle
-        cx={polylinePoints ? Number(polylinePoints.split(" ").at(-1)?.split(",")[0]) : 0}
-        cy={polylinePoints ? Number(polylinePoints.split(" ").at(-1)?.split(",")[1]) : 0}
-        r={5}
-        fill="#ef4444"
-      />
+      {/* Current position. The white collar goes down first: doubling back
+          along the route lays the blue track over itself, and a bare dot of
+          roughly the line's own weight disappears into that tangle exactly
+          when the rider most needs to find themselves on it. */}
+      {currentPoint && (
+        <g>
+          <circle cx={currentPoint.x} cy={currentPoint.y} r={12} fill="#fff" />
+          <circle
+            cx={currentPoint.x}
+            cy={currentPoint.y}
+            r={9}
+            fill="#ef4444"
+            stroke="#7f1d1d"
+            strokeWidth={2}
+          />
+        </g>
+      )}
 
       <g>
         <line

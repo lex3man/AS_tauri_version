@@ -10,11 +10,19 @@ use crate::{
         telemetry::{Exceed, PointCapture, Telemetry},
         AppState, GPSData, JumpSuggestion, Position,
     },
+    ipc::report::build_and_queue_report,
     utils::{
         converters::{course_in_degrees, distance},
         send_data::{send_collected, send_report, send_telemetry},
     },
 };
+
+/// How far the rider must have run since capturing DSS before the stage's
+/// ASS point will accept a capture. On a circular stage start and finish sit
+/// in the same place, so the two capture radiuses overlap and the finish is
+/// in range from the moment the stage begins; a kilometre is comfortably more
+/// than any capture radius and comfortably less than any real stage.
+const ASS_MIN_RUN_KM: f64 = 1.0;
 
 pub async fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position) -> Result<(), ()> {
     if let Ok(mut state) = state.lock() {
@@ -49,6 +57,10 @@ pub async fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position)
         let mut zone_speed_limit: Option<u8> = None;
         let mut area_id = String::new();
         let mut tel = Telemetry::new();
+        // Whether `tel` actually holds this area's stored telemetry. It stays
+        // the empty placeholder when no area or no next point resolves, and
+        // writing that back would wipe the stage's record.
+        let mut tel_loaded = false;
         let mut is_open = false;
         let mut in_visiable_zone = false;
         let mut counter = 0;
@@ -74,6 +86,45 @@ pub async fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position)
             let holding_now = state.race.spec_area_state.held_point.clone();
             let mut dss_in_sight = false;
 
+            // On a circular stage the finish is laid out on top of the start,
+            // so ASS is inside its own capture radius from the moment the
+            // rider rolls up to DSS — and the proximity scan below, which
+            // retargets navigation onto any unchecked point in range, would
+            // hand them the finish before they had gone anywhere. ASS is
+            // therefore held shut until DSS has been captured and the
+            // odometer has moved on by ASS_MIN_RUN_KM since.
+            let dss_checked = area.points_set.iter().any(|p| {
+                p.point_type == "DSS"
+                    && state
+                        .race
+                        .spec_area_state
+                        .points
+                        .get(&p.get_id())
+                        .map(|ps| ps.checked)
+                        .unwrap_or(false)
+            });
+            // abs_total, not total: the per-capture odo corrections rewrite
+            // `total`, and a correction landing between DSS and ASS would
+            // move the anchor's meaning out from under the comparison.
+            let run_since_dss = state
+                .race
+                .spec_area_state
+                .dss_odo
+                .map(|odo| state.dashboard.metrics.abs_total - odo);
+            // A stage with no DSS has nothing to gate against, and a captured
+            // DSS with no anchor means the capture predates this field (state
+            // restored from an older build) — neither is a reason to lock a
+            // rider out of their own finish.
+            let has_dss = area.points_set.iter().any(|p| p.point_type == "DSS");
+            let ass_unlocked = !has_dss
+                || (dss_checked
+                    && run_since_dss
+                        .map(|run| run >= ASS_MIN_RUN_KM)
+                        .unwrap_or(true));
+            let takeable = |point: &crate::race::types::Point| {
+                point.point_type != "ASS" || ass_unlocked
+            };
+
             let _ = &area.points_set.iter().for_each(|point| {
                 let distance_to_point = distance(
                     Coords {
@@ -87,6 +138,7 @@ pub async fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position)
                 ) * 1000.0;
                 if holding_now.is_none()
                     && distance_to_point <= point.capture_radius as f64
+                    && takeable(point)
                     && !state
                         .race
                         .spec_area_state
@@ -100,6 +152,7 @@ pub async fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position)
                 }
 
                 if distance_to_point <= point.visible_radius as f64
+                    && takeable(point)
                     && !state
                         .race
                         .spec_area_state
@@ -205,6 +258,70 @@ pub async fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position)
                 };
             }
 
+            // Inside the capture radius of an FZ that a DZ opened, the
+            // rider is at the seam between two limits, and which seam it is
+            // depends on what follows the point.
+            //
+            // Another FZ behind it — a cascade like DZ, FZ50, FZ30, FZ50 —
+            // means the restriction continues at a new figure. The point
+            // then plays the part the DZ played at the head of the zone: the
+            // sign goes grey carrying the limit that is about to apply, and
+            // enforcement stays at the more forgiving of the two until the
+            // transition is behind them. Judging the passage at the stricter
+            // figure would book a rider for a limit that only starts where
+            // they are still braking into it.
+            //
+            // Anything else behind it — this FZ ends the run — means the
+            // restriction is over: the zone sign comes down and what governs
+            // is the limit of the point ahead. (With no zone sign the screen
+            // falls back to its plain speeding warning, as it does anywhere
+            // outside a zone.)
+            let run_after_dz = |mut i: usize| {
+                // Walk back over the run this FZ belongs to — these rules are
+                // about a zone a DZ opened, not a stray FZ.
+                while i > 0 && area.points_set[i - 1].point_type == "FZ" {
+                    i -= 1;
+                }
+                i > 0 && area.points_set[i - 1].point_type == "DZ"
+            };
+            // Set when the branch below has taken the sign down on purpose,
+            // so the lone-FZ fallback further on does not put it straight
+            // back up for the tick before the capture lands.
+            let mut zone_ended_here = false;
+            let fz_in_radius = area.points_set.iter().enumerate().find_map(|(i, p)| {
+                if p.point_type != "FZ"
+                    || distance_to(p) > p.capture_radius as f64
+                    || !run_after_dz(i)
+                {
+                    return None;
+                }
+                // No point after it at all: that is the end of the stage,
+                // not a handover, and there is no limit to hand over to.
+                Some((p.speed_limit, area.points_set.get(i + 1)?))
+            });
+            if let Some((here, ahead)) = fz_in_radius {
+                if ahead.point_type == "FZ" {
+                    let effective = here.max(ahead.speed_limit);
+                    if effective > 0 {
+                        zone_speed_limit = Some(effective);
+                    }
+                    sign_limit = ahead.speed_limit;
+                    sign_state = if effective > 0 && sog > effective as u32 {
+                        "blink"
+                    } else {
+                        "grey"
+                    };
+                } else {
+                    sign_limit = 0;
+                    sign_state = "none";
+                    // Deliberately Some(0) when the point ahead carries no
+                    // limit: past the zone there is nothing left to enforce,
+                    // and leaving this None would keep the FZ's own figure.
+                    zone_speed_limit = Some(ahead.speed_limit);
+                    zone_ended_here = true;
+                }
+            }
+
             // Roadbook unlock latches on: entering the DSS visible radius,
             // or capturing an RBP (the pre-start marker whose whole job is
             // to open the roadbook) / DSS. Once set it stays set for this
@@ -227,16 +344,9 @@ pub async fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position)
             // Same idea, but DSS specifically — roadbook slide odo values
             // are relative to the special stage start, so auto-scroll needs
             // this even when RBP alone already unlocked the roadbook view.
-            dss_taken = area.points_set.iter().any(|p| {
-                p.point_type == "DSS"
-                    && state
-                        .race
-                        .spec_area_state
-                        .points
-                        .get(&p.get_id())
-                        .map(|ps| ps.checked)
-                        .unwrap_or(false)
-            });
+            // (Computed with the ASS guard above, which asks the same
+            // question of the same points.)
+            dss_taken = dss_checked;
 
             // "Keep pointing at WPT": while a point is held, it overrides
             // whatever the proximity scan / stored next_point picked — the
@@ -269,18 +379,33 @@ pub async fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position)
                     .get_point_by_id(&limit_point_id)
                     .map(|p| p.speed_limit)
                     .unwrap_or(next_point.speed_limit);
-                // Outside a DZ zone, approaching an FZ still shows the plain
-                // grey heads-up with that FZ's limit. This rule used to live
-                // in the screens as `next_point_type === "FZ"`, which couldn't
-                // tell "approaching an FZ" from "that FZ was the last point of
-                // the stage and is now captured": next_point_id stops
-                // advancing there, so the sign never cleared. Checking the
-                // point itself settles it.
-                if sign_limit == 0 {
+                // An FZ the zone branch above did not cover. In practice
+                // that is a chained zone: the zone closes at the *first* FZ
+                // after its DZ, so on a DZ,FZ50,FZ30,FZ50 leg every step
+                // past the first one lands here — most of the restricted
+                // distance — all of it except the capture radiuses
+                // themselves, which the cascade rule above owns. The limit
+                // is in force on those steps just the
+                // same (max_speed right above comes from this very point),
+                // so the sign is drawn the way it is inside a zone: red,
+                // and blinking once the limit is actually broken. Anything
+                // less understates it, and it used to be a flat grey that
+                // stayed calm while the violation went into the report.
+                //
+                // The !is_checked guard separates "approaching an FZ" from
+                // "that FZ ended the stage and is now captured", where
+                // next_point_id stops advancing — the old screen-side rule
+                // (`next_point_type === "FZ"`) could not tell them apart and
+                // left the sign stuck on for the rest of the leg.
+                if sign_limit == 0 && !zone_ended_here {
                     if let Some(p) = area.get_point_by_id(&limit_point_id) {
                         if p.point_type == "FZ" && !is_checked(p) {
                             sign_limit = p.speed_limit;
-                            sign_state = "grey";
+                            sign_state = if p.speed_limit > 0 && sog > p.speed_limit as u32 {
+                                "blink"
+                            } else {
+                                "red"
+                            };
                         }
                     }
                 }
@@ -306,6 +431,7 @@ pub async fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position)
                     );
                     in_visiable_zone = (dtw * 1000.0) <= (next_point.visible_radius as f64);
                     tel = telemetry.clone();
+                    tel_loaded = true;
                     if let Some(_prev_position) = telemetry.steps.last() {
                         let length = telemetry.steps.len();
                         if length > 2 {
@@ -332,7 +458,18 @@ pub async fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position)
                             )
                         }
                     }
-                    tel.steps.push(*pos);
+                    // Track points only while actually moving. The speed gate
+                    // used to sit on the telemetry write-back at the end of
+                    // the tick, so standing still discarded the whole local
+                    // copy and this push with it. Now that the write-back is
+                    // unconditional (captures must survive a stop), the gate
+                    // has to live here instead — otherwise a device parked
+                    // for ten minutes would append six hundred points that
+                    // all sit on the same spot, bloating the track buffer
+                    // and the stored telemetry for nothing.
+                    if sog > 3 {
+                        tel.steps.push(*pos);
+                    }
                     //
                     // ============================================================================
                     // oncoming detection
@@ -374,6 +511,7 @@ pub async fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position)
                     if dtw * 1000.0 <= next_point.capture_radius as f64
                         && (!state.current.finished || !next_point_checked)
                         && !is_holding
+                        && takeable(next_point)
                     {
                         capture = true;
                         prev_point_id = next_point_id.clone();
@@ -383,6 +521,10 @@ pub async fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position)
                         if next_point.point_type == "ASS" {
                             ass_captured = true;
                         }
+                        // Read up front, written below once `next_point` —
+                        // and with it the borrow of `area` — is out of the
+                        // way of the state writes.
+                        let is_dss_point = next_point.point_type == "DSS";
                         if next_point.point_type.contains("NZ") {
                             counter = next_point.name.replace("NZ", "").parse().unwrap_or(0);
                             tel.events.push(
@@ -406,6 +548,14 @@ pub async fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position)
                                     (next_point_odo as f64 - distance_to_point) / 1000.0,
                                 );
                             }
+                        }
+                        // Start the clock for the ASS guard: the stage
+                        // proper begins here, and the finish stays shut until
+                        // the odometer has moved on by ASS_MIN_RUN_KM from
+                        // this reading.
+                        if is_dss_point {
+                            state.race.spec_area_state.dss_odo =
+                                Some(state.dashboard.metrics.abs_total);
                         }
                         state
                             .race
@@ -466,7 +616,14 @@ pub async fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position)
                                 "time": pos.timestamp,
                             })
                             .to_string();
-                            send_report(app, data.clone()).unwrap();
+                            // Same reasoning as the per-second telemetry
+                            // emit: a failed emit must not abort the app
+                            // under the release profile's panic = "abort",
+                            // and least of all on the capture tick, which
+                            // is where the ASS report is triggered from.
+                            if send_report(app, data.clone()).is_err() {
+                                println!("Capture report could not be handed over");
+                            }
                             state.last_report = data;
                         }
                     } else if is_holding {
@@ -518,7 +675,13 @@ pub async fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position)
                     })
                     .to_string();
                     state.collected.push(data.clone());
-                    send_telemetry(app, data).unwrap();
+                    // Never unwrap here: a failed emit would abort the whole
+                    // app under the release profile's panic = "abort", and
+                    // for the sake of one dropped per-second frame that the
+                    // collected buffer is already holding a copy of anyway.
+                    if send_telemetry(app, data).is_err() {
+                        println!("Per-second telemetry could not be handed over");
+                    }
                 }
             }
         }
@@ -564,13 +727,44 @@ pub async fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position)
                     tel.speed_exceeds.insert(odo_key, exceed);
                 };
             }
-            state.telemetry.insert(area_id.clone(), tel);
             state.jump_suggestion = JumpSuggestion {
                 suggested: jump_suggested,
                 point: jump_point_id.clone(),
             };
         } else {
             state.dashboard.sog = 0;
+        }
+        // Write the tick's telemetry back whatever the speed. This used to
+        // sit inside the `sog > 3` branch above, which quietly threw away
+        // everything the tick had put in the local copy whenever the device
+        // was barely moving — the capture record among it. Riders stop at
+        // FZ and CP points, so exactly the captures that matter were the
+        // ones going missing: navigation still advanced (`checked` lives in
+        // spec_area_state and is written unconditionally), but the point
+        // never reached the Captures sheet or the JSON report.
+        //
+        // Guarded on the load instead: when no area or no next point
+        // resolves, `tel` is still the empty placeholder, and writing that
+        // back would wipe the stage's accumulated record.
+        if tel_loaded {
+            state.telemetry.insert(area_id.clone(), tel);
+        }
+
+        // Make a capture durable the instant it happens. AppState::sync()
+        // runs at the *start* of the next location_update, so until one
+        // arrives the capture exists only in memory — and at an ASS one may
+        // never arrive, since watchPosition goes quiet the moment the rider
+        // stops at the finish. Being killed in that window rolls both the
+        // record the report is built from and the point's checked flag back
+        // one tick, while the collected buffer keeps its own copy (it is
+        // persisted on its own ack), which is exactly the shape of "collected
+        // saw the ASS, the report says it was never taken".
+        if capture {
+            if let Some(storage) = &state.storage {
+                storage.set("as_telemetry", json!(state.telemetry));
+                storage.set("race_state", json!(state.race));
+                storage.close_resource();
+            }
         }
         state.dashboard.widget_shown.arrow = is_open || in_visiable_zone;
         state.dashboard.arrow_color = arrow_color;
@@ -592,13 +786,31 @@ pub async fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position)
         state.race.spec_area_state.next_point = next_point_id;
         state.current.oncoming = oncoming;
 
+        // Queue the end-of-stage report here, in the same pass that captured
+        // the ASS point. It used to be the frontend's job, triggered off the
+        // `ass_captured` flag above — but that flag is a single-tick pulse
+        // read by a *separate* sync_data call, so an overlapping GPS tick
+        // could clear it before the frontend ever saw it. A missed pulse
+        // meant the report was never generated or queued at all, and then
+        // neither the retry timer nor the return of connectivity had
+        // anything to send. Queued here it exists regardless, and the
+        // frontend only has to upload it.
+        //
+        // Must come after the telemetry write-back above, or the report
+        // would be built without the ASS capture that triggered it.
+        if ass_captured {
+            if let Err(e) = build_and_queue_report(app, &mut state, "auto") {
+                println!("Auto report could not be built: {}", e);
+            }
+        }
+
         if capture {
-            match send_collected(app, state.collected.clone()) {
+            match send_collected(app, state.collected_batch()) {
                 Ok(_) => {
-                    println!("Collected data sent!!!");
+                    println!("Collected batch handed to the frontend");
                 }
                 Err(_) => {
-                    println!("Collected data sending faild!!!");
+                    println!("Collected batch could not be handed over");
                 }
             }
         }

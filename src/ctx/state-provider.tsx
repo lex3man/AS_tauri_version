@@ -1,4 +1,5 @@
-import { request_config, send_report, send_telemetry, send_collected } from "@/lib/api";
+import { request_config, send_report, send_telemetry } from "@/lib/api";
+import { uploadCollected, flushCollected, CollectedBatch } from "@/lib/collected";
 import { TypeOfRequest } from "@/types/request";
 import { RoadbookSlide, ImageData } from "@/types/roadbook";
 import { AppState, Coords, DashBoard, GPSData, TelemetryData } from "@/types/state";
@@ -563,19 +564,25 @@ export function StateProvider({
 
         reportData.device_id = device.uuid as string;
 
+        // The collected buffer rides along with every report, on all three
+        // paths a report can leave by. Not awaited, so the report isn't
+        // held back by the upload timeout.
+        void flushCollected();
+
         await send_report(reportData);
       } catch (e) {
         console.error("Failed to parse report event:", e);
       }
     });
 
+    // The prompt path: a captured point flushes the buffer right away. The
+    // timer in App.tsx covers everything else, including the long stretches
+    // between points and a stage that ended out of coverage.
     const unlistenCollected = listen<string>("send_collected", async (event) => {
       try {
-        const collectedData = parseEventPayload(event.payload);
-
-        await send_collected(collectedData);
+        await uploadCollected(parseEventPayload(event.payload) as CollectedBatch);
       } catch (e) {
-        console.error("Failed to parse report event:", e);
+        console.error("Failed to send collected telemetry:", e);
       }
     })
 

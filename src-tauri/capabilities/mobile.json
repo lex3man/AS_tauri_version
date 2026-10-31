@@ -22,7 +22,7 @@
     "gamepad:default",
     {
       "identifier": "http:default",
-      "allow": [{ "url": "https://map.rostexcabinet.ru" }],
+      "allow": [{ "url": "https://advsmart.net" }],
       "deny": []
     },
     {

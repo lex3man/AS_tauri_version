@@ -85,6 +85,8 @@ pub fn run() {
             ipc::report::get_report_sent_time,
             ipc::report::get_pending_report,
             ipc::report::mark_report_sent,
+            ipc::report::ack_collected,
+            ipc::report::get_pending_collected,
         ])
         .setup(|app| {
             app.manage(Mutex::new(AppState::default()));
@@ -139,6 +141,15 @@ pub fn run() {
             }
             if let Some(val) = store.get("as_last_report") {
                 state.last_report = val.as_str().unwrap_or_default().to_string();
+            }
+            // Telemetry that never reached the server. Restored as a pair:
+            // the base is what gives the restored records their sequence
+            // numbers again, so an ack can still name them.
+            if let Some(val) = store.get("as_collected") {
+                state.collected = serde_json::from_value::<Vec<String>>(val).unwrap_or_default();
+            }
+            if let Some(val) = store.get("as_collected_base") {
+                state.collected_base = val.as_u64().unwrap_or_default();
             }
             state.storage = Some(store);
             Ok(())
