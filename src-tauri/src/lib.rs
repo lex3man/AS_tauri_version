@@ -9,11 +9,13 @@ mod utils;
 use std::{collections::HashMap, sync::Mutex};
 
 use tauri::Manager;
+use tauri_plugin_device_info::DeviceInfoExt as _;
 use tauri_plugin_store::StoreExt as _;
 
 use crate::{
     config::Config,
     state::{dashboard::DashBoard, race_config::RaceState, telemetry::Telemetry, AppState},
+    utils::crypto,
 };
 
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
@@ -85,33 +87,82 @@ pub fn run() {
             ipc::report::get_report_sent_time,
             ipc::report::get_pending_report,
             ipc::report::mark_report_sent,
+            ipc::report::set_report_status,
             ipc::report::ack_collected,
             ipc::report::get_pending_collected,
         ])
         .setup(|app| {
             app.manage(Mutex::new(AppState::default()));
             let store = app.store("AS_storage.json")?;
+
+            // Derive the at-rest key before a single value is read. The salt
+            // is per-install and sits in the store in the clear — it is the
+            // device identifier, which is deliberately not written anywhere,
+            // that makes a copied file useless elsewhere.
+            //
+            // No device id means no vault, and every read and write below
+            // falls back to plaintext rather than refusing to run: a build
+            // on a platform the plugin does not answer for is still a
+            // working app, just an unencrypted one.
+            let salt = match store.get("as_vault_salt").and_then(|v| v.as_str().map(String::from)) {
+                Some(salt) => Some(salt),
+                None => {
+                    let fresh = crypto::new_salt();
+                    if let Some(salt) = &fresh {
+                        store.set("as_vault_salt", serde_json::json!(salt));
+                    }
+                    fresh
+                }
+            };
+            let device_id = app
+                .device_info()
+                .get_device_info()
+                .ok()
+                .and_then(|info| info.uuid);
+            if let (Some(device_id), Some(salt)) = (device_id, salt) {
+                if let Ok(salt) = base64::Engine::decode(
+                    &base64::engine::general_purpose::STANDARD,
+                    salt.as_bytes(),
+                ) {
+                    crypto::init(&device_id, &salt);
+                }
+            }
+
             let state = app.state::<Mutex<AppState>>();
             let mut state = state.lock().unwrap();
 
-            if let Some(val) = store.get("race_number") {
-                state.race_number = Some(val.as_str().unwrap().to_string());
+            // Every restore below is now tolerant of a value that will not
+            // parse. It has to be: a store carried to another device, or
+            // written by a build with a different secret, decrypts to
+            // nothing, and the old `.unwrap()` would have turned that into
+            // an abort on startup — the release profile has no unwinding —
+            // leaving an app that could not be opened at all. Dropping back
+            // to defaults is recoverable; a boot loop is not.
+            if let Some(val) = crypto::open(store.get("race_number")) {
+                state.race_number = val.as_str().map(|s| s.to_string());
             }
-            if let Some(val) = store.get("settings") {
-                state.settings = serde_json::from_value::<Config>(val).unwrap();
+            if let Some(cfg) = crypto::open(store.get("settings"))
+                .and_then(|val| serde_json::from_value::<Config>(val).ok())
+            {
+                state.settings = cfg;
             }
-            if let Some(val) = store.get("snapshot") {
-                state.snapshot = Some(val.as_str().unwrap().to_string());
+            if let Some(val) = crypto::open(store.get("snapshot")) {
+                state.snapshot = val.as_str().map(|s| s.to_string());
             }
-            if let Some(val) = store.get("race_state") {
-                state.race = serde_json::from_value::<RaceState>(val).unwrap();
+            if let Some(race) = crypto::open(store.get("race_state"))
+                .and_then(|val| serde_json::from_value::<RaceState>(val).ok())
+            {
+                state.race = race;
             }
-            if let Some(val) = store.get("as_dashboard") {
-                state.dashboard = serde_json::from_value::<DashBoard>(val).unwrap();
+            if let Some(dash) = crypto::open(store.get("as_dashboard"))
+                .and_then(|val| serde_json::from_value::<DashBoard>(val).ok())
+            {
+                state.dashboard = dash;
             }
-            if let Some(val) = store.get("as_telemetry") {
-                state.telemetry =
-                    serde_json::from_value::<HashMap<String, Telemetry>>(val).unwrap();
+            if let Some(tel) = crypto::open(store.get("as_telemetry"))
+                .and_then(|val| serde_json::from_value::<HashMap<String, Telemetry>>(val).ok())
+            {
+                state.telemetry = tel;
             }
             // .to_string() on a serde_json::Value re-serializes it as JSON
             // text (quotes and all) rather than giving back the raw string
@@ -121,34 +172,37 @@ pub fn run() {
             // GPS tick, each subsequent restart escaped the already-escaped
             // text again — compounding into a growing run of `\` and `"`
             // characters in CONFIG UPDATED.
-            if let Some(val) = store.get("as_config_updayed_time") {
+            if let Some(val) = crypto::open(store.get("as_config_updayed_time")) {
                 state.config_updated = val.as_str().unwrap_or_default().to_string();
             }
-            if let Some(val) = store.get("as_report_sent_auto_time") {
+            if let Some(val) = crypto::open(store.get("as_report_sent_auto_time")) {
                 state.report_sent_auto = val.as_str().unwrap_or_default().to_string();
             }
-            if let Some(val) = store.get("as_report_sent_manual_time") {
+            if let Some(val) = crypto::open(store.get("as_report_sent_manual_time")) {
                 state.report_sent_manual = val.as_str().unwrap_or_default().to_string();
             }
-            if let Some(val) = store.get("as_pending_report_path") {
+            if let Some(val) = crypto::open(store.get("as_pending_report_path")) {
                 state.pending_report_path = val.as_str().unwrap_or_default().to_string();
             }
-            if let Some(val) = store.get("as_pending_report_mode") {
+            if let Some(val) = crypto::open(store.get("as_pending_report_mode")) {
                 state.pending_report_mode = val.as_str().unwrap_or_default().to_string();
             }
-            if let Some(val) = store.get("as_pending_report_etape") {
+            if let Some(val) = crypto::open(store.get("as_pending_report_etape")) {
                 state.pending_report_etape = val.as_str().unwrap_or_default().to_string();
             }
-            if let Some(val) = store.get("as_last_report") {
+            if let Some(val) = crypto::open(store.get("as_last_report")) {
                 state.last_report = val.as_str().unwrap_or_default().to_string();
+            }
+            if let Some(val) = crypto::open(store.get("as_report_status")) {
+                state.report_error = val.as_str().unwrap_or_default().to_string();
             }
             // Telemetry that never reached the server. Restored as a pair:
             // the base is what gives the restored records their sequence
             // numbers again, so an ack can still name them.
-            if let Some(val) = store.get("as_collected") {
+            if let Some(val) = crypto::open(store.get("as_collected")) {
                 state.collected = serde_json::from_value::<Vec<String>>(val).unwrap_or_default();
             }
-            if let Some(val) = store.get("as_collected_base") {
+            if let Some(val) = crypto::open(store.get("as_collected_base")) {
                 state.collected_base = val.as_u64().unwrap_or_default();
             }
             state.storage = Some(store);

@@ -4,6 +4,7 @@ use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use tauri_plugin_android_fs::{AndroidFsExt, PrivateDir, Result};
 
 use crate::race::types::RBSlide;
+use crate::utils::crypto;
 
 const MANIFEST_FILE: &str = "manifest.json";
 
@@ -91,8 +92,11 @@ pub async fn download_images(
 
             let new_fingerprint = fingerprint(response.headers()).or_else(|| cached_fingerprint.clone());
             let saved = response.bytes().is_ok_and(|bytes| {
+                // Slides are cached encrypted. They are the roadbook — the
+                // one thing on the device that reads as the course itself,
+                // and the one thing a file manager could open directly.
                 std::fs::create_dir_all(file_path.parent().unwrap()).is_ok()
-                    && std::fs::write(&file_path, &bytes).is_ok()
+                    && std::fs::write(&file_path, crypto::seal_file(&bytes)).is_ok()
             });
             if saved {
                 (slide.url.clone(), new_fingerprint)

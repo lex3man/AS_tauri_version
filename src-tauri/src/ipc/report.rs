@@ -6,6 +6,7 @@ use rust_xlsxwriter::workbook::Workbook;
 use tauri::{AppHandle, Manager, State};
 
 use crate::{state::AppState, utils::send_data::{send_collected, send_report}};
+use crate::utils::crypto;
 
 #[tauri::command]
 pub async fn export_telemetry_report(
@@ -169,6 +170,7 @@ pub fn build_and_queue_report(
             state.pending_report_path = output_path.to_string_lossy().to_string();
             state.pending_report_mode = mode.to_string();
             state.pending_report_etape = state.race.active_code.clone();
+            state.report_error = String::new();
             generated = true;
         }
     }
@@ -182,28 +184,62 @@ pub fn build_and_queue_report(
     // further ticks, so a report queued here could otherwise sit unsaved
     // until the app is killed and then be gone.
     if let Some(storage) = &state.storage {
-        storage.set("as_pending_report_path", json!(state.pending_report_path));
-        storage.set("as_pending_report_mode", json!(state.pending_report_mode));
-        storage.set("as_pending_report_etape", json!(state.pending_report_etape));
+        storage.set("as_pending_report_path", crypto::seal(json!(state.pending_report_path)));
+        storage.set("as_pending_report_mode", crypto::seal(json!(state.pending_report_mode)));
+        storage.set("as_pending_report_etape", crypto::seal(json!(state.pending_report_etape)));
         storage.close_resource();
     }
     Ok(output_path.to_string_lossy().to_string())
 }
 
-/// The report file still awaiting delivery, as `{path, mode, etape}` — or
-/// `{}` when the queue is empty. Retried by the frontend on every poll.
+/// The report file still awaiting delivery, as
+/// `{path, mode, etape, exists, size}` — or just `{error}` when the queue is
+/// empty. Retried by the frontend on every poll, and read by the settings
+/// screen to show what the queue is actually holding.
+///
+/// `exists`/`size` come from the file itself: a queue entry pointing at a
+/// file that is not there separates "the workbook was never written" from
+/// "it was written and the upload is what fails", which from the outside
+/// look identical — both are simply a report that never arrives.
 #[tauri::command]
 pub fn get_pending_report(state: State<'_, Mutex<AppState>>) -> Result<String, String> {
     if let Ok(state) = state.lock() {
         if state.pending_report_path.is_empty() {
-            return Ok("{}".to_string());
+            return Ok(json!({ "status": state.report_error }).to_string());
         }
+        let meta = std::fs::metadata(&state.pending_report_path).ok();
         return Ok(json!({
             "path": state.pending_report_path,
             "mode": state.pending_report_mode,
             "etape": state.pending_report_etape,
+            "exists": meta.is_some(),
+            "size": meta.map(|m| m.len()).unwrap_or(0),
+            "status": state.report_error,
         })
         .to_string());
+    }
+    Err("Failed to get state".to_string())
+}
+
+/// Record what became of the last report attempt, so the settings screen can
+/// show it long after the toast is gone.
+///
+/// Written by the frontend because that is where the upload happens, and the
+/// one thing worth keeping is the server's own answer — the app has been
+/// treating a request the server took but did not file as a delivery, and
+/// nothing on the device said otherwise.
+#[tauri::command]
+pub fn set_report_status(
+    state: State<'_, Mutex<AppState>>,
+    status: &str,
+) -> Result<String, String> {
+    if let Ok(mut state) = state.lock() {
+        state.report_error = status.to_string();
+        if let Some(storage) = &state.storage {
+            storage.set("as_report_status", crypto::seal(json!(state.report_error)));
+            storage.close_resource();
+        }
+        return Ok("ok".to_string());
     }
     Err("Failed to get state".to_string())
 }
@@ -226,11 +262,11 @@ pub fn mark_report_sent(state: State<'_, Mutex<AppState>>) -> Result<String, Str
         // AppState::sync(): being killed in between would clear the queue
         // while losing the timestamp of a report that did get delivered.
         if let Some(storage) = &state.storage {
-            storage.set("as_report_sent_auto_time", json!(state.report_sent_auto));
-            storage.set("as_report_sent_manual_time", json!(state.report_sent_manual));
-            storage.set("as_pending_report_path", json!(""));
-            storage.set("as_pending_report_mode", json!(""));
-            storage.set("as_pending_report_etape", json!(""));
+            storage.set("as_report_sent_auto_time", crypto::seal(json!(state.report_sent_auto)));
+            storage.set("as_report_sent_manual_time", crypto::seal(json!(state.report_sent_manual)));
+            storage.set("as_pending_report_path", crypto::seal(json!("")));
+            storage.set("as_pending_report_mode", crypto::seal(json!("")));
+            storage.set("as_pending_report_etape", crypto::seal(json!("")));
             storage.close_resource();
         }
         return Ok(sent_at);
@@ -274,8 +310,8 @@ pub fn ack_collected(state: State<'_, Mutex<AppState>>, last_seq: u64) -> Result
             // device produces none) keeps a buffer on disk that the server
             // already has.
             if let Some(storage) = &state.storage {
-                storage.set("as_collected", json!(state.collected));
-                storage.set("as_collected_base", json!(state.collected_base));
+                storage.set("as_collected", crypto::seal(json!(state.collected)));
+                storage.set("as_collected_base", crypto::seal(json!(state.collected_base)));
                 storage.close_resource();
             }
         }

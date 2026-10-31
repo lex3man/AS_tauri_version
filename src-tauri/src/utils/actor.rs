@@ -16,6 +16,7 @@ use crate::{
         send_data::{send_collected, send_report, send_telemetry},
     },
 };
+use crate::utils::crypto;
 
 /// How far the rider must have run since capturing DSS before the stage's
 /// ASS point will accept a capture. On a circular stage start and finish sit
@@ -761,8 +762,8 @@ pub async fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position)
         // saw the ASS, the report says it was never taken".
         if capture {
             if let Some(storage) = &state.storage {
-                storage.set("as_telemetry", json!(state.telemetry));
-                storage.set("race_state", json!(state.race));
+                storage.set("as_telemetry", crypto::seal(json!(state.telemetry)));
+                storage.set("race_state", crypto::seal(json!(state.race)));
                 storage.close_resource();
             }
         }
@@ -801,6 +802,10 @@ pub async fn make_culc(app: &AppHandle, state: &Mutex<AppState>, pos: &Position)
         if ass_captured {
             if let Err(e) = build_and_queue_report(app, &mut state, "auto") {
                 println!("Auto report could not be built: {}", e);
+                // Keep it where a human can reach it. This is the one report
+                // nobody is watching being made, and a println on a phone is
+                // the same as saying nothing at all.
+                state.report_error = e;
             }
         }
 

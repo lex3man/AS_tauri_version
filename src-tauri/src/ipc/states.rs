@@ -7,12 +7,13 @@ use tauri::{AppHandle, State};
 use crate::{
     AppState, race::types::{CheckPoint, PointBuilder}, utils::{parser::FormatedData, rb_store::download_images}
 };
+use crate::utils::crypto;
 
 #[tauri::command]
 pub async fn snapshot(state: State<'_, Mutex<AppState>>, snapshot: &str) -> Result<(), ()> {
     if let Ok(mut s) = state.lock() {
         if let Some(storage) = &s.storage {
-            storage.set("snapshot", json!(snapshot));
+            storage.set("snapshot", crypto::seal(json!(snapshot)));
             storage.close_resource();
         }
         s.snapshot = Some(snapshot.to_string());
@@ -24,7 +25,7 @@ pub async fn snapshot(state: State<'_, Mutex<AppState>>, snapshot: &str) -> Resu
 pub fn get_snapshot(state: State<'_, Mutex<AppState>>) -> Result<String, ()> {
     if let Ok(state) = state.lock() {
         if let Some(storage) = &state.storage {
-            if let Some(value) = storage.get("snapshot") {
+            if let Some(value) = crypto::open(storage.get("snapshot")) {
                 storage.close_resource();
                 return Ok(value.to_string());
             };

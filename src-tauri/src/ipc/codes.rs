@@ -7,6 +7,7 @@ use crate::{
     state::{race_config::RaceState, AppState},
     utils::parser::{upload_config, FormatedData},
 };
+use crate::utils::crypto;
 
 /// Exposes the currently active day code so the frontend can restore its own
 /// `activeCode` state on app mount. `state.race.active_code` itself already
@@ -58,7 +59,7 @@ pub fn activate_code(state: State<'_, Mutex<AppState>>, code: &str) -> Result<St
                     // re-entry of an already-active, unchanged code.
                     let rebuilt = state.race.activate(code);
                     if let Some(storage) = &state.storage {
-                        storage.set("race_state", json!(state.race));
+                        storage.set("race_state", crypto::seal(json!(state.race)));
                         storage.close_resource();
                     }
                     if rebuilt {

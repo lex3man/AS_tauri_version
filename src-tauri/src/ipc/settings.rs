@@ -2,12 +2,13 @@ use crate::AppState;
 use serde_json::json;
 use std::{process, sync::Mutex};
 use tauri::State;
+use crate::utils::crypto;
 
 #[tauri::command]
 pub async fn get_settings(state: State<'_, Mutex<AppState>>) -> Result<String, ()> {
     if let Ok(state) = state.lock() {
         if let Some(storage) = &state.storage {
-            if let Some(value) = storage.get("settings") {
+            if let Some(value) = crypto::open(storage.get("settings")) {
                 storage.close_resource();
                 return Ok(value.to_string());
             };
@@ -22,7 +23,7 @@ pub async fn switch_background(state: State<'_, Mutex<AppState>>) -> Result<(), 
     if let Ok(mut s) = state.lock() {
         s.settings.background_switch();
         if let Some(storage) = &s.storage {
-            storage.set("settings", json!(s.settings));
+            storage.set("settings", crypto::seal(json!(s.settings)));
             storage.close_resource();
         }
     }
@@ -34,7 +35,7 @@ pub async fn switch_theme(state: State<'_, Mutex<AppState>>) -> Result<(), ()> {
     if let Ok(mut s) = state.lock() {
         let _ = s.settings.theme_switch();
         if let Some(storage) = &s.storage {
-            storage.set("settings", json!(s.settings));
+            storage.set("settings", crypto::seal(json!(s.settings)));
             storage.close_resource();
         }
     };
@@ -46,7 +47,7 @@ pub fn switch_jump_mode(state: State<'_, Mutex<AppState>>, status: &str) -> Resu
     if let Ok(mut s) = state.lock() {
         s.settings.jump_mode_switch(status);
         if let Some(storage) = &s.storage {
-            storage.set("settings", json!(s.settings));
+            storage.set("settings", crypto::seal(json!(s.settings)));
             storage.close_resource();
         }
     };
@@ -58,7 +59,7 @@ pub fn switch_keep_pointing_at_wpt(state: State<'_, Mutex<AppState>>, status: &s
     if let Ok(mut s) = state.lock() {
         s.settings.keep_pointing_at_wpt_switch(status);
         if let Some(storage) = &s.storage {
-            storage.set("settings", json!(s.settings));
+            storage.set("settings", crypto::seal(json!(s.settings)));
             storage.close_resource();
         }
     };
@@ -79,7 +80,7 @@ pub fn switch_oncoming_mode(state: State<'_, Mutex<AppState>>, status: &str) -> 
             _ => {}
         }
         if let Some(storage) = &s.storage {
-            storage.set("settings", json!(s.settings));
+            storage.set("settings", crypto::seal(json!(s.settings)));
             storage.close_resource();
         }
     };
@@ -100,7 +101,7 @@ pub fn switch_auto_move(state: State<'_, Mutex<AppState>>, status: &str) -> Resu
             _ => {}
         }
         if let Some(storage) = &s.storage {
-            storage.set("settings", json!(s.settings));
+            storage.set("settings", crypto::seal(json!(s.settings)));
             storage.close_resource();
         }
     };
@@ -112,7 +113,7 @@ pub fn switch_auto_move_after_dss(state: State<'_, Mutex<AppState>>, status: &st
     if let Ok(mut s) = state.lock() {
         s.settings.auto_move_after_dss_switch(status);
         if let Some(storage) = &s.storage {
-            storage.set("settings", json!(s.settings));
+            storage.set("settings", crypto::seal(json!(s.settings)));
             storage.close_resource();
         }
     };
@@ -132,7 +133,7 @@ pub fn set_dist_step(state: State<'_, Mutex<AppState>>, c: &str) -> Result<(), (
             _ => {}
         }
         if let Some(storage) = &state.storage {
-            storage.set("settings", json!(state.settings));
+            storage.set("settings", crypto::seal(json!(state.settings)));
             storage.close_resource();
         }
         return Ok(());
@@ -153,7 +154,7 @@ pub fn set_track_dist(state: State<'_, Mutex<AppState>>, c: &str) -> Result<(), 
             _ => {}
         }
         if let Some(storage) = &state.storage {
-            storage.set("settings", json!(state.settings));
+            storage.set("settings", crypto::seal(json!(state.settings)));
             storage.close_resource();
         }
         return Ok(());
@@ -166,7 +167,7 @@ pub fn increase_angle(state: State<'_, Mutex<AppState>>) -> Result<(), ()> {
     if let Ok(mut state) = state.lock() {
         state.settings.increase_oncoming_angle();
         if let Some(storage) = &state.storage {
-            storage.set("settings", json!(state.settings));
+            storage.set("settings", crypto::seal(json!(state.settings)));
             storage.close_resource();
         }
         return Ok(());
@@ -179,7 +180,7 @@ pub fn decrease_angle(state: State<'_, Mutex<AppState>>) -> Result<(), ()> {
     if let Ok(mut state) = state.lock() {
         state.settings.decrease_oncoming_angle();
         if let Some(storage) = &state.storage {
-            storage.set("settings", json!(state.settings));
+            storage.set("settings", crypto::seal(json!(state.settings)));
             storage.close_resource();
         }
         return Ok(());
@@ -192,7 +193,7 @@ pub fn increase_detection(state: State<'_, Mutex<AppState>>) -> Result<(), ()> {
     if let Ok(mut state) = state.lock() {
         state.settings.increase_oncoming_detection();
         if let Some(storage) = &state.storage {
-            storage.set("settings", json!(state.settings));
+            storage.set("settings", crypto::seal(json!(state.settings)));
             storage.close_resource();
         }
         return Ok(());
@@ -205,7 +206,7 @@ pub fn decrease_detection(state: State<'_, Mutex<AppState>>) -> Result<(), ()> {
     if let Ok(mut state) = state.lock() {
         state.settings.decrease_oncoming_detection();
         if let Some(storage) = &state.storage {
-            storage.set("settings", json!(state.settings));
+            storage.set("settings", crypto::seal(json!(state.settings)));
             storage.close_resource();
         }
         return Ok(());

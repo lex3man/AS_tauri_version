@@ -7,6 +7,7 @@ use crate::{
 use serde_json::json;
 use std::sync::Mutex;
 use tauri::{AppHandle, State};
+use crate::utils::crypto;
 
 #[tauri::command]
 pub async fn location_update(
@@ -20,11 +21,11 @@ pub async fn location_update(
         state.coords = Some(gps_data.coords.clone());
         state.gps_timestamp = gps_data.timestamp;
         if let Some(store) = &state.storage {
-            store.set("position", json!(gps_data.coords));
-            store.set("sa_state", json!(state.race.spec_area_state));
-            store.set("race_state", json!(state.race));
-            store.set("dashboard", json!(state.dashboard));
-            store.set("timestamp", gps_data.timestamp);
+            store.set("position", crypto::seal(json!(gps_data.coords)));
+            store.set("sa_state", crypto::seal(json!(state.race.spec_area_state)));
+            store.set("race_state", crypto::seal(json!(state.race)));
+            store.set("dashboard", crypto::seal(json!(state.dashboard)));
+            store.set("timestamp", crypto::seal(gps_data.timestamp));
         }
         state.sync();
     }
