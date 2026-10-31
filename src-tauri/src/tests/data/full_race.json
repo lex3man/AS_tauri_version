@@ -210,24 +210,78 @@
                 }
             ],
             "roadbook": [
-                "https://advsmart.net/upload/roadbooks/18/rb001.png",
-                "https://advsmart.net/upload/roadbooks/18/rb002.png",
-                "https://advsmart.net/upload/roadbooks/18/rb003.png",
-                "https://advsmart.net/upload/roadbooks/18/rb004.png",
-                "https://advsmart.net/upload/roadbooks/18/rb005.png",
-                "https://advsmart.net/upload/roadbooks/18/rb006.png",
-                "https://advsmart.net/upload/roadbooks/18/rb007.png",
-                "https://advsmart.net/upload/roadbooks/18/rb008.png",
-                "https://advsmart.net/upload/roadbooks/18/rb009.png",
-                "https://advsmart.net/upload/roadbooks/18/rb010.png",
-                "https://advsmart.net/upload/roadbooks/18/rb011.png",
-                "https://advsmart.net/upload/roadbooks/18/rb012.png",
-                "https://advsmart.net/upload/roadbooks/18/rb013.png",
-                "https://advsmart.net/upload/roadbooks/18/rb014.png",
-                "https://advsmart.net/upload/roadbooks/18/rb015.png",
-                "https://advsmart.net/upload/roadbooks/18/rb016.png",
-                "https://advsmart.net/upload/roadbooks/18/rb017.png",
-                "https://advsmart.net/upload/roadbooks/18/rb018.png"
+                {
+                    "odo": 0,
+                    "url": "https://advsmart.net/upload/roadbooks/18/rb001.png"
+                },
+                {
+                    "odo": 0,
+                    "url": "https://advsmart.net/upload/roadbooks/18/rb002.png"
+                },
+                {
+                    "odo": 1350,
+                    "url": "https://advsmart.net/upload/roadbooks/18/rb003.png"
+                },
+                {
+                    "odo": 2980,
+                    "url": "https://advsmart.net/upload/roadbooks/18/rb004.png"
+                },
+                {
+                    "odo": 4590,
+                    "url": "https://advsmart.net/upload/roadbooks/18/rb005.png"
+                },
+                {
+                    "odo": 5170,
+                    "url": "https://advsmart.net/upload/roadbooks/18/rb006.png"
+                },
+                {
+                    "odo": 5990,
+                    "url": "https://advsmart.net/upload/roadbooks/18/rb007.png"
+                },
+                {
+                    "odo": 6835,
+                    "url": "https://advsmart.net/upload/roadbooks/18/rb008.png"
+                },
+                {
+                    "odo": 7620,
+                    "url": "https://advsmart.net/upload/roadbooks/18/rb009.png"
+                },
+                {
+                    "odo": 8175,
+                    "url": "https://advsmart.net/upload/roadbooks/18/rb010.png"
+                },
+                {
+                    "odo": 8840,
+                    "url": "https://advsmart.net/upload/roadbooks/18/rb011.png"
+                },
+                {
+                    "odo": 9780,
+                    "url": "https://advsmart.net/upload/roadbooks/18/rb012.png"
+                },
+                {
+                    "odo": 10450,
+                    "url": "https://advsmart.net/upload/roadbooks/18/rb013.png"
+                },
+                {
+                    "odo": 11260,
+                    "url": "https://advsmart.net/upload/roadbooks/18/rb014.png"
+                },
+                {
+                    "odo": 12100,
+                    "url": "https://advsmart.net/upload/roadbooks/18/rb015.png"
+                },
+                {
+                    "odo": 12830,
+                    "url": "https://advsmart.net/upload/roadbooks/18/rb016.png"
+                },
+                {
+                    "odo": 13510,
+                    "url": "https://advsmart.net/upload/roadbooks/18/rb017.png"
+                },
+                {
+                    "odo": 14010,
+                    "url": "https://advsmart.net/upload/roadbooks/18/rb018.png"
+                }
             ]
         },
         "222222": {
@@ -440,24 +494,78 @@
                 }
             ],
             "roadbook": [
-                "https://advsmart.net/upload/roadbooks/19/rb002.png",
-                "https://advsmart.net/upload/roadbooks/19/rb003.png",
-                "https://advsmart.net/upload/roadbooks/19/rb001.png",
-                "https://advsmart.net/upload/roadbooks/19/rb005.png",
-                "https://advsmart.net/upload/roadbooks/19/rb006.png",
-                "https://advsmart.net/upload/roadbooks/19/rb004.png",
-                "https://advsmart.net/upload/roadbooks/19/rb007.png",
-                "https://advsmart.net/upload/roadbooks/19/rb008.png",
-                "https://advsmart.net/upload/roadbooks/19/rb009.png",
-                "https://advsmart.net/upload/roadbooks/19/rb010.png",
-                "https://advsmart.net/upload/roadbooks/19/rb011.png",
-                "https://advsmart.net/upload/roadbooks/19/rb012.png",
-                "https://advsmart.net/upload/roadbooks/19/rb013.png",
-                "https://advsmart.net/upload/roadbooks/19/rb014.png",
-                "https://advsmart.net/upload/roadbooks/19/rb015.png",
-                "https://advsmart.net/upload/roadbooks/19/rb016.png",
-                "https://advsmart.net/upload/roadbooks/19/rb017.png",
-                "https://advsmart.net/upload/roadbooks/19/rb018.png"
+                {
+                    "odo": 0,
+                    "url": "https://advsmart.net/upload/roadbooks/19/rb002.png"
+                },
+                {
+                    "odo": 0,
+                    "url": "https://advsmart.net/upload/roadbooks/19/rb003.png"
+                },
+                {
+                    "odo": 1350,
+                    "url": "https://advsmart.net/upload/roadbooks/19/rb001.png"
+                },
+                {
+                    "odo": 2980,
+                    "url": "https://advsmart.net/upload/roadbooks/19/rb005.png"
+                },
+                {
+                    "odo": 4590,
+                    "url": "https://advsmart.net/upload/roadbooks/19/rb006.png"
+                },
+                {
+                    "odo": 5170,
+                    "url": "https://advsmart.net/upload/roadbooks/19/rb004.png"
+                },
+                {
+                    "odo": 5990,
+                    "url": "https://advsmart.net/upload/roadbooks/19/rb007.png"
+                },
+                {
+                    "odo": 6835,
+                    "url": "https://advsmart.net/upload/roadbooks/19/rb008.png"
+                },
+                {
+                    "odo": 7620,
+                    "url": "https://advsmart.net/upload/roadbooks/19/rb009.png"
+                },
+                {
+                    "odo": 8175,
+                    "url": "https://advsmart.net/upload/roadbooks/19/rb010.png"
+                },
+                {
+                    "odo": 8840,
+                    "url": "https://advsmart.net/upload/roadbooks/19/rb011.png"
+                },
+                {
+                    "odo": 9780,
+                    "url": "https://advsmart.net/upload/roadbooks/19/rb012.png"
+                },
+                {
+                    "odo": 10450,
+                    "url": "https://advsmart.net/upload/roadbooks/19/rb013.png"
+                },
+                {
+                    "odo": 11260,
+                    "url": "https://advsmart.net/upload/roadbooks/19/rb014.png"
+                },
+                {
+                    "odo": 12100,
+                    "url": "https://advsmart.net/upload/roadbooks/19/rb015.png"
+                },
+                {
+                    "odo": 12830,
+                    "url": "https://advsmart.net/upload/roadbooks/19/rb016.png"
+                },
+                {
+                    "odo": 13510,
+                    "url": "https://advsmart.net/upload/roadbooks/19/rb017.png"
+                },
+                {
+                    "odo": 14010,
+                    "url": "https://advsmart.net/upload/roadbooks/19/rb018.png"
+                }
             ]
         }
     },

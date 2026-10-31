@@ -1,6 +1,6 @@
 [package]
 name = "adventuresmart"
-version = "1.0.5"
+version = "1.1.0"
 description = "Race navigation and tracking app for Android"
 authors = ["lex3man"]
 edition = "2021"
@@ -38,6 +38,11 @@ tauri-plugin-android-fs = "28.1.0"
 reqwest = { version = "0.10", default-features = false, features = ["json", "rustls-tls", "blocking"] }
 rayon = "1.11.0"
 base64 = "0.22"
+# At-rest encryption of the store and the cached roadbook slides.
+aes-gcm = "0.10"
+hkdf = "0.12"
+sha2 = "0.10"
+getrandom = "0.2"
 rust_xlsxwriter = { version = "0.94.0", features = ["chrono", "serde"] }
 chrono = { version = "0.4.44", features = ["serde"] }
 tauri-plugin-gamepad = "0.0.5"

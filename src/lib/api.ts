@@ -28,15 +28,24 @@ const SCHEME = "https";
 const accepted = async (
   resp: Response,
   what: string,
-): Promise<{ ok: boolean; reason: string }> => {
+): Promise<{ ok: boolean; reason: string; detail: string }> => {
   let text = "";
   try {
     text = await resp.text();
   } catch {
     // Body already consumed or unreadable — judge on the status alone.
     const ok = resp.status === 200;
-    return { ok, reason: ok ? "" : `HTTP ${resp.status}` };
+    return {
+      ok,
+      reason: ok ? "" : `HTTP ${resp.status}`,
+      detail: `HTTP ${resp.status} <unreadable body>`,
+    };
   }
+
+  // Kept whatever the verdict: an acceptance that the server then files
+  // somewhere the rider cannot see looks exactly like a success from here,
+  // and its answer is the only thing that tells them apart.
+  const detail = `HTTP ${resp.status} ${text.slice(0, 300)}`.trim();
 
   let payload: any = null;
   try {
@@ -51,14 +60,14 @@ const accepted = async (
       : "";
 
   if (resp.status === 200 && !serverError) {
-    return { ok: true, reason: "" };
+    return { ok: true, reason: "", detail };
   }
 
   const reason = serverError
     ? String(serverError)
     : `HTTP ${resp.status} ${text.slice(0, 200)}`.trim();
   console.error(`${what} rejected by the server: ${reason}`);
-  return { ok: false, reason };
+  return { ok: false, reason, detail };
 };
 
 export const server_init = async (raceNumber: string, password: string) => {
@@ -192,7 +201,7 @@ export const send_report = async (data: any) => {
 export const send_report_file = async (
   filePath: string,
   etape: string,
-): Promise<{ ok: boolean; reason: string }> => {
+): Promise<{ ok: boolean; reason: string; detail: string }> => {
   const url = `${SCHEME}://${HOST}/api/report/checkpoint-file`;
   const device = await getDeviceInfo();
   const device_id = `${device.uuid}`;
@@ -206,9 +215,14 @@ export const send_report_file = async (
     fileBytes = await readFile(filePath);
   } catch (e) {
     console.error("Report file is not readable:", e);
-    return { ok: false, reason: `Report file is not readable: ${e}` };
+    return {
+      ok: false,
+      reason: `Report file is not readable: ${e}`,
+      detail: `unreadable: ${e}`,
+    };
   }
 
+  const bytes = fileBytes.byteLength;
   const formData = new FormData();
   formData.append("file", new Blob([fileBytes], { type: "application/octet-stream" }), "report.xlsx");
   formData.append("device_id", device_id);
@@ -231,12 +245,15 @@ export const send_report_file = async (
       connectTimeout: 15000,
     });
 
-    return await accepted(resp, "Report file");
+    const verdict = await accepted(resp, "Report file");
+    // The size goes in too: a request the server happily accepts while the
+    // file part is empty is a case the answer alone would not reveal.
+    return { ...verdict, detail: `${bytes} B etape=${etape} ${verdict.detail}` };
   } catch (e) {
     console.error("Report file upload failed:", e);
     // No answer at all — the offline case. Left without a reason on
     // purpose: the callers treat that as "retry later, say nothing", and
     // a rider out of coverage does not need a toast every thirty seconds.
-    return { ok: false, reason: "" };
+    return { ok: false, reason: "", detail: `no answer: ${e}` };
   }
 }

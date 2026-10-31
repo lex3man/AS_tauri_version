@@ -15,6 +15,7 @@ use crate::{
     race::types::SpecAreaID,
     state::{dashboard::DashBoard, race_config::RaceState, telemetry::Telemetry},
 };
+use crate::utils::crypto;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Copy)]
 pub struct GPSData {
@@ -124,6 +125,15 @@ pub struct AppState {
     pub pending_report_path: String,
     pub pending_report_mode: String,
     pub pending_report_etape: String,
+    // What happened to the last report, in one line: the build failing, or
+    // the upload's outcome with the server's own answer in it. The report
+    // paths run with nobody looking at them, and their only way of saying
+    // anything used to be a `println!` nobody can read on a phone — so "no
+    // report on the server" could equally mean the workbook was never
+    // written, the file was never read, or the server took the request and
+    // filed it somewhere else. Persisted, because the rider usually looks
+    // well after the fact, and an app restart in between is normal.
+    pub report_error: String,
 }
 
 impl Default for AppState {
@@ -153,6 +163,7 @@ impl Default for AppState {
             pending_report_path: String::from(""),
             pending_report_mode: String::from(""),
             pending_report_etape: String::from(""),
+            report_error: String::from(""),
         }
     }
 }
@@ -160,23 +171,24 @@ impl Default for AppState {
 impl AppState {
     pub fn sync(&self) {
         if let Some(storage) = &self.storage {
-            storage.set("as_race_number", json!(self.race_number));
-            storage.set("as_settings", json!(self.settings));
-            storage.set("as_coords", json!(self.coords));
-            storage.set("as_snapshot", json!(self.snapshot));
-            storage.set("as_spec_area", json!(self.race.spec_area_state));
-            storage.set("as_race", json!(self.race));
-            storage.set("as_dashboard", json!(self.dashboard));
-            storage.set("as_telemetry", json!(self.telemetry));
-            storage.set("as_config_updayed_time", json!(self.config_updated));
-            storage.set("as_report_sent_auto_time", json!(self.report_sent_auto));
-            storage.set("as_report_sent_manual_time", json!(self.report_sent_manual));
-            storage.set("as_pending_report_path", json!(self.pending_report_path));
-            storage.set("as_pending_report_mode", json!(self.pending_report_mode));
-            storage.set("as_pending_report_etape", json!(self.pending_report_etape));
-            storage.set("as_last_report", json!(self.last_report));
-            storage.set("as_collected", json!(self.collected));
-            storage.set("as_collected_base", json!(self.collected_base));
+            storage.set("as_race_number", crypto::seal(json!(self.race_number)));
+            storage.set("as_settings", crypto::seal(json!(self.settings)));
+            storage.set("as_coords", crypto::seal(json!(self.coords)));
+            storage.set("as_snapshot", crypto::seal(json!(self.snapshot)));
+            storage.set("as_spec_area", crypto::seal(json!(self.race.spec_area_state)));
+            storage.set("as_race", crypto::seal(json!(self.race)));
+            storage.set("as_dashboard", crypto::seal(json!(self.dashboard)));
+            storage.set("as_telemetry", crypto::seal(json!(self.telemetry)));
+            storage.set("as_config_updayed_time", crypto::seal(json!(self.config_updated)));
+            storage.set("as_report_sent_auto_time", crypto::seal(json!(self.report_sent_auto)));
+            storage.set("as_report_sent_manual_time", crypto::seal(json!(self.report_sent_manual)));
+            storage.set("as_pending_report_path", crypto::seal(json!(self.pending_report_path)));
+            storage.set("as_pending_report_mode", crypto::seal(json!(self.pending_report_mode)));
+            storage.set("as_pending_report_etape", crypto::seal(json!(self.pending_report_etape)));
+            storage.set("as_last_report", crypto::seal(json!(self.last_report)));
+            storage.set("as_report_status", crypto::seal(json!(self.report_error)));
+            storage.set("as_collected", crypto::seal(json!(self.collected)));
+            storage.set("as_collected_base", crypto::seal(json!(self.collected_base)));
 
             storage.close_resource();
         }

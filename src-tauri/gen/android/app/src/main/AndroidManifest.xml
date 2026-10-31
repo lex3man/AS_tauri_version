@@ -13,7 +13,11 @@
     <!-- AndroidTV support -->
     <uses-feature android:name="android.software.leanback" android:required="false" />
 
+    <!-- The store and the slide cache are app-private, but a backup lifts
+         them off the device wholesale. Encryption already makes a copy
+         useless on another device; this keeps the copy from being made. -->
     <application
+        android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:theme="@style/Theme.adventuresmart"

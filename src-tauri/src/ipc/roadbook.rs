@@ -49,7 +49,12 @@ pub async fn get_roadbook_image<R: tauri::Runtime>(
         .map_err(|e| e.to_string())?;
     let file_path = cache_dir.join("roadbooks").join(subdir).join(name);
 
-    let bytes = std::fs::read(&file_path).map_err(|e| e.to_string())?;
+    let stored = std::fs::read(&file_path).map_err(|e| e.to_string())?;
+    // Slides written by an older build come back unchanged; one that will
+    // not decrypt belongs to another device, and saying so beats handing the
+    // webview ciphertext to render as an image.
+    let bytes = crate::utils::crypto::open_file(stored)
+        .ok_or_else(|| "Roadbook slide could not be decrypted".to_string())?;
     let base64_data = BASE64.encode(&bytes);
 
     let mime_type = match file_path.extension().and_then(|e| e.to_str()) {

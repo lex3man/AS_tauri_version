@@ -128,6 +128,12 @@ function App() {
       void flushCollected();
 
       const sent = await send_report_file(pending.path, pending.etape ?? "");
+      // Keep the outcome where it can be read later. The automatic report
+      // goes out with nobody watching, and a toast would be gone long
+      // before anyone thought to look.
+      void invoke("set_report_status", {
+        status: `auto ${new Date().toLocaleTimeString()} ${sent.detail}`,
+      });
       // Stays queued and is retried on a later tick. A reason means the
       // server answered and refused — that will not fix itself by waiting,
       // so it goes to the log where the next field report can find it,
