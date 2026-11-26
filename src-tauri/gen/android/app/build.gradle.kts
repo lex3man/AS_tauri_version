@@ -1,6 +1,4 @@
 import java.util.Properties
-import java.io.FileInputStream
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     id("com.android.application")
@@ -26,20 +24,6 @@ android {
         versionCode = tauriProperties.getProperty("tauri.android.versionCode", "1").toInt()
         versionName = tauriProperties.getProperty("tauri.android.versionName", "1.0")
     }
-    signingConfigs {
-        create("release") {
-            val keystorePropertiesFile = rootProject.file("keystore.properties")
-            val keystoreProperties = Properties()
-            if (keystorePropertiesFile.exists()) {
-                keystoreProperties.load(FileInputStream(keystorePropertiesFile))
-            }
-
-            keyAlias = keystoreProperties["keyAlias"] as String
-            keyPassword = keystoreProperties["password"] as String
-            storeFile = file(keystoreProperties["storeFile"] as String)
-            storePassword = keystoreProperties["password"] as String
-        }
-    }
     buildTypes {
         getByName("debug") {
             manifestPlaceholders["usesCleartextTraffic"] = "true"
@@ -53,30 +37,19 @@ android {
             }
         }
         getByName("release") {
-            optimization {
-               enable = true
-            }
+            isMinifyEnabled = true
             proguardFiles(
-                *fileTree(".") {
-                  include("**/*.pro")
-                  exclude("build/**")
-                }.files.toTypedArray()
+                *fileTree(".") { include("**/*.pro") }
+                    .plus(getDefaultProguardFile("proguard-android-optimize.txt"))
+                    .toList().toTypedArray()
             )
-            signingConfig = signingConfigs.getByName("release")
         }
     }
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+    kotlinOptions {
+        jvmTarget = "1.8"
     }
     buildFeatures {
         buildConfig = true
-    }
-}
-
-kotlin {
-    compilerOptions {
-        jvmTarget = JvmTarget.JVM_1_8
     }
 }
 
@@ -95,4 +68,4 @@ dependencies {
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.0")
 }
 
-apply(from = file("tauri.build.gradle.kts"))
+apply(from = "tauri.build.gradle.kts")

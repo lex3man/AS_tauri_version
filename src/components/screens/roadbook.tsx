@@ -213,14 +213,18 @@ const Roadbook = () => {
               {visiable && <div className={`flex my-auto justify-end text-l font-bold`}>CTW</div>}
             </div>
             <div className="flex flex-col justify-end h-[30%] p-2 border-b-2 border-l-2 border-foreground">
-              <div className={`flex my-auto justify-end text-l font-bold`}>DTW</div>
-              <div
-                className={`flex my-auto justify-end text-5xl font-extrabold leading-none`}
-              >
-                <div className="transform origin-right scale-x-60">
-                  {dtw.toFixed(2)}
-                </div>
-              </div>
+              {visiable && (
+                <>
+                  <div className={`flex my-auto justify-end text-l font-bold`}>DTW</div>
+                  <div
+                    className={`flex my-auto justify-end text-5xl font-extrabold leading-none`}
+                  >
+                    <div className="transform origin-right scale-x-60">
+                      {dtw.toFixed(2)}
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
             <div className="h-[40%] p-1">
               {/* The backend-driven sign: grey on the approach
