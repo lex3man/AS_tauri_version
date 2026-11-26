@@ -322,18 +322,22 @@ const Ride = () => {
             )}
           </div>
           <div className="flex flex-col justify-end h-[30%] px-3">
-            <div
-              className={`flex justify-end ${mobileView ? "text-xl" : "text-2xl"} font-bold`}
-            >
-              DTW
-            </div>
-            <div
-              className={`flex justify-end ${mobileView ? "text-6xl" : "text-[clamp(4rem,10vw,8rem)]"} font-extrabold leading-none`}
-            >
-              <div className="transform origin-right scale-x-60">
-                {dtw.toFixed(2)}
-              </div>
-            </div>
+            {visiable && (
+              <>
+                <div
+                  className={`flex justify-end ${mobileView ? "text-xl" : "text-2xl"} font-bold`}
+                >
+                  DTW
+                </div>
+                <div
+                  className={`flex justify-end ${mobileView ? "text-6xl" : "text-[clamp(4rem,10vw,8rem)]"} font-extrabold leading-none`}
+                >
+                  <div className="transform origin-right scale-x-60">
+                    {dtw.toFixed(2)}
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>

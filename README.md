@@ -34,20 +34,26 @@ export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
 Зависимости фронтенда ставятся один раз:
 
 ```bash
-npm install
+bun install
 ```
+
+Именно bun: в репозитории лежит `bun.lock`, и Tauri вызывает `bun run build`. `npm install` тоже соберёт рабочий `node_modules`, но версии разъедутся с локом.
 
 ## Подпись релиза
 
-Релизная сборка подписывается всегда, параметры подписи читаются из `src-tauri/gen/android/keystore.properties`. Файл в `.gitignore` и в репозиторий не попадает — на новой машине его нужно создать рядом с `gradlew`:
+Релизная сборка подписывается всегда, параметры подписи читаются из `src-tauri/gen/android/keystore.properties`:
 
 ```
-storeFile=/абсолютный/путь/к/adventuresmart.jks
+storeFile=/абсолютный/путь/к/upload-keystore.jks
 keyAlias=<алиас ключа>
 password=<пароль; используется и для хранилища, и для ключа>
 ```
 
-Без этого файла Gradle падает ещё на конфигурации: `null cannot be cast to non-null type kotlin.String`.
+Этот файл лежит в репозитории — он попал туда раньше, чем появилось правило в `.gitignore`, и правило на уже отслеживаемый файл не действует. **Пароль от хранилища ключей, таким образом, есть в истории git.** Если репозиторий станет доступен шире, чем сейчас, пароль надо менять вместе с ключом, а файл убирать из индекса (`git rm --cached`).
+
+Сам `.jks` в репозиторий не входит и лежит по абсолютному пути из `storeFile`, вне проекта. На новой машине его нужно положить туда же или поправить путь.
+
+Без `keystore.properties` Gradle падает ещё на конфигурации: `null cannot be cast to non-null type kotlin.String`.
 
 **Ключ подписи менять нельзя** без понимания последствий:
 
@@ -57,23 +63,31 @@ password=<пароль; используется и для хранилища, �
 ## Сборка APK
 
 ```bash
-npm run tauri android build -- --apk
+bun run tauri android build --apk
 ```
 
-Готовый файл:
+Готовый файл — около 56 МБ:
 
 ```
 src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release.apk
 ```
 
-`universal` — все четыре ABI в одном файле, это то, что раздаётся участникам.
+`universal` — все четыре ABI в одном файле, это то, что раздаётся участникам. Сборка с нуля занимает минут десять: Rust компилируется отдельно под каждую ABI.
 
 | Команда | Что делает |
 | --- | --- |
-| `npm run tauri android build` | APK и AAB сразу |
-| `npm run tauri android build -- --apk --split-per-abi` | отдельный APK на каждую ABI |
-| `npm run tauri android build -- --apk --target aarch64` | только arm64, заметно быстрее |
-| `npm run tauri android build -- --apk --debug` | отладочная сборка (разрешён cleartext-трафик, не минифицируется) |
+| `bun run tauri android build` | APK и AAB сразу |
+| `bun run tauri android build --apk --split-per-abi` | отдельный APK на каждую ABI |
+| `bun run tauri android build --apk --target aarch64` | только arm64, заметно быстрее |
+| `bun run tauri android build --apk --debug` | отладочная сборка (разрешён cleartext-трафик, не минифицируется) |
+
+Через npm то же самое, но флаги нужно отделить: `npm run tauri android build -- --apk`.
+
+Проверить, что APK подписан нужным ключом:
+
+```bash
+$ANDROID_HOME/build-tools/35.0.0/apksigner verify --print-certs src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release.apk
+```
 
 `versionName` и `versionCode` считаются из `version` в `tauri.conf.json` — CLI записывает их в `app/tauri.properties`, этот файл руками не правят. При выпуске версию поднимают в трёх местах: `package.json`, `src-tauri/tauri.conf.json`, `src-tauri/Cargo.toml`.
 
@@ -88,7 +102,7 @@ adb install -r src-tauri/gen/android/app/build/outputs/apk/universal/release/app
 Конфиг гонки с координатами точек, состояние приложения и слайды роадбука лежат на устройстве зашифрованными (AES-256-GCM). Ключ выводится на устройстве из идентификатора устройства и секрета, зашитого при компиляции. По умолчанию берётся запасное значение из кода; для боевой сборки секрет задаётся переменной окружения:
 
 ```bash
-AS_STORAGE_SECRET='строка-секрета' npm run tauri android build -- --apk
+AS_STORAGE_SECRET='строка-секрета' bun run tauri android build --apk
 ```
 
 Смена секрета делает нечитаемыми данные, сохранённые прежними сборками. Приложение не упадёт — оно стартует с настройками по умолчанию, но код этапа придётся активировать заново. Поэтому секрет меняют между соревнованиями, а не в середине.
@@ -102,7 +116,7 @@ cargo clean -p adventuresmart --manifest-path src-tauri/Cargo.toml
 ## Разработка
 
 ```bash
-npm run tauri android dev
+bun run tauri android dev
 ```
 
 Собирает отладочную версию, ставит её на подключённое по USB устройство (нужна включённая отладка по USB) и держит hot-reload интерфейса.
@@ -134,3 +148,4 @@ npx tsc --noEmit
 - **NDK не найден** — не задан `NDK_HOME`, либо версия в SDK отличается от указанной в переменной.
 - **`error: linker ... not found` или таргет не собирается** — проверьте, что `cargo` берётся из rustup, а не из Homebrew: `which -a cargo` должен первым показать `~/.cargo/bin/cargo`. Homebrew-овский Rust не умеет android-таргеты.
 - **Gradle подобрал мусор из прошлой сборки** — `cd src-tauri/gen/android && ./gradlew clean`, затем собрать заново.
+- **`could not write output to .../target/... No such file or directory`** — каталог `src-tauri/target` исчез прямо во время сборки. Так ведут себя «чистильщики диска» вроде CleanMyMac: `node_modules`, `target` и каталог с именем `gen` они считают мусором разработчика и сносят по расписанию, вместе с исходниками Android-проекта. Проект нужно внести в исключения чистильщика; восстановить отслеживаемые файлы после такого можно через `git checkout -- src-tauri/gen/android`, а зависимости — через `bun install`.
