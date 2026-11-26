@@ -2,24 +2,45 @@ import { useAppState } from "@/ctx/state-provider";
 import clsx from "clsx";
 import { RoadbookSlide, ImageData } from "@/types/roadbook";
 import { useGamepads } from "react-gamepads";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import { useSettings } from "@/ctx/settings-provider";
+import { useLongPressFor } from "@/lib/use-long-press";
 
 export const RoadbookSlides = () => {
   const {
     mobileView,
     rbSlides,
     rbImages,
+    total,
+    setTotal,
     setRBSlides,
     currentRBIndex,
+    setCurrentRBIndex,
+    rbSlidesUnlocked,
+    dssTaken,
     goNext,
     goPrev,
     setNextPointNumber,
     setNextPointName,
     setPartial,
   } = useAppState();
+  const { autoMove, autoMoveAfterDss } = useSettings();
   const [gamepads, setGamepads] = useState({});
   useGamepads((gamepads) => setGamepads(gamepads));
+
+  const AUTO_MOVE_DEBOUNCE_MS = 5000;
+  const suppressAutoMoveUntilRef = useRef(0);
+
+  const manualGoNext = () => {
+    suppressAutoMoveUntilRef.current = Date.now() + AUTO_MOVE_DEBOUNCE_MS;
+    goNext();
+  };
+
+  const manualGoPrev = () => {
+    suppressAutoMoveUntilRef.current = Date.now() + AUTO_MOVE_DEBOUNCE_MS;
+    goPrev();
+  };
 
   const handleMark = () => {
     if (rbSlides[currentRBIndex]) {
@@ -27,11 +48,59 @@ export const RoadbookSlides = () => {
         rbSlides[currentRBIndex].marked = false;
       } else {
         rbSlides[currentRBIndex].marked = true;
-        goNext();
+        manualGoNext();
       }
       setRBSlides([...rbSlides]);
     }
   };
+
+  useEffect(() => {
+    if (!autoMove) return;
+    // Roadbook slide odo values are relative to the DSS (special stage
+    // start) — before DSS is taken, `total` doesn't correspond to them at
+    // all (e.g. still on the liaison road to the stage). The "After DSS"
+    // setting (default) keeps auto-scroll off until then even if RBP
+    // already made the roadbook visible; "Always" skips this wait.
+    if (autoMoveAfterDss && !dssTaken) return;
+    if (rbSlides.length === 0) return;
+    if (Date.now() < suppressAutoMoveUntilRef.current) return;
+
+    let idx = currentRBIndex;
+    let changed = false;
+    while (
+      idx < rbSlides.length - 1 &&
+      rbSlides[idx] &&
+      total * 1000 > rbSlides[idx].odo
+    ) {
+      rbSlides[idx].marked = true;
+      idx++;
+      changed = true;
+    }
+
+    // Backward: mirror of the forward loop above, using each slide's own
+    // odo threshold — not a nearest-of-all-slides search. A nearest-match
+    // search creates a switching boundary at the MIDPOINT between two
+    // slides' odo values, which made the previous slide "win" for the
+    // entire first half of the gap to the next one every tick until total
+    // passed that midpoint. Retreating while total has dropped back below
+    // the previous slide's own threshold keeps the same boundary the
+    // forward loop used to get here, so there's no dead zone either way.
+    // `marked` is intentionally left untouched on retreat — once a slide is
+    // marked passed, it stays marked; only the current index moves back.
+    while (
+      idx > 0 &&
+      rbSlides[idx - 1] &&
+      total * 1000 <= rbSlides[idx - 1].odo
+    ) {
+      idx--;
+      changed = true;
+    }
+
+    if (changed) {
+      setRBSlides([...rbSlides]);
+      setCurrentRBIndex(idx);
+    }
+  }, [total]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -40,17 +109,17 @@ export const RoadbookSlides = () => {
       switch (e.key) {
         case "ArrowUp":
           e.preventDefault();
-          goPrev();
+          manualGoPrev();
           break;
 
         case "":
           e.preventDefault();
-          goPrev();
+          manualGoPrev();
           break;
 
         case "ArrowDown":
           e.preventDefault();
-          goNext();
+          manualGoNext();
           break;
 
         case "ArrowRight":
@@ -101,7 +170,7 @@ export const RoadbookSlides = () => {
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [rbSlides, currentRBIndex, goPrev, goNext, handleMark]);
+  }, [rbSlides, currentRBIndex, manualGoPrev, manualGoNext, handleMark]);
 
   useEffect(() => {
     const deadzone = 0.5;
@@ -113,12 +182,19 @@ export const RoadbookSlides = () => {
     const a = pad.buttons[0]?.pressed;
     const x = pad.buttons[2]?.pressed;
 
-    if (up) goPrev();
-    if (down) goNext();
+    if (up) manualGoPrev();
+    if (down) manualGoNext();
     if ((a || x) && rbSlides[currentRBIndex]) {
       handleMark();
     }
-  }, [gamepads, rbSlides, currentRBIndex, goPrev, goNext, handleMark]);
+  }, [gamepads, rbSlides, currentRBIndex, manualGoPrev, manualGoNext, handleMark]);
+
+  const applyOdoToTotal = async (slide: RoadbookSlide) => {
+    const newTotal = slide.odo / 1000;
+    await invoke("update_total", { total: newTotal });
+    setTotal(newTotal);
+  };
+  const bindTotalZone = useLongPressFor(applyOdoToTotal);
 
   const renderSlideImage = (
     img: ImageData,
@@ -142,10 +218,22 @@ export const RoadbookSlides = () => {
           />
         </div>
       )}
+      <div
+        {...bindTotalZone(slide)}
+        className="absolute left-0 top-0 h-full w-1/4 select-none"
+      />
     </div>
   );
 
   const predictedSlides = mobileView ? [1, 2, 3] : [1, 2];
+
+  if (!rbSlidesUnlocked) {
+    return (
+      <div className="relative flex flex-col w-full h-full text-center items-center justify-center text-gray-400 text-xl">
+        Road Book temporarily locked. Please, keep moving to DSS point to unlock it. <br />
+      </div>
+    );
+  }
 
   return (
     <div className="relative flex flex-col w-full h-full">
@@ -167,12 +255,12 @@ export const RoadbookSlides = () => {
       </div>
 
       <div
-        className="flex-1 flex items-center justify-center w-full overflow-hidden border-10 border-red-700 rounded-2xl z-50"
+        className="relative flex-1 flex items-center justify-center w-full overflow-hidden border-10 border-red-700 rounded-2xl z-50"
         onDoubleClick={handleMark}
       >
         {rbSlides.length > 0 &&
-        currentRBIndex >= 0 &&
-        currentRBIndex < rbSlides.length ? (
+          currentRBIndex >= 0 &&
+          currentRBIndex < rbSlides.length ? (
           (() => {
             const slide = rbSlides[currentRBIndex];
             const key = `${slide.subdir}/${slide.name}`;
@@ -218,7 +306,7 @@ export const RoadbookSlides = () => {
       {rbSlides.length > 1 && (
         <>
           <button
-            onClick={goPrev}
+            onClick={manualGoPrev}
             disabled={currentRBIndex === 0}
             className="absolute bottom-2 left-4 w-20 h-20 bg-black/30 hover:bg-black/50 disabled:bg-black/10 disabled:cursor-not-allowed backdrop-blur-sm rounded-lg flex items-center justify-center transition-all duration-200 active:scale-95 z-50"
           >
@@ -237,7 +325,7 @@ export const RoadbookSlides = () => {
             </svg>
           </button>
           <button
-            onClick={goNext}
+            onClick={manualGoNext}
             disabled={currentRBIndex === rbSlides.length - 1}
             className="absolute bottom-2 right-4 w-20 h-20 bg-black/30 hover:bg-black/50 disabled:bg-black/10 disabled:cursor-not-allowed backdrop-blur-sm rounded-lg flex items-center justify-center transition-all duration-200 active:scale-95 z-50"
           >

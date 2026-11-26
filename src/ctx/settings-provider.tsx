@@ -4,6 +4,8 @@ import { useTheme } from "./theme-provider";
 import { Kilometers, Meters } from "@/types/messure-units";
 import { Settings } from "@/types/settings";
 
+const TRACK_DIST_STEP_KM = 0.5;
+
 type SettingsProviderProps = {
   children: React.ReactNode;
   storageKey?: string;
@@ -21,6 +23,10 @@ function parseSettings(json: string): Settings {
     track_distance: number;
     oncoming_angle: number;
     oncoming_detection: number;
+    oncoming_detection_enabled: boolean;
+    auto_move: boolean;
+    keep_pointing_at_wpt: boolean;
+    auto_move_after_dss: boolean;
   };
 
   return {
@@ -34,6 +40,10 @@ function parseSettings(json: string): Settings {
     roadbookMode: parsed.road_book,
     oncomingAngle: parsed.oncoming_angle,
     oncomingDetection: parsed.oncoming_detection,
+    oncomingDetectionEnabled: parsed.oncoming_detection_enabled,
+    autoMove: parsed.auto_move,
+    keepPointingAtWpt: parsed.keep_pointing_at_wpt,
+    autoMoveAfterDss: parsed.auto_move_after_dss,
   };
 }
 
@@ -48,12 +58,19 @@ type SettingsProviderState = {
   roadbookMode: boolean;
   oncomingAngle: number;
   oncomingDetection: number;
+  oncomingDetectionEnabled: boolean;
+  autoMove: boolean;
+  keepPointingAtWpt: boolean;
+  autoMoveAfterDss: boolean;
   setShowBackground: (status: boolean) => void;
   setDtwEnable: (status: boolean) => void;
   setDarkMode: (status: boolean) => void;
   setDemoMode: (status: boolean) => void;
   setJumpMode: (status: boolean) => void;
   setRoadbookMode: (status: boolean) => void;
+  setAutoMove: (status: boolean) => void;
+  setKeepPointingAtWpt: (status: boolean) => void;
+  setAutoMoveAfterDss: (status: boolean) => void;
   increaseDistStep: () => void;
   decreaseDistStep: () => void;
   increaseTrackDist: () => void;
@@ -62,6 +79,7 @@ type SettingsProviderState = {
   decreaseOncomingAngle: () => void;
   increaseOncomingDetection: () => void;
   decreaseOncomingDetection: () => void;
+  setOncomingDetectionEnabled: (status: boolean) => void;
   getSettings: () => void;
 };
 
@@ -76,6 +94,10 @@ const initialState: SettingsProviderState = {
   roadbookMode: false,
   oncomingAngle: 60,
   oncomingDetection: 300,
+  oncomingDetectionEnabled: false,
+  autoMove: false,
+  keepPointingAtWpt: false,
+  autoMoveAfterDss: false,
 
   setShowBackground: () => null,
   setDtwEnable: () => null,
@@ -83,6 +105,9 @@ const initialState: SettingsProviderState = {
   setDemoMode: () => null,
   setJumpMode: () => null,
   setRoadbookMode: () => null,
+  setAutoMove: () => null,
+  setKeepPointingAtWpt: () => null,
+  setAutoMoveAfterDss: () => null,
   increaseDistStep: () => null,
   decreaseDistStep: () => null,
   increaseTrackDist: () => null,
@@ -91,6 +116,7 @@ const initialState: SettingsProviderState = {
   decreaseOncomingAngle: () => null,
   increaseOncomingDetection: () => null,
   decreaseOncomingDetection: () => null,
+  setOncomingDetectionEnabled: () => null,
   getSettings: () => null,
 };
 
@@ -110,8 +136,12 @@ export function SettingsProvider({
   const [demoMode, setDemoMode] = useState(false);
   const [jumpMode, setJumpMode] = useState(false);
   const [roadbookMode, setRoadbookMode] = useState(false);
+  const [autoMove, setRBAutoMove] = useState(false);
+  const [keepPointingAtWpt, setKPAWpt] = useState(false);
+  const [autoMoveAfterDss, setAMAfterDss] = useState(false);
   const [oncomingAngle, setOncomingAngle] = useState(60);
   const [oncomingDetection, setOncomingDetection] = useState(300);
+  const [oncomingDetectionEnabled, setOncomingDE] = useState(false);
   const { setTheme } = useTheme();
 
   const getSettings = () => {
@@ -128,9 +158,15 @@ export function SettingsProvider({
       setDemoMode(settings.demoMode);
       setJumpMode(settings.jumpMode);
       setRoadbookMode(settings.roadbookMode);
-    }
+      setOncomingDE(settings.oncomingDetectionEnabled);
+      setOncomingAngle(settings.oncomingAngle);
+      setOncomingDetection(settings.oncomingDetection);
+      setRBAutoMove(settings.autoMove);
+      setKPAWpt(settings.keepPointingAtWpt);
+      setAMAfterDss(settings.autoMoveAfterDss);
+    };
     update();
-  }
+  };
 
   useEffect(() => {
     getSettings();
@@ -167,17 +203,18 @@ export function SettingsProvider({
     });
   };
 
+  // TRACK DIST moves in 500 m steps; the backend clamps at 0 the same way.
   const increaseTrackDist = async () => {
     invoke("set_track_dist", { c: "up" }).then(() => {
-      setTrackDistance(new Kilometers(trackDistance.value + 5));
+      setTrackDistance(new Kilometers(trackDistance.value + TRACK_DIST_STEP_KM));
     });
   };
 
   const decreaseTrackDist = async () => {
     invoke("set_track_dist", { c: "down" }).then(() => {
-      if (trackDistance.value > 0) {
-        setTrackDistance(new Kilometers(trackDistance.value - 5));
-      }
+      setTrackDistance(
+        new Kilometers(Math.max(trackDistance.value - TRACK_DIST_STEP_KM, 0)),
+      );
     });
   };
 
@@ -224,12 +261,49 @@ export function SettingsProvider({
     roadbookMode,
     oncomingAngle,
     oncomingDetection,
+    oncomingDetectionEnabled,
+    autoMove,
+    keepPointingAtWpt,
+    autoMoveAfterDss,
     setDarkMode,
     setShowBackground,
     setDtwEnable,
     setDemoMode,
-    setJumpMode,
+    setJumpMode: (status: boolean) => {
+      const save = async () => await invoke("switch_jump_mode", { status });
+      if (jumpMode != status) {
+        save();
+      }
+      setJumpMode(status);
+    },
     setRoadbookMode,
+    setAutoMove: (status: boolean) => {
+      const save = async () => await invoke("switch_auto_move", { status });
+      if (autoMove != status) {
+        save();
+      }
+      setRBAutoMove(status);
+    },
+    setKeepPointingAtWpt: (status: boolean) => {
+      const save = async () =>
+        await invoke("switch_keep_pointing_at_wpt", {
+          status: status ? "on" : "off",
+        });
+      if (keepPointingAtWpt != status) {
+        save();
+      }
+      setKPAWpt(status);
+    },
+    setAutoMoveAfterDss: (status: boolean) => {
+      const save = async () =>
+        await invoke("switch_auto_move_after_dss", {
+          status: status ? "on" : "off",
+        });
+      if (autoMoveAfterDss != status) {
+        save();
+      }
+      setAMAfterDss(status);
+    },
     increaseDistStep,
     decreaseDistStep,
     increaseTrackDist,
@@ -238,6 +312,13 @@ export function SettingsProvider({
     decreaseOncomingAngle,
     increaseOncomingDetection,
     decreaseOncomingDetection,
+    setOncomingDetectionEnabled: (status: boolean) => {
+      const save = async () => await invoke("switch_oncoming_mode", { status });
+      if (oncomingDetectionEnabled != status) {
+        save();
+      }
+      setOncomingDE(status);
+    },
     getSettings,
   };
 

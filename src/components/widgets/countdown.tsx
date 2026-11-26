@@ -31,7 +31,7 @@ const CountdownWidget = () => {
   }, [time]);
 
   return (
-    <div className="flex flex-col gap-2 border-4 border-primary h-full bg-primary-foreground p-2">
+    <div className="flex flex-col gap-2 border-4 border-primary h-full bg-primary-foreground p-3">
       <div
         className={`font-extrabold text-center ${mobileView ? "text-xs" : "text-xl"} leading-none`}
       >

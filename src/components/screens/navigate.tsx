@@ -14,9 +14,9 @@ const Ride = () => {
     dtw,
     speed,
     maxSpeed,
+    signLimit,
+    signState,
     cpCounter,
-    totalWidgetShown,
-    partialWidgetShown,
     countdownWidgetShown,
     mobileView,
     roadbookMode,
@@ -106,6 +106,14 @@ const Ride = () => {
     setExceeding(speed > maxSpeed && maxSpeed > 0);
     setPreExceeding(speed > maxSpeed - 2 && maxSpeed > 0);
   }, [speed, maxSpeed]);
+
+  const backendSign = signLimit > 0;
+  const signValue = backendSign ? signLimit : maxSpeed;
+  const signVisible = backendSign
+    ? signState !== "none"
+    : exceeding || preExceeding;
+  const signBlinking = backendSign ? signState === "blink" : exceeding;
+  const signRed = backendSign ? signState !== "grey" : exceeding;
 
   useEffect(() => {
     if (exceeding) {
@@ -233,17 +241,14 @@ const Ride = () => {
             </div>
           )}
           <div className="h-[30%]">
-            {((preExceeding || nextPointType === "FZ") && !exceeding) && (
-              <div className={`flex items-center justify-center ${!mobileView && "m-auto"} h-full ${mobileView ? "border-15" : "border-25"} border-zinc-600 rounded-full aspect-square`}>
+            {/* The backend-driven sign: grey on the approach
+                inside DZ's radius, red once the penalised stretch starts, blinking
+                while over the limit in force. Outside a zone the sign falls back to
+                its plain max_speed behaviour. */}
+            {signVisible && (
+              <div className={`flex items-center justify-center ${!mobileView && "m-auto"} h-full ${mobileView ? "border-15" : "border-25"} ${signRed ? "border-red-500" : "border-zinc-600"} rounded-full aspect-square ${signBlinking ? "animate-caret-blink" : ""}`}>
                 <div className="text-[clamp(1rem,5vw,3.5rem)] font-extrabold">
-                  {maxSpeed}
-                </div>
-              </div>
-            )}
-            {exceeding && (
-              <div className={`flex items-center justify-center ${!mobileView && "m-auto"} h-full ${mobileView ? "border-15" : "border-25"} border-red-500 rounded-full animate-caret-blink aspect-square`}>
-                <div className="text-[clamp(1rem,5vw,3.5rem)] font-extrabold">
-                  {maxSpeed}
+                  {signValue}
                 </div>
               </div>
             )}
@@ -308,27 +313,31 @@ const Ride = () => {
             ) : (
               <div className="h-full">
                 <div className="h-1/2">
-                  {totalWidgetShown && <TotalWidget />}
+                  <TotalWidget />
                 </div>
                 <div className="h-1/2">
-                  {partialWidgetShown && <PartialWidget />}
+                  <PartialWidget />
                 </div>
               </div>
             )}
           </div>
           <div className="flex flex-col justify-end h-[30%] px-3">
-            <div
-              className={`flex justify-end ${mobileView ? "text-xl" : "text-2xl"} font-bold`}
-            >
-              DTW
-            </div>
-            <div
-              className={`flex justify-end ${mobileView ? "text-6xl" : "text-[clamp(4rem,10vw,8rem)]"} font-extrabold leading-none`}
-            >
-              <div className="transform origin-right scale-x-60">
-                {dtw.toFixed(2)}
-              </div>
-            </div>
+            {visiable && (
+              <>
+                <div
+                  className={`flex justify-end ${mobileView ? "text-xl" : "text-2xl"} font-bold`}
+                >
+                  DTW
+                </div>
+                <div
+                  className={`flex justify-end ${mobileView ? "text-6xl" : "text-[clamp(4rem,10vw,8rem)]"} font-extrabold leading-none`}
+                >
+                  <div className="transform origin-right scale-x-60">
+                    {dtw.toFixed(2)}
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>

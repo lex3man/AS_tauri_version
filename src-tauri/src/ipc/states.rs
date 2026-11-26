@@ -5,14 +5,15 @@ use serde_json::json;
 use tauri::{AppHandle, State};
 
 use crate::{
-    AppState, race::types::{CheckPoint, PointBuilder}, state::{race_config::RaceState}, utils::{parser::FormatedData, rb_store::download_images}
+    AppState, race::types::{CheckPoint, PointBuilder}, utils::{parser::FormatedData, rb_store::download_images}
 };
+use crate::utils::crypto;
 
 #[tauri::command]
 pub async fn snapshot(state: State<'_, Mutex<AppState>>, snapshot: &str) -> Result<(), ()> {
     if let Ok(mut s) = state.lock() {
         if let Some(storage) = &s.storage {
-            storage.set("snapshot", json!(snapshot));
+            storage.set("snapshot", crypto::seal(json!(snapshot)));
             storage.close_resource();
         }
         s.snapshot = Some(snapshot.to_string());
@@ -24,7 +25,7 @@ pub async fn snapshot(state: State<'_, Mutex<AppState>>, snapshot: &str) -> Resu
 pub fn get_snapshot(state: State<'_, Mutex<AppState>>) -> Result<String, ()> {
     if let Ok(state) = state.lock() {
         if let Some(storage) = &state.storage {
-            if let Some(value) = storage.get("snapshot") {
+            if let Some(value) = crypto::open(storage.get("snapshot")) {
                 storage.close_resource();
                 return Ok(value.to_string());
             };
@@ -44,7 +45,12 @@ pub async fn update_config(
     if let Some(cfg) = cfg {
         let areas = {
             let mut state = state.lock().unwrap();
-            state.race = RaceState::new();
+            // Config gets re-fetched on every day-code entry, including
+            // harmless re-entries of an already-active code — don't wipe
+            // active_code/spec_area_state (checked points, position) here.
+            // `activate_code`, called right after this, is what decides
+            // whether the area's point list actually changed and a real
+            // reset is warranted.
             state.race.update(&cfg);
             state.config_updated = Local::now().format("%d.%m.%Y %H:%M:%S").to_string();
             state.race.race.as_ref().unwrap().areas.clone()
@@ -133,7 +139,13 @@ pub fn sync_data(state: State<'_, Mutex<AppState>>) -> Result<String, ()> {
             "ctw": state.dashboard.ctw,
             "dtw": state.dashboard.dtw,
             "max_speed": state.dashboard.max_speed,
+            "sign_limit": state.dashboard.sign_limit,
+            "sign_state": state.dashboard.sign_state,
+            "arrow_color": state.dashboard.arrow_color,
             "capture": state.current.capture,
+            "roadbook_unlocked": state.current.roadbook_unlocked,
+            "dss_taken": state.current.dss_taken,
+            "ass_captured": state.current.ass_captured,
             "activation_code": state.race.active_code,
             "metrics": {
                 "abs_total": state.dashboard.metrics.abs_total,
@@ -158,6 +170,12 @@ pub fn sync_data(state: State<'_, Mutex<AppState>>) -> Result<String, ()> {
 #[tauri::command]
 pub fn point_switch(state: State<'_, Mutex<AppState>>, move_to: &str) -> Result<(), ()> {
     if let Ok(mut state) = state.lock() {
+        // Manual navigation overrides whatever the "keep pointing at WPT"
+        // hold was tracking — without this, make_culc's held_point override
+        // would silently snap navigation right back to the stale held point
+        // on the next GPS tick.
+        state.race.spec_area_state.held_point = None;
+        state.race.spec_area_state.held_min_dtw = None;
         match move_to {
             "prev" => {
                 if state.race.spec_area_state.point_controller.has_prev() {
@@ -171,13 +189,14 @@ pub fn point_switch(state: State<'_, Mutex<AppState>>, move_to: &str) -> Result<
             }
             _ => {}
         }
-        let next_point_id = state
-            .race
-            .spec_area_state
-            .point_controller
-            .get_active()
-            .unwrap()
-            .clone();
+        // No day code activated yet — point_controller has no active point
+        // to switch to/from. Nothing to do rather than a hard error, since
+        // pressing W+/W- before activating a code is a normal (if useless)
+        // thing for a user to do.
+        let next_point_id = match state.race.spec_area_state.point_controller.get_active() {
+            Some(id) => id.clone(),
+            None => return Ok(()),
+        };
         if state.race.spec_area_state.point_controller.has_prev() {
             let prev_point_id = state
                 .race

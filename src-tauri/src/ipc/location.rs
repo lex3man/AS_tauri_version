@@ -7,6 +7,7 @@ use crate::{
 use serde_json::json;
 use std::sync::Mutex;
 use tauri::{AppHandle, State};
+use crate::utils::crypto;
 
 #[tauri::command]
 pub async fn location_update(
@@ -20,11 +21,11 @@ pub async fn location_update(
         state.coords = Some(gps_data.coords.clone());
         state.gps_timestamp = gps_data.timestamp;
         if let Some(store) = &state.storage {
-            store.set("position", json!(gps_data.coords));
-            store.set("sa_state", json!(state.race.spec_area_state));
-            store.set("race_state", json!(state.race));
-            store.set("dashboard", json!(state.dashboard));
-            store.set("timestamp", gps_data.timestamp);
+            store.set("position", crypto::seal(json!(gps_data.coords)));
+            store.set("sa_state", crypto::seal(json!(state.race.spec_area_state)));
+            store.set("race_state", crypto::seal(json!(state.race)));
+            store.set("dashboard", crypto::seal(json!(state.dashboard)));
+            store.set("timestamp", crypto::seal(gps_data.timestamp));
         }
         state.sync();
     }
@@ -50,6 +51,12 @@ pub fn jump_reaction(state: State<'_, Mutex<AppState>>, flag: &str) -> Result<()
         let mut tel = state.telemetry.get(&current_sa).unwrap().clone();
         match flag {
             "yes" => {
+                // A confirmed jump overrides whatever the "keep pointing at
+                // WPT" hold was tracking — without this, make_culc's
+                // held_point override would silently snap navigation right
+                // back to the stale held point on the next GPS tick.
+                state.race.spec_area_state.held_point = None;
+                state.race.spec_area_state.held_min_dtw = None;
                 state
                     .race
                     .spec_area_state
@@ -101,7 +108,9 @@ pub fn get_location_history(state: State<'_, Mutex<AppState>>) -> Result<String,
             if let Some(last_position) = tel.steps.last() {
                 let mut prev_pos = last_position.coords;
                 let mut full_buffer = tel.steps.clone();
-                while (counter as u64) < dist {
+                // Compare in f64: truncating to whole km here would make the
+                // 500 m TRACK DIST step invisible to the track length.
+                while counter < dist {
                     if let Some(pos) = full_buffer.pop() {
                         counter += distance(
                             Coords {

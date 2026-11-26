@@ -77,11 +77,36 @@ fn test_boundaries() {
     list.append("A".to_string());
     list.append("B".to_string());
 
-    list.move_to_first();
-    assert!(list._move_to_last().is_none());
+    // The jumps are absolute, not steps: they report the point they landed
+    // on whichever end the list was already standing at.
+    assert_eq!(list.move_to_first(), Some("A".to_string()));
+    assert_eq!(list.move_to_first(), Some("A".to_string()));
+    assert_eq!(list._move_to_last(), Some("B".to_string()));
+    assert_eq!(list._move_to_last(), Some("B".to_string()));
 
-    list._move_to_last();
-    assert!(list.move_to_first().is_none());
+    // Stepping is what stops at the ends, and a refused step leaves the
+    // active point where it was.
+    assert_eq!(list.move_next(), None);
+    assert_eq!(list.get_active().unwrap(), "B");
+
+    assert_eq!(list.move_prev(), Some("A".to_string()));
+    assert_eq!(list.move_prev(), None);
+    assert_eq!(list.get_active().unwrap(), "A");
+}
+
+#[test]
+fn test_empty_list_goes_nowhere() {
+    // No config loaded yet: every move has to answer "nowhere" instead of
+    // reaching for a head that is not there.
+    let mut list = PointLinkedList::new();
+
+    assert_eq!(list.move_to_first(), None);
+    assert_eq!(list._move_to_last(), None);
+    assert_eq!(list.move_next(), None);
+    assert_eq!(list.move_prev(), None);
+    assert!(list.get_active().is_none());
+    assert!(!list.has_next());
+    assert!(!list.has_prev());
 }
 
 #[test]

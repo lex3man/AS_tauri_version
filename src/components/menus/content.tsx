@@ -3,7 +3,7 @@ import { useAppState } from "@/ctx/state-provider";
 import { invoke } from "@tauri-apps/api/core";
 
 export const LeftContent = () => {
-  const { switchWidget, setPartial, setTotal, callView } = useAppState();
+  const { setPartial, setTotal, adminMode, callView } = useAppState();
 
   return (
     <div className="flex flex-col gap-2">
@@ -33,15 +33,15 @@ export const LeftContent = () => {
           DIST+
         </Button>
       </div>
-      <div className="py-2 w-full">
-        <Button
+      <div className="w-full">
+        {/* <Button
           className="p-7 text-3xl w-full"
           onClick={() => {
             switchWidget("total");
           }}
         >
           TOTAL
-        </Button>
+        </Button> */}
         <Button
           className="p-7 text-3xl w-full"
           onClick={() => {
@@ -51,15 +51,15 @@ export const LeftContent = () => {
           ADJUST
         </Button>
       </div>
-      <div className="py-2 w-full">
-        <Button
+      <div className="w-full">
+        {/* <Button
           className="p-7 text-3xl w-full"
           onClick={() => {
             switchWidget("partial");
           }}
         >
           PARTIAL
-        </Button>
+        </Button> */}
         <Button
           className="p-7 text-3xl w-full"
           onClick={async () => {
@@ -67,10 +67,35 @@ export const LeftContent = () => {
             setPartial(0);
           }}
         >
-          RESET
+          PART RST
         </Button>
       </div>
-      
+      <Button
+        className="p-7 text-3xl"
+        onClick={() => {
+          callView("settings");
+        }}
+      >
+        SETUP
+      </Button>
+      {adminMode && (
+        <Button
+          className="p-7 text-3xl"
+          onClick={() => {
+            callView("request", "command");
+          }}
+        >
+          COMMAND
+        </Button>
+      )}
+      <Button
+        className="p-7 text-3xl"
+        onClick={() => {
+          callView("position");
+        }}
+      >
+        POSITION
+      </Button>
     </div>
   );
 };
@@ -94,19 +119,6 @@ export const RightContent = () => {
         <Button
           className="p-7 text-3xl w-1/2"
           onClick={async () => {
-            await invoke("point_switch", { moveTo: "next" });
-            await invoke<string>("sync_data").then((rawData) => {
-              const data = JSON.parse(rawData);
-              setNextPointNumber(data.next_point.split("-")[0]);
-              setNextPointName(data.next_point.split("-")[1]);
-            });
-          }}
-        >
-          W+
-        </Button>
-        <Button
-          className="p-7 text-3xl w-1/2"
-          onClick={async () => {
             await invoke("point_switch", { moveTo: "prev" });
             await invoke<string>("sync_data").then((rawData) => {
               const data = JSON.parse(rawData);
@@ -116,6 +128,19 @@ export const RightContent = () => {
           }}
         >
           W-
+        </Button>
+        <Button
+          className="p-7 text-3xl w-1/2"
+          onClick={async () => {
+            await invoke("point_switch", { moveTo: "next" });
+            await invoke<string>("sync_data").then((rawData) => {
+              const data = JSON.parse(rawData);
+              setNextPointNumber(data.next_point.split("-")[0]);
+              setNextPointName(data.next_point.split("-")[1]);
+            });
+          }}
+        >
+          W+
         </Button>
       </div>
       <Button
@@ -134,32 +159,6 @@ export const RightContent = () => {
       >
         TRACK
       </Button>
-      <Button
-        className="p-7 text-3xl"
-        onClick={() => {
-          callView("position");
-        }}
-      >
-        POSITION
-      </Button>
-      <Button
-        className="p-7 text-3xl"
-        onClick={() => {
-          callView("settings");
-        }}
-      >
-        SETUP
-      </Button>
-      {adminMode && (
-        <Button
-          className="p-7 text-3xl"
-          onClick={() => {
-            callView("request", "command");
-          }}
-        >
-          COMMAND
-        </Button>
-      )}
       {adminMode && (
         <Button
           className="p-7 text-3xl"

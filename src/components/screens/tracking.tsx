@@ -1,10 +1,13 @@
 import { useAppState } from "@/ctx/state-provider";
+import { useSettings } from "@/ctx/settings-provider";
 import { Button } from "../ui/button";
 import { RouteMap } from "../trackMap";
 import useWindowDimensions from "@/lib/viewport";
+import { Minus, Plus } from "lucide-react";
 
 const Tracking = () => {
   const { roadbookMode, trackPoints, callView } = useAppState();
+  const { trackDistance, increaseTrackDist, decreaseTrackDist } = useSettings();
   const { width, height } = useWindowDimensions();
 
   return (
@@ -31,6 +34,19 @@ const Tracking = () => {
       <div className="flex flex-col justify-center text-center m-auto">
         <div id="canvas">
           <RouteMap trackPoints={trackPoints} width={width * 0.9} height={height * 0.7} />
+        </div>
+      </div>
+      {/* Same TRACK DIST setting as in SETUP (shared state, so changes here
+          persist identically) — laid out as − value + for one-handed use
+          while the map is open. */}
+      <div className="absolute bottom-5 right-5 flex flex-col items-center">
+        <div className="text-center text-2xl font-extrabold">TRACK DIST</div>
+        <div className="flex items-center gap-4">
+          <Minus className="size-10" onClick={() => decreaseTrackDist()} />
+          <div className="text-3xl font-extrabold">
+            {trackDistance.value.toFixed(1)}
+          </div>
+          <Plus className="size-10" onClick={() => increaseTrackDist()} />
         </div>
       </div>
     </div>

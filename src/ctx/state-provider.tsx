@@ -1,4 +1,5 @@
-import { request_config, send_report, send_telemetry, send_collected } from "@/lib/api";
+import { request_config, send_report, send_telemetry } from "@/lib/api";
+import { uploadCollected, flushCollected, CollectedBatch } from "@/lib/collected";
 import { TypeOfRequest } from "@/types/request";
 import { RoadbookSlide, ImageData } from "@/types/roadbook";
 import { AppState, Coords, DashBoard, GPSData, TelemetryData } from "@/types/state";
@@ -55,6 +56,8 @@ type AppStateProviderState = {
   rbSlides: RoadbookSlide[];
   rbImages: Record<string, ImageData>;
   currentRBIndex: number;
+  rbSlidesUnlocked: boolean;
+  dssTaken: boolean;
 
   lat: number;
   lon: number;
@@ -62,8 +65,14 @@ type AppStateProviderState = {
   cog: number;
   ctw: number;
   dtw: number;
+  arrowColor: string;
   time: string;
   maxSpeed: number;
+  // Speed sign override for the DZ -> FZ stretch. signLimit > 0 means the
+  // zone rules are active and signState says how to draw the sign:
+  // "grey" (approach), "red" (penalised stretch), "blink" (over the limit).
+  signLimit: number;
+  signState: string;
   cpCounter: number;
   countdown: number;
   nextPointNumber: number;
@@ -80,9 +89,11 @@ type AppStateProviderState = {
   oncomingDistance: number;
   isOncoming: boolean;
 
-  reportSentTime: string;
+  reportSentAutoTime: string;
+  reportSentManualTime: string;
 
   setRaceNumber: (rn: string) => void;
+  setActiveCode: (code: string) => void;
   setRoadbookMode: (status: boolean) => void;
   setDebugData: (data: string) => void;
   setCodeOfDay: (code: string) => void;
@@ -102,10 +113,13 @@ type AppStateProviderState = {
   setDtw: (val: number) => void;
   setCog: (val: number) => void;
   setCtw: (val: number) => void;
+  setArrowColor: (val: string) => void;
   setCpCounter: (val: number) => void;
   setNextPointNumber: (val: number) => void;
   setNextPointName: (val: string) => void;
   setMaxSpeed: (val: number) => void;
+  setSignLimit: (val: number) => void;
+  setSignState: (val: string) => void;
   setTotal: (val: number) => void;
   setPartial: (val: number) => void;
   setTelemetry: (val: TelemetryData[]) => void;
@@ -114,6 +128,8 @@ type AppStateProviderState = {
   setRBSlides: (val: RoadbookSlide[]) => void;
   setRBImages: (val: Record<string, ImageData>) => void;
   setCurrentRBIndex: (val: number) => void;
+  setRBSlidesUnlocked: (val: boolean) => void;
+  setDssTaken: (val: boolean) => void;
   goNext: () => void;
   goPrev: () => void;
   setJumpPointID: (val: string) => void;
@@ -123,7 +139,8 @@ type AppStateProviderState = {
   setCountdown: (val: number) => void;
   setTime: (val: string) => void;
   setGPSData: (data: GPSData) => void;
-  setReportSentTime: (val: string) => void;
+  setReportSentAutoTime: (val: string) => void;
+  setReportSentManualTime: (val: string) => void;
   resetOncomingDistance: () => void;
   increaseOncomingDistance: (val: number) => void;
   setIsOncoming: (status: boolean) => void;
@@ -165,6 +182,8 @@ const initialState: AppStateProviderState = {
   rbSlides: [],
   rbImages: {},
   currentRBIndex: 0,
+  rbSlidesUnlocked: false,
+  dssTaken: false,
 
   lat: 0,
   lon: 0,
@@ -172,8 +191,11 @@ const initialState: AppStateProviderState = {
   cog: 0,
   ctw: 0,
   dtw: 0,
+  arrowColor: "black",
   time: "",
   maxSpeed: 140,
+  signLimit: 0,
+  signState: "none",
   cpCounter: 0,
   countdown: 0,
   nextPointNumber: 0,
@@ -188,7 +210,8 @@ const initialState: AppStateProviderState = {
   captured: false,
   trackPoints: [],
 
-  reportSentTime: "",
+  reportSentAutoTime: "",
+  reportSentManualTime: "",
   oncomingDistance: 0,
   isOncoming: false,
 
@@ -215,6 +238,7 @@ const initialState: AppStateProviderState = {
   activeViewPort: ViewPort.new("request", "race number"),
 
   setRaceNumber: () => null,
+  setActiveCode: () => null,
   setDebugData: () => null,
   setCodeOfDay: () => null,
   callView: () => null,
@@ -230,10 +254,13 @@ const initialState: AppStateProviderState = {
   setDtw: () => null,
   setCog: () => null,
   setCtw: () => null,
+  setArrowColor: () => null,
   setCpCounter: () => null,
   setNextPointNumber: () => null,
   setNextPointName: () => null,
   setMaxSpeed: () => null,
+  setSignLimit: () => null,
+  setSignState: () => null,
   setTotal: () => null,
   setPartial: () => null,
   setVisiable: () => null,
@@ -243,6 +270,8 @@ const initialState: AppStateProviderState = {
   setRBSlides: () => null,
   setRBImages: () => null,
   setCurrentRBIndex: () => null,
+  setRBSlidesUnlocked: () => null,
+  setDssTaken: () => null,
   goNext: () => null,
   goPrev: () => null,
   setJumpPointID: () => null,
@@ -252,7 +281,8 @@ const initialState: AppStateProviderState = {
   setCountdown: () => null,
   setTime: () => null,
   setGPSData: () => null,
-  setReportSentTime: () => null,
+  setReportSentAutoTime: () => null,
+  setReportSentManualTime: () => null,
   resetOncomingDistance: () => null,
   increaseOncomingDistance: () => null,
   setIsOncoming: () => null,
@@ -291,10 +321,13 @@ export function StateProvider({
   const [lon, setLon] = useState(0);
   const [cog, setCog] = useState(0);
   const [ctw, setCtw] = useState(0);
+  const [arrowColor, setArrowColor] = useState("black");
   const [dtw, setDtw] = useState(0);
   const [time, setTime] = useState("");
   const [speed, setSpeed] = useState(0);
   const [maxSpeed, setMaxSpeed] = useState(140);
+  const [signLimit, setSignLimit] = useState(0);
+  const [signState, setSignState] = useState("none");
   const [cpCounter, setCpCounter] = useState(0);
   const [nextPointNumber, setNextPointNumber] = useState(0);
   const [nextPointName, setNextPointName] = useState("");
@@ -318,12 +351,21 @@ export function StateProvider({
     heading: 0,
     timestamp: 0,
   });
-  const [reportSentTime, setReportSentTime] = useState("");
+  const [reportSentAutoTime, setReportSentAutoTime] = useState("");
+  const [reportSentManualTime, setReportSentManualTime] = useState("");
 
   // roadbook
   const [rbSlides, setRBSlides] = useState<RoadbookSlide[]>([]);
   const [rbImages, setRBImages] = useState<Record<string, ImageData>>({});
   const [currentRBIndex, setCurrentRBIndex] = useState(0);
+  // Slides stay hidden until an RBP (or, failing that, DSS) point is
+  // captured — separate from `roadbookMode`, which is purely the
+  // portrait/landscape screen-layout switch.
+  const [rbSlidesUnlocked, setRBSlidesUnlocked] = useState(false);
+  // Separate from rbSlidesUnlocked: the roadbook can become visible on RBP
+  // alone, but its slide odo values are relative to the DSS (special stage
+  // start), so auto-scroll specifically must wait for DSS.
+  const [dssTaken, setDssTaken] = useState(false);
 
   const goNext = useCallback(() => {
     setCurrentRBIndex((prev) => Math.min(prev + 1, rbSlides.length - 1));
@@ -469,15 +511,41 @@ export function StateProvider({
       setBatteryLevel(battery.level ? battery.level : 0);
       setCharging(battery.isCharging ? battery.isCharging : false);
     };
+
+    const look_for_settings = async () => {
+      const config = await invoke<string>("get_settings");
+      setDebugData(config);
+    }
+
+    look_for_settings();
     batteryCheck();
   }, [speed]);
 
   useEffect(() => {
+    // The Rust side builds these payloads with `json!({...}).to_string()`
+    // (an already-JSON-encoded string) and emits *that string* as the event
+    // payload. Depending on the Tauri version's emit/listen round-trip,
+    // event.payload can come through still wrapped in one extra layer of
+    // JSON-string-encoding — a single JSON.parse then yields the original
+    // JSON text back as a string, not an object, and assigning a property
+    // onto it throws ("Cannot create property 'device_id' on string ...").
+    // Unwrap repeatedly so this works whether Tauri hands back one layer or
+    // two.
+    const parseEventPayload = (payload: string): any => {
+      let value: unknown = payload;
+      while (typeof value === "string") {
+        value = JSON.parse(value);
+      }
+      return value;
+    };
+
     const unlistenTelemetry = listen<string>(
       "send_telemetry",
       async (event) => {
         try {
-          const telemetryData = JSON.parse(event.payload) as TelemetryData;
+          const telemetryData = parseEventPayload(
+            event.payload,
+          ) as TelemetryData;
           const device = await getDeviceInfo();
 
           telemetryData.device_id = device.uuid as string;
@@ -491,10 +559,15 @@ export function StateProvider({
 
     const unlistenReport = listen<string>("send_report", async (event) => {
       try {
-        const reportData = JSON.parse(event.payload);
+        const reportData = parseEventPayload(event.payload);
         const device = await getDeviceInfo();
 
         reportData.device_id = device.uuid as string;
+
+        // The collected buffer rides along with every report, on all three
+        // paths a report can leave by. Not awaited, so the report isn't
+        // held back by the upload timeout.
+        void flushCollected();
 
         await send_report(reportData);
       } catch (e) {
@@ -502,13 +575,14 @@ export function StateProvider({
       }
     });
 
+    // The prompt path: a captured point flushes the buffer right away. The
+    // timer in App.tsx covers everything else, including the long stretches
+    // between points and a stage that ended out of coverage.
     const unlistenCollected = listen<string>("send_collected", async (event) => {
       try {
-        const collectedData = JSON.parse(event.payload);
-
-        await send_collected(collectedData);
+        await uploadCollected(parseEventPayload(event.payload) as CollectedBatch);
       } catch (e) {
-        console.error("Failed to parse report event:", e);
+        console.error("Failed to send collected telemetry:", e);
       }
     })
 
@@ -724,9 +798,12 @@ export function StateProvider({
     cog,
     ctw,
     dtw,
+    arrowColor,
     time,
 
     maxSpeed,
+    signLimit,
+    signState,
     cpCounter,
     countdown,
     nextPointNumber,
@@ -744,16 +821,20 @@ export function StateProvider({
     rbSlides,
     rbImages,
     currentRBIndex,
+    rbSlidesUnlocked,
+    dssTaken,
 
     gpsAccurancy,
     batteryLevel,
     charging,
 
-    reportSentTime,
+    reportSentAutoTime,
+    reportSentManualTime,
     oncomingDistance,
     isOncoming,
 
     setRaceNumber,
+    setActiveCode: setCoad,
     setDebugData,
     callView,
     setCodeOfDay,
@@ -769,10 +850,13 @@ export function StateProvider({
     setDtw,
     setCog,
     setCtw,
+    setArrowColor,
     setCpCounter,
     setNextPointNumber,
     setNextPointName,
     setMaxSpeed,
+    setSignLimit,
+    setSignState,
     setTotal,
     setPartial,
     setVisiable,
@@ -782,6 +866,8 @@ export function StateProvider({
     setRBSlides,
     setRBImages,
     setCurrentRBIndex,
+    setRBSlidesUnlocked,
+    setDssTaken,
     goNext,
     goPrev,
     setJumpPointID,
@@ -791,7 +877,8 @@ export function StateProvider({
     setCountdown,
     setTime,
     setGPSData,
-    setReportSentTime,
+    setReportSentAutoTime,
+    setReportSentManualTime,
     resetOncomingDistance,
     increaseOncomingDistance,
     setIsOncoming,
